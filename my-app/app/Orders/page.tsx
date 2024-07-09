@@ -9,43 +9,24 @@ import * as XLSX from "xlsx";
 import OrderTable from "./components/OrderTable";
 import Pagination from "../components/Paginations";
 import SmallSpinner from "../components/SmallSpinner";
-
-const translateStatus = (status: string) => {
-  switch (status) {
-    case "PROCESSING":
-      return "EN TRAITEMENT";
-    case "PAYED":
-      return "PAYÉ";
-    case "DELIVERED":
-      return "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON";
-    case "PENDING":
-      return "EN ATTENTE";
-    case "RETURNED":
-      return "RETOUR";
-    case "EXCHANGED":
-      return "ÉCHANGE";
-    default:
-      return status;
-  }
-};
+import { translateStatus } from "../Helpers/_translateStatus";
+import { generateInvoice } from "../Helpers/_generateInvoice";
+import { formatDate } from "../Helpers/_formatDate";
 
 const CommandesPage: React.FC = () => {
   const [searchCommande, setSearchCommande] = useState("");
-  const [searchProduit, setSearchProduit] = useState("");
   const [filter, setFilter] = useState("Toute");
   const [page, setPage] = useState(1);
-  const ordersPerPage = 10;
+  const ordersPerPage = 5;
 
   const { loading, error, data } = useQuery(ORDERS_QUERY);
 
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
 
-  const formatDate = (timestamp: string) => {
-    return new Date(parseInt(timestamp)).toLocaleString();
-  };
 
-  const exportToPDF = () => {
+
+  const exportToPDFPackageList = () => {
     const doc = new jsPDF();
 
     // Définir la couleur principale
@@ -60,13 +41,14 @@ const CommandesPage: React.FC = () => {
     doc.setLineWidth(0.5);
     doc.line(14, 25, 196, 25);
 
-    // Ajouter un sous-titre avec la date et l'heure
+    // Ajouter une date et une heure formatées
     const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const formattedDate = `${currentDate
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${(currentDate.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}/${currentDate.getFullYear()}`;
     const formattedTime = currentDate.toLocaleTimeString("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
@@ -102,8 +84,11 @@ const CommandesPage: React.FC = () => {
       margin: { top: 40 }, // Marge supérieure du tableau
     });
 
+    // Nom du fichier PDF avec la date
+    const fileName = `commandes_${formattedDate.replace(/\//g, "-")}.pdf`;
+
     // Enregistrer le PDF
-    doc.save("commandes.pdf");
+    doc.save(fileName);
   };
 
   const exportToExcel = () => {
@@ -121,115 +106,7 @@ const CommandesPage: React.FC = () => {
     XLSX.writeFile(wb, "commandes.xlsx");
   };
 
-  const generateInvoice = (order: any) => {
-    const doc = new jsPDF();
 
-    // Set font
-    doc.setFont("helvetica");
-
-    // Company header
-    doc.setFontSize(24);
-    doc.text("MAISON NG", 14, 20);
-
-    doc.setFontSize(10);
-    doc.text("Sté HORTENSIA SARL", 14, 30);
-    doc.text("26, COLONEL GARBOUJI 22", 14, 35);
-    doc.text("4051 Sousse, TUNISIE", 14, 40);
-    doc.text("M.F : 1719566M/M/P/000", 14, 45);
-
-    // Page number
-    doc.text("Page N° 1", 180, 10);
-
-    // FACTURE title
-    doc.setFontSize(18);
-    doc.text("FACTURE", 14, 60);
-
-    // Invoice details box
-    doc.rect(14, 65, 90, 20);
-    doc.setFontSize(10);
-    doc.text("N° Pièce", 16, 71);
-    doc.text("Date", 16, 77);
-    doc.text("Référence", 16, 83);
-
-    doc.text(order.customId, 50, 71);
-    doc.text(formatDate(order.createdAt), 50, 77);
-    doc.text(order.reference || "", 50, 83);
-
-    // Client details box
-    doc.rect(120, 65, 75, 20);
-    doc.text("Client", 122, 71);
-    doc.setFontSize(9);
-    doc.text(order.Checkout.userId, 122, 77);
-    doc.text(order.Checkout.userName.toUpperCase(), 122, 83);
-    doc.text(order.Checkout.address || "", 122, 89);
-
-    // Table for items
-    const tableColumns = [
-      "Référence",
-      "Désignation",
-      "Qté",
-      "Remise",
-      "Montant TTC",
-    ];
-    const tableData = order.Checkout.products.map((item: any) => [
-      item.product.reference,
-      item.product.name,
-      item.productQuantity,
-      item.product.price.toFixed(3),
-      "0%",
-      (item.productQuantity * item.product.price).toFixed(3),
-      "19,00%",
-    ]);
-
-    autoTable(doc, {
-      startY: 90,
-      head: [tableColumns],
-      body: tableData,
-      theme: "grid",
-      headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: [0, 0, 0],
-        fontStyle: "bold",
-      },
-      styles: { fontSize: 8, cellPadding: 1 },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 15, halign: "center" },
-        3: { cellWidth: 25, halign: "right" },
-        4: { cellWidth: 20, halign: "center" },
-        5: { cellWidth: 30, halign: "right" },
-        6: { cellWidth: 20, halign: "center" },
-      },
-    });
-
-    // Totals
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-
-    doc.line(14, finalY, 195, finalY);
-
-    // doc.text("Total HT", 140, finalY + 7);
-    doc.text(order.Checkout.total.toFixed(3), 180, finalY + 7, {
-      align: "right",
-    });
-
-    const tva = (order.Checkout.total * 0.19).toFixed(3);
-    doc.text("TVA", 140, finalY + 14);
-    doc.text(tva, 180, finalY + 14, { align: "right" });
-
-    const totalTTC = (
-      parseFloat(order.Checkout.total) + parseFloat(tva)
-    ).toFixed(3);
-    doc.setFont("helvetica", "bold");
-    doc.text("Total TTC", 140, finalY + 21);
-    doc.text(totalTTC, 180, finalY + 21, { align: "right" });
-    // Space for stamp and signature
-    doc.rect(120, finalY + 30, 75, 40);
-    doc.text("Cachet & Signature", 122, finalY + 35);
-
-    // Save the PDF
-    doc.save(`facture_${order.id}.pdf`);
-  };
   const indexOfLastOrder = page * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = data.getAllPackages.slice(
@@ -241,8 +118,8 @@ const CommandesPage: React.FC = () => {
     <div className="p-6 w-full">
       <h1 className="text-2xl font-bold mb-4">Commandes</h1>
 
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex space-x-4 mb-4">
+      <div className="bg-white rounded-lg shadow">
+        <div className="flex p-4  space-x-4 mb-4">
           <input
             type="text"
             placeholder="Rechercher une commande"
@@ -250,13 +127,7 @@ const CommandesPage: React.FC = () => {
             value={searchCommande}
             onChange={(e) => setSearchCommande(e.target.value)}
           />
-          <input
-            type="text"
-            placeholder="Rechercher un produit"
-            className="border p-2 rounded flex-grow"
-            value={searchProduit}
-            onChange={(e) => setSearchProduit(e.target.value)}
-          />
+      
           <select
             className="border p-2 rounded"
             value={filter}
@@ -287,18 +158,20 @@ const CommandesPage: React.FC = () => {
         )}
 
         {data.getAllPackages.length > 0 && (
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <div className="pb-4 pl-4">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
         )}
       </div>
 
-      <div className="mt-4 flex space-x-4">
+      <div className="mt-4  flex space-x-4">
         <button
           className="bg-pink-600 text-white px-4 py-2 rounded"
-          onClick={exportToPDF}
+          onClick={exportToPDFPackageList}
         >
           Exportation PDF
         </button>
