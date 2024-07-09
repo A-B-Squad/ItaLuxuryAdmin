@@ -48,6 +48,11 @@ mutation DeleteCoupons($couponsId: ID!) {
   deleteCoupons(couponsId: $couponsId)
 }
 `;
+export const PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS = gql`
+mutation PayedOrToDeliveryPackage($packageId: ID!, $status: String!) {
+  payedOrToDeliveryPackage(packageId: $packageId, status: $status)
+}
+`;
 export const CREATE_COUPONS_MUTATIONS = gql`
 mutation CreateCoupons($input: CreateCouponInput!) {
   createCoupons(input: $input)
@@ -62,6 +67,16 @@ export const UPDATE_PRODUCT_MUTATIONS = gql`
   mutation UpdateProduct($productId: ID!, $input: ProductInput!) {
     updateProduct(productId: $productId, input: $input)
   }
+`;
+export const CANCEL_PACKAGE_MUTATIONS = gql`
+mutation CancelPackage($input: CancelPackageInput!) {
+  cancelPackage(input: $input)
+}
+`;
+export const REFUND_PACKAGE_MUTATIONS = gql`
+mutation RefundPackage($input: RefundPackageInput!) {
+  refundPackage(input: $input)
+}
 `;
 export const UPDATE_PRODUCT_INVENTORY_MUTATION = gql`
 mutation AddProductInventory($productId: ID!, $inventory: Int!) {

@@ -24,12 +24,12 @@ const OrderTable: React.FC<OrderTableProps> = ({
   translateStatus,
   generateInvoice,
 }) => (
-  <section className="container mx-auto py-6 px-3  relative">
+  <section className=" mx-auto py-6   relative">
     <div className="w-full mb-8 overflow-hidden rounded-lg">
       <div className="w-full ">
         <table className="w-full">
           <thead>
-            <tr className="text-left">
+            <tr className="text-center">
               <th>Réf</th>
               <th>Date de création</th>
               <th>Client</th>

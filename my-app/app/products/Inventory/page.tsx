@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { gql } from "@apollo/client";
 
@@ -39,62 +45,73 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  const PAGE_SIZE = 10;
-  const numberOfPages = Math.ceil(totalCount / PAGE_SIZE);
-
-  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
-  const [searchProducts] = useLazyQuery(SEARCH_PRODUCTS_QUERY);
   const [updateInventory] = useMutation(UPDATE_PRODUCT_INVENTORY_MUTATION);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await searchProducts({
-        variables: {
-          input: {
-            query: query || undefined,
-            page,
-            pageSize: PAGE_SIZE,
-          },
-        },
-      });
+  const PAGE_SIZE = 10;
+  const numberOfPages = useMemo(
+    () => Math.ceil(totalCount / PAGE_SIZE),
+    [totalCount]
+  );
 
-      let fetchedProducts = [
-        ...(data?.searchProducts?.results?.products || []),
-      ];
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const [searchProducts, { loading, refetch }] = useLazyQuery(
+    SEARCH_PRODUCTS_QUERY,
+    {
+      onCompleted: (data) => {
+        const fetchedProducts = data.searchProducts?.results?.products || [];
+        setTotalCount(data.searchProducts?.totalCount || 0);
 
-      if (order) {
-        fetchedProducts.sort((a, b) =>
-          order === "ASC" ? a.price - b.price : b.price - a.price
-        );
-      }
+        const sortedProducts = order
+          ? [...fetchedProducts].sort((a, b) =>
+              order === "ASC" ? a.price - b.price : b.price - a.price
+            )
+          : fetchedProducts;
 
-      setProducts(fetchedProducts);
-      setTotalCount(data?.searchProducts?.totalCount || 0);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
+        setProducts(sortedProducts);
+      },
+      onError: (error) => {
+        console.error("Error fetching products:", error);
+        toast({
+          title: "Erreur",
+          description:
+            "Impossible de récupérer les produits. Veuillez réessayer.",
+          className: "text-white bg-red-600 border-0",
+          duration: 5000,
+        });
+      },
     }
-  }, [page, query, order, searchProducts]);
+  );
 
+  const fetchProducts = useCallback(() => {
+    searchProducts({
+      variables: {
+        input: {
+          query: query || undefined,
+          page,
+          pageSize: PAGE_SIZE,
+        },
+      },
+    });
+  }, [searchProducts, query, page]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
   const exportToPDF = () => {
     const doc = new jsPDF();
-  
+
     // Define the main color as a tuple
     const mainColor: [number, number, number] = [32, 41, 57];
-  
+
     // Add a title
     doc.setFontSize(18);
     doc.setTextColor(...mainColor);
     doc.text("Rapport d'Inventaire", 14, 22);
-  
+
     // Add a separation line
     doc.setLineWidth(0.5);
     doc.line(14, 25, 196, 25);
-  
+
     // Format the current date and time
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString("fr-FR", {
@@ -107,11 +124,11 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
       minute: "2-digit",
       second: "2-digit",
     });
-  
+
     // Add a subtitle with date and time
     doc.setFontSize(12);
     doc.text(`Généré le: ${formattedDate} à ${formattedTime}`, 14, 32);
-  
+
     // Add the table with custom styles
     autoTable(doc, {
       startY: 40, // Starting position of the table
@@ -136,7 +153,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
       },
       margin: { top: 40 }, // Top margin of the table
     });
-  
+
     // Save the PDF
     doc.save("inventaire.pdf");
   };
@@ -172,10 +189,6 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
     XLSX.writeFile(wb, "inventaire.xlsx");
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
   const handleAddToInventory = async (productId: string) => {
     const inputValue = inputRefs.current[productId]?.value;
     if (!inputValue) {
@@ -196,33 +209,30 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
     }
 
     try {
-      const { data } = await updateInventory({
+      const { data: updateData } = await updateInventory({
         variables: {
           productId,
           inventory: inventoryToAdd,
         },
       });
+      console.log(updateData,"kd,lk,d");
+      
 
-      if (data && data.updateProductInventory) {
-        // Update the local state immediately
-        setProducts((prevProducts) =>
-          prevProducts.map((product) =>
-            product.id === productId
-              ? { ...product, inventory: data.updateProductInventory.inventory }
-              : product
-          )
-        );
+      if (updateData && updateData.addProductInventory) {
+        await refetch();
 
         if (inputRefs.current[productId]) {
           inputRefs.current[productId].value = "";
         }
+
         toast({
           title: "Succès",
           className: "text-white bg-green-600 border-0",
           description: "L'inventaire a été mis à jour avec succès.",
           duration: 3000,
         });
-        window.location.reload();
+
+        fetchProducts();
       }
     } catch (error) {
       console.error("Error updating inventory:", error);

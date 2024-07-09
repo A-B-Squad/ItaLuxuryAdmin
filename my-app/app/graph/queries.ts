@@ -156,30 +156,56 @@ export const ORDERS_QUERY = gql`
         governorateId
         address
         phone
-        products {
+        productInCheckout {
           productQuantity
+          price
+          discountedPrice
           product {
+            id
             name
-            price
-            productDiscounts {
-              newPrice
-            }
+            reference
             images
-            Colors {
-              color
-              Hex
-            }
           }
         }
         total
-        couponsId
       }
       status
       createdAt
     }
   }
 `;
-
+export const PACKAGE_BY_ID_QUERY = gql`
+  query PackageById($packageId: ID!) {
+    packageById(packageId: $packageId) {
+      comments
+      createdAt
+      customId
+      status
+      Checkout {
+        total
+        Coupons {
+          discount
+        }
+        userId
+        userName
+        phone
+        address
+        governorateId
+        productInCheckout {
+          productQuantity
+          price
+          discountedPrice
+          product {
+            id
+            name
+            reference
+            images
+          }
+        }
+      }
+    }
+  }
+`;
 export const DISCOUNT_PERCENTAGE_QUERY = gql`
   query DiscountsPercentage {
     DiscountsPercentage {
