@@ -44,19 +44,19 @@ export const DELETE_PRODUCT_MUTATIONS = gql`
   }
 `;
 export const DELETE_COUPONS_MUTATIONS = gql`
-mutation DeleteCoupons($couponsId: ID!) {
-  deleteCoupons(couponsId: $couponsId)
-}
+  mutation DeleteCoupons($couponsId: ID!) {
+    deleteCoupons(couponsId: $couponsId)
+  }
 `;
 export const PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS = gql`
-mutation PayedOrToDeliveryPackage($packageId: ID!, $status: String!) {
-  payedOrToDeliveryPackage(packageId: $packageId, status: $status)
-}
+  mutation PayedOrToDeliveryPackage($packageId: ID!, $status: String!) {
+    payedOrToDeliveryPackage(packageId: $packageId, status: $status)
+  }
 `;
 export const CREATE_COUPONS_MUTATIONS = gql`
-mutation CreateCoupons($input: CreateCouponInput!) {
-  createCoupons(input: $input)
-}
+  mutation CreateCoupons($input: CreateCouponInput!) {
+    createCoupons(input: $input)
+  }
 `;
 export const CREATE_PRODUCT_MUTATIONS = gql`
   mutation CreateProduct($input: ProductInput!) {
@@ -69,19 +69,48 @@ export const UPDATE_PRODUCT_MUTATIONS = gql`
   }
 `;
 export const CANCEL_PACKAGE_MUTATIONS = gql`
-mutation CancelPackage($input: CancelPackageInput!) {
-  cancelPackage(input: $input)
-}
+  mutation CancelPackage($input: CancelPackageInput!) {
+    cancelPackage(input: $input)
+  }
+`;
+export const CREATE_CHECKOUT_MUTATION = gql`
+  mutation CreateCheckout($input: CreateCheckoutInput!) {
+    createCheckout(input: $input) {
+      id
+      userId
+      governorateId
+      phone
+      address
+      total
+      createdAt
+      couponsId
+    }
+  }
+`;
+export const UPDATE_CHECKOUT_MUTATIONS = gql`
+  mutation UpdateProductInCheckout($input: UpdateProductInCheckoutInput!) {
+    updateProductInCheckout(input: $input)
+  }
+`;
+export const UPDATE_CUSTOMER_MUTATIONS = gql`
+  mutation UpdateCustomerCheckout($input: UpdateCustomerCheckoutInput!) {
+    updateCustomerCheckout(input: $input)
+  }
 `;
 export const REFUND_PACKAGE_MUTATIONS = gql`
-mutation RefundPackage($input: RefundPackageInput!) {
-  refundPackage(input: $input)
-}
+  mutation RefundPackage($input: RefundPackageInput!) {
+    refundPackage(input: $input)
+  }
 `;
 export const UPDATE_PRODUCT_INVENTORY_MUTATION = gql`
-mutation AddProductInventory($productId: ID!, $inventory: Int!) {
-  addProductInventory(productId: $productId, inventory: $inventory)
-}
+  mutation AddProductInventory($productId: ID!, $inventory: Int!) {
+    addProductInventory(productId: $productId, inventory: $inventory)
+  }
+`;
+export const CREATE_PACKAGE_COMMENTS_MUTATIONS = gql`
+  mutation CreatePackageComments($packageId: ID!, $comment: [String!]!) {
+    createPackageComments(packageId: $packageId, comment: $comment)
+  }
 `;
 
 export const CREATE_CATEGORY_MUTATIONS = gql`
@@ -90,13 +119,15 @@ export const CREATE_CATEGORY_MUTATIONS = gql`
   }
 `;
 export const UPDATE_CATEGORY_MUTATIONS = gql`
-mutation UpdateCategory($updateCategoryId: ID!, $input: UpdateCategoryInput!) {
-  updateCategory(id: $updateCategoryId, input: $input)
-}
+  mutation UpdateCategory(
+    $updateCategoryId: ID!
+    $input: UpdateCategoryInput!
+  ) {
+    updateCategory(id: $updateCategoryId, input: $input)
+  }
 `;
 export const DELETE_CATEGORIES_MUTATIONS = gql`
   mutation DeleteCategory($deleteCategoryId: ID!) {
     deleteCategory(id: $deleteCategoryId)
   }
 `;
-

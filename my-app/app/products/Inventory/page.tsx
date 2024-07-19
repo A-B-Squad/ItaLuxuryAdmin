@@ -8,7 +8,6 @@ import React, {
   useState,
 } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { gql } from "@apollo/client";
 
 import SearchBar from "../../components/SearchBar";
 import SmallSpinner from "../../components/SmallSpinner";

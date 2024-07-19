@@ -8,8 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Link from "next/link";
 
-const OrderReference = ({ order, OrderStatus, handleModifyOrder }: any) => {
+const OrderReference = ({ order, OrderStatus }: any) => {
   return (
     <div className="orderRef bg-white shadow-sm border rounded-lg mb-6">
       <h2 className="text-lg border-b font-semibold mb-4 p-6 py-3">
@@ -65,12 +66,17 @@ const OrderReference = ({ order, OrderStatus, handleModifyOrder }: any) => {
           OrderStatus !== "BACK" &&
           OrderStatus !== "TRANSFER_TO_DELIVERY_COMPANY" && (
             <div className="w-full flex justify-end">
-              <button
-                onClick={handleModifyOrder}
+              <Link
+                href={{
+                  pathname: "CreateOrder",
+                  query: {
+                    orderId: order?.id,
+                  },
+                }}
                 className="px-4 py-2 self-end bg-mainColorAdminDash hover:opacity-70 transition-opacity text-white rounded mt-4"
               >
                 Modifier la commande
-              </button>
+              </Link>
             </div>
           )}
       </div>

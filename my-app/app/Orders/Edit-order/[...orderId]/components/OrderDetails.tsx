@@ -7,8 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ActionButton from "../components/ActionButton";
-import { translateStatus } from "../../../Helpers/_translateStatus";
+import ActionButton from "./ActionButton";
+import { translateStatus } from "@/app/Helpers/_translateStatus";
 import { useToast } from "@/components/ui/use-toast";
 
 const OrderDetails = ({

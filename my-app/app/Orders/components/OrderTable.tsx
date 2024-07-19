@@ -24,32 +24,36 @@ const OrderTable: React.FC<OrderTableProps> = ({
   translateStatus,
   generateInvoice,
 }) => (
-  <section className=" mx-auto py-6   relative">
+  <section className="mx-auto py-6 relative">
     <div className="w-full mb-8 overflow-hidden rounded-lg">
-      <div className="w-full ">
-        <table className="w-full">
-          <thead>
-            <tr className="text-center">
-              <th>Réf</th>
-              <th>Date de création</th>
-              <th>Client</th>
-              <th>Statut</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order: any) => (
-              <OrderRow
-                key={order.id}
-                order={order}
-                formatDate={formatDate}
-                translateStatus={translateStatus}
-                generateInvoice={generateInvoice}
-              />
-            ))}
-          </tbody>
-        </table>
+      <div className="w-full">
+        {orders.length === 0 ? (
+          <div className="text-center py-5">Aucune commande disponible</div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="text-center">
+                <th>Réf</th>
+                <th>Date de création</th>
+                <th>Client</th>
+                <th>Statut</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order: any) => (
+                <OrderRow
+                  key={order.id}
+                  order={order}
+                  formatDate={formatDate}
+                  translateStatus={translateStatus}
+                  generateInvoice={generateInvoice}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   </section>

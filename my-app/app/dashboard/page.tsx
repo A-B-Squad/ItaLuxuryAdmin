@@ -91,71 +91,51 @@ const Dashboard: React.FC = () => {
   }, [packageData]);
 
   const deliveredPackagesCount = packageData.filter(
-    (pkg) => pkg.status === "PAYED",
+    (pkg) => pkg.status === "PAYED"
   ).length;
 
   const totalEarningsDelivered = packageData.reduce(
     (total, pkg) =>
       pkg.status === "PAYED" ? total + pkg.Checkout.total : total,
-    0,
+    0
   );
 
   return (
     <div className="w-full p-8 relative">
       <Stats />
-      <div className="w-full mt-10 border shadow-md rounded-sm">
+      <div className="w-full mt-10 border shadow-md rounded-sm ">
         <h1 className="font-semibold py-5 px-4 border-b-2 w-full">
           Aperçu de votre tableau de bord
         </h1>
         <div className="flex justify-around mt-8 p-5">
-          <div className="border w-[45%] rounded-sm">
-            <h1 className="flex items-center justify-center gap-2 p-3 font-bold w-full border-b-2">
+          <div className="border w-[45%] rounded-sm bg-slate-50">
+            <h1 className="flex  items-center tracking-wider gap-2 p-3 font-semibold text-sm w-full border-b-2">
               <LuPackage2 size={24} />
               Commandes
             </h1>
-            <div className="m-5 border rounded-sm flex flex-col">
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Aujourd’hui</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.today[0]}</span>
-                )}
+            <div className="m-5 border  flex flex-col bg-white font-semibold text-gray-600 divide-y text-sm tracking-wider rounded-md">
+              <div className="flex justify-between items-center   p-4">
+                <span>Aujourd’hui</span>
+                {loading ? <SmallSpinner /> : <span>{stats.today[0]}</span>}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Hier</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.lastDay[0]}</span>
-                )}
+              <div className="flex justify-between items-center   p-4">
+                <span >Hier</span>
+                {loading ? <SmallSpinner /> : <span>{stats.lastDay[0]}</span>}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Cette semaine</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.thisWeek[0]}</span>
-                )}
+              <div className="flex justify-between items-center  p-4">
+                <span >Cette semaine</span>
+                {loading ? <SmallSpinner /> : <span>{stats.thisWeek[0]}</span>}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Ce mois-ci</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.thisMonth[0]}</span>
-                )}
+              <div className="flex justify-between items-center  p-4">
+                <span >Ce mois-ci</span>
+                {loading ? <SmallSpinner /> : <span>{stats.thisMonth[0]}</span>}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Cette année</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.thisYear[0]}</span>
-                )}
+              <div className="flex justify-between items-center  p-4">
+                <span >Cette année</span>
+                {loading ? <SmallSpinner /> : <span>{stats.thisYear[0]}</span>}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">
+              <div className="flex font-bold justify-between items-center  p-4">
+                <span  >
                   Total des livraisons
                 </span>
                 {loading ? (
@@ -166,54 +146,50 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="border w-[45%] rounded-sm">
-            <h1 className="flex items-center justify-center gap-2 p-3 font-bold w-full border-b-2">
+          <div className="border w-[45%] rounded-sm bg-slate-50 ">
+            <h1 className="flex items-center gap-2 font-semibold text-sm tracking-wider p-3 w-full border-b-2 ">
               <MdOutlineAttachMoney size={24} />
               Gains
             </h1>
-            <div className="m-5 border rounded-sm flex flex-col">
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Aujourd’hui</span>
+            <div className="m-5 border  flex flex-col bg-white text-sm text-gray-600 font-semibold tracking-wider rounded-md divide-y ">
+              <div className="flex justify-between items-center  p-4">
+                <span>Aujourd’hui</span>
+                {loading ? <SmallSpinner /> : <span>{stats.today[1]} TND</span>}
+              </div>
+              <div className="flex justify-between items-center  p-4">
+                <span>Hier</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (
-                  <span className="font-bold">{stats.today[1]} TND</span>
+                  <span>{stats.lastDay[1]} TND</span>
                 )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Hier</span>
+                <span>Cette semaine</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (
-                  <span className="font-bold">{stats.lastDay[1]} TND</span>
+                  <span>{stats.thisWeek[1]} TND</span>
                 )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Cette semaine</span>
+                <span>Ce mois-ci</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (
-                  <span className="font-bold">{stats.thisWeek[1]} TND</span>
+                  <span>{stats.thisMonth[1]} TND</span>
                 )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Ce mois-ci</span>
+                <span>Cette année</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (
-                  <span className="font-bold">{stats.thisMonth[1]} TND</span>
+                  <span>{stats.thisYear[1]} TND</span>
                 )}
               </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">Cette année</span>
-                {loading ? (
-                  <SmallSpinner />
-                ) : (
-                  <span className="font-bold">{stats.thisYear[1]} TND</span>
-                )}
-              </div>
-              <div className="flex justify-between items-center border-b-2 p-4">
-                <span className="font-bold text-gray-600">
+              <div className="flex font-bold justify-between items-center border-b-2 p-4">
+                <span >
                   Total des gains livrés
                 </span>
                 {loading ? (

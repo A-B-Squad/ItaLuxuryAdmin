@@ -24,8 +24,6 @@ const CommandesPage: React.FC = () => {
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur : {error.message}</p>;
 
-
-
   const exportToPDFPackageList = () => {
     const doc = new jsPDF();
 
@@ -106,7 +104,6 @@ const CommandesPage: React.FC = () => {
     XLSX.writeFile(wb, "commandes.xlsx");
   };
 
-
   const indexOfLastOrder = page * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = data.getAllPackages.slice(
@@ -127,7 +124,7 @@ const CommandesPage: React.FC = () => {
             value={searchCommande}
             onChange={(e) => setSearchCommande(e.target.value)}
           />
-      
+
           <select
             className="border p-2 rounded"
             value={filter}
@@ -138,7 +135,7 @@ const CommandesPage: React.FC = () => {
             <option>PAYED</option>
             <option>DELIVERED</option>
           </select>
-          <button className="bg-pink-600 text-white px-4 py-2 rounded">
+          <button className="bg-mainColorAdminDash text-white px-4 py-2 rounded">
             Filtre
           </button>
           <button className="border px-4 py-2 rounded">Clear</button>
@@ -170,18 +167,30 @@ const CommandesPage: React.FC = () => {
 
       <div className="mt-4  flex space-x-4">
         <button
-          className="bg-pink-600 text-white px-4 py-2 rounded"
+          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${
+            data.getAllPackages.length == 0
+              ? "cursor-not-allowed"
+              : "cursor-pointer"
+          }`}
           onClick={exportToPDFPackageList}
+          disabled={data.getAllPackages.length == 0}
         >
           Exportation PDF
         </button>
         <button
-          className="bg-pink-600 text-white px-4 py-2 rounded"
+          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${
+            data.getAllPackages.length == 0
+              ? "cursor-not-allowed"
+              : "cursor-pointer"
+          }`}
           onClick={exportToExcel}
+          disabled={data.getAllPackages.length == 0}
         >
           Exportation Excel
         </button>
-        <button className="bg-pink-600 text-white px-4 py-2 rounded">
+        <button
+          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded `}
+        >
           + Ajouter une commande
         </button>
       </div>

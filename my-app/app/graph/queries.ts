@@ -174,15 +174,38 @@ export const ORDERS_QUERY = gql`
     }
   }
 `;
+export const GET_GOVERMENT_INFO = gql`
+  query AllGovernorate {
+    allGovernorate {
+      id
+      name
+    }
+  }
+`;
+export const GET_ALL_USERS = gql`
+  query FetchAllUsers {
+    fetchAllUsers {
+      id
+      fullName
+      email
+    }
+  }
+`;
 export const PACKAGE_BY_ID_QUERY = gql`
   query PackageById($packageId: ID!) {
     packageById(packageId: $packageId) {
+      id
       comments
       createdAt
       customId
       status
       Checkout {
-        total
+        id
+        User {
+          fullName
+          email
+          number
+        }
         Coupons {
           discount
         }
@@ -191,15 +214,27 @@ export const PACKAGE_BY_ID_QUERY = gql`
         phone
         address
         governorateId
+        manualDiscount
+        total
         productInCheckout {
+          id
           productQuantity
           price
           discountedPrice
           product {
             id
             name
+            inventory
             reference
             images
+            productDiscounts {
+              dateOfEnd
+              price
+              newPrice
+              Discount {
+                percentage
+              }
+            }
           }
         }
       }

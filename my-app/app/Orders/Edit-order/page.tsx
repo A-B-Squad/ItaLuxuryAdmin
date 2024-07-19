@@ -1,19 +1,19 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client";
-import { PACKAGE_BY_ID_QUERY } from "@/app/graph/queries";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
+import { GET_GOVERMENT_INFO, PACKAGE_BY_ID_QUERY } from "@/app/graph/queries";
 import {
   CANCEL_PACKAGE_MUTATIONS,
   PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
   REFUND_PACKAGE_MUTATIONS,
 } from "@/app/graph/mutations";
-import OrderDetails from "./components/OrderDetails";
-import OrderReference from "./components/OrderReference";
-import OrderTotalPrice from "./components/OrderTotalPrice";
-import Comments from "./components/Comments";
-import ClientInfo from "./components/ClientInfo";
-import CancelModal from "./components/CancelModal";
-import RefundModal from "./components/RefundModal";
+import OrderDetails from "./[...orderId]/components/OrderDetails";
+import OrderReference from "./[...orderId]/components/OrderReference";
+import OrderTotalPrice from "./[...orderId]/components/OrderTotalPrice";
+import Comments from "./[...orderId]/components/Comments";
+import CustomerInfo from "./[...orderId]/components/CustomerInfo";
+import CancelModal from "./[...orderId]/components/CancelModal";
+import RefundModal from "./[...orderId]/components/RefundModal";
 import { generateInvoice } from "@/app/Helpers/_generateInvoice";
 import { CiSaveDown2 } from "react-icons/ci";
 
@@ -31,10 +31,26 @@ const EditOrderPage = ({ searchParams }: any) => {
   );
   const [cancelPackage] = useMutation(CANCEL_PACKAGE_MUTATIONS);
   const [refundPackage] = useMutation(REFUND_PACKAGE_MUTATIONS);
+  const [governmentInfo, setGovernmentInfo] = useState<{
+    [key: string]: string;
+  }>({});
+
+  useQuery(GET_GOVERMENT_INFO, {
+    onCompleted: (data) => {
+      const govMap = data.allGovernorate.reduce((map: any, gov: any) => {
+        map[gov.id] = gov.name;
+        return map;
+      }, {});
+      setGovernmentInfo(govMap);
+    },
+  });
 
   useEffect(() => {
     if (orderId) {
-      getPackage({ variables: { packageId: orderId } });
+      getPackage({
+        variables: { packageId: orderId },
+        fetchPolicy: "network-only",
+      });
     }
   }, [orderId, getPackage]);
 
@@ -49,18 +65,17 @@ const EditOrderPage = ({ searchParams }: any) => {
   };
 
   const initializeProductStatuses = () => {
-    console.log(data?.packageById?.Checkout,"tetetet");
-    
-    const initialStatuses = data?.packageById?.Checkout.productInCheckout.reduce(
-      (acc: any, product: any) => {
-        acc[product.product.id] = {
-          items: Array(product.productQuantity).fill(false),
-          quantity: product.productQuantity,
-        };
-        return acc;
-      },
-      {}
-    );
+    const initialStatuses =
+      data?.packageById?.Checkout.productInCheckout.reduce(
+        (acc: any, product: any) => {
+          acc[product.product.id] = {
+            items: Array(product.productQuantity).fill(false),
+            quantity: product.productQuantity,
+          };
+          return acc;
+        },
+        {}
+      );
     setProductStatuses(initialStatuses);
   };
 
@@ -75,15 +90,12 @@ const EditOrderPage = ({ searchParams }: any) => {
   };
 
   const handleCancelSubmit = async () => {
-
     const brokenProducts = Object.entries(productStatuses).flatMap(
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
       }
     );
-
-
 
     try {
       await cancelPackage({
@@ -100,7 +112,6 @@ const EditOrderPage = ({ searchParams }: any) => {
     } catch (error) {
       console.error("Error cancelling package:", error);
     }
-
   };
 
   const handleRefundSubmit = async () => {
@@ -110,8 +121,6 @@ const EditOrderPage = ({ searchParams }: any) => {
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
       }
     );
-
-
 
     try {
       await refundPackage({
@@ -128,10 +137,6 @@ const EditOrderPage = ({ searchParams }: any) => {
     } catch (error) {
       console.error("Error refunding package:", error);
     }
-  };
-
-  const handleModifyOrder = () => {
-    // Logique pour modifier la commande
   };
 
   const handleTransferToDeliveryOrder = async () => {
@@ -179,15 +184,15 @@ const EditOrderPage = ({ searchParams }: any) => {
               handlePayedPackageOrder={handlePayedPackageOrder}
               handleRefundOrder={handleRefundOrder}
             />
-            <OrderReference
-              order={order}
-              OrderStatus={order?.status}
-              handleModifyOrder={handleModifyOrder}
-            />
+            <OrderReference order={order} OrderStatus={order?.status} />
             <OrderTotalPrice order={order} />
-            <Comments />
+            <Comments
+              comments={order?.comments}
+              packageId={orderId}
+              refetch={refetch}
+            />
           </div>
-          <ClientInfo order={order} />
+          <CustomerInfo governmentInfo={governmentInfo} order={order} />
         </div>
       </div>
       <div className="bg-white shadow-md fixed left-0 bottom-0 w-full py-4 flex items-center gap-2 px-2 border justify-end">
