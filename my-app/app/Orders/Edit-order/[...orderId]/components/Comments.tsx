@@ -3,9 +3,11 @@ import { useMutation } from "@apollo/client";
 import React, { useState } from "react";
 import { FaCommentAlt, FaInfoCircle, FaUserCircle } from "react-icons/fa";
 
-const Comments = ({ comments = [], packageId, refetch }:any) => {
+const Comments = ({ comments = [], packageId, refetch }: any) => {
   const [newComment, setNewComment] = useState("");
-  const [createPackageComments] = useMutation(CREATE_PACKAGE_COMMENTS_MUTATIONS);
+  const [createPackageComments] = useMutation(
+    CREATE_PACKAGE_COMMENTS_MUTATIONS,
+  );
 
   const handleSubmitComment = async () => {
     if (!newComment.trim()) return;
@@ -15,8 +17,8 @@ const Comments = ({ comments = [], packageId, refetch }:any) => {
       await createPackageComments({
         variables: {
           packageId,
-          comment: updatedComments
-        }
+          comment: updatedComments,
+        },
       });
       setNewComment("");
       refetch(); // Refetch the package data to get the updated comments
@@ -45,7 +47,7 @@ const Comments = ({ comments = [], packageId, refetch }:any) => {
         onChange={(e) => setNewComment(e.target.value)}
       ></textarea>
 
-      <button 
+      <button
         className="bg-pink-500 text-white px-4 py-2 rounded-md flex items-center"
         onClick={handleSubmitComment}
       >

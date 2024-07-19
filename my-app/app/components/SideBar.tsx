@@ -18,7 +18,7 @@ const SideBar = () => {
 
   useEffect(() => {
     setActiveLink(pathname);
-   }, [pathname]);
+  }, [pathname]);
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded);
@@ -65,7 +65,6 @@ const SideBar = () => {
       subItems: [
         { text: "Tous les coupons", href: "/Coupons" },
         { text: "Nouveau coupons", href: "/Coupons/CreateCoupons" },
-    
       ],
     },
     {

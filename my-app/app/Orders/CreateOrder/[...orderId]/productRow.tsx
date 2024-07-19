@@ -16,7 +16,9 @@ const ProductRow: React.FC<ProductRowProps> = ({
   onQuantityChange,
   existingProductInCheckout,
 }) => {
-  const [quantity, setQuantity] = useState(existingProductInCheckout.productQuantity);
+  const [quantity, setQuantity] = useState(
+    existingProductInCheckout.productQuantity,
+  );
   const [total, setTotal] = useState(0);
 
   const price = existingProductInCheckout.price;
@@ -68,12 +70,8 @@ const ProductRow: React.FC<ProductRowProps> = ({
       <TableCell className="text-center">
         {discountedPrice && discountedPrice < price ? (
           <>
-            <p className="line-through text-gray-500">
-              {price.toFixed(3)} TND
-            </p>
-            <p className="text-red-500">
-              {discountedPrice.toFixed(3)} TND
-            </p>
+            <p className="line-through text-gray-500">{price.toFixed(3)} TND</p>
+            <p className="text-red-500">{discountedPrice.toFixed(3)} TND</p>
           </>
         ) : (
           <p>{price.toFixed(3)} TND</p>

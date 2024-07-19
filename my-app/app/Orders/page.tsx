@@ -97,7 +97,7 @@ const CommandesPage: React.FC = () => {
         Client: order.Checkout.userName,
         Statut: translateStatus(order.status),
         Total: order.Checkout.total,
-      }))
+      })),
     );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Commandes");
@@ -108,7 +108,7 @@ const CommandesPage: React.FC = () => {
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = data.getAllPackages.slice(
     indexOfFirstOrder,
-    indexOfLastOrder
+    indexOfLastOrder,
   );
   const totalPages = Math.ceil(data.getAllPackages.length / ordersPerPage);
   return (

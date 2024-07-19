@@ -104,7 +104,7 @@ const UpdateCategory = ({ searchParams }: any) => {
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData({

@@ -95,8 +95,6 @@ export const generateInvoice = (order: any) => {
     align: "right",
   });
 
-
-
   const totalTTC = order.Checkout.total.toFixed(3);
   doc.setFont("helvetica", "bold");
   doc.text("Total TTC", 140, finalY + 14);

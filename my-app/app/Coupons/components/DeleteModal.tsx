@@ -5,10 +5,7 @@ interface DeleteModalProps {
   onCancel: () => void;
 }
 
-const DeleteModal: React.FC<DeleteModalProps> = ({
-  onConfirm,
-  onCancel,
-}) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({ onConfirm, onCancel }) => {
   return (
     <div
       className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
@@ -21,8 +18,8 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
           </h3>
           <div className="mt-2 px-7 py-3">
             <p className="text-sm text-gray-500">
-              Voulez-vous vraiment supprimer ce Coupon? Cette
-              action est irréversible.
+              Voulez-vous vraiment supprimer ce Coupon? Cette action est
+              irréversible.
             </p>
           </div>
           <div className="items-center flex gap-2 justify-center px-4 py-3">

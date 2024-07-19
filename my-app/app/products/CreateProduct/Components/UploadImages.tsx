@@ -56,7 +56,6 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
               height={800}
               src={url}
               objectFit="contain"
-
               alt={`Uploaded image ${index + 1}`}
               className="h-32 w-32  rounded-md"
             />

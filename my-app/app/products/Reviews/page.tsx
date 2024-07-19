@@ -18,7 +18,7 @@ interface Product {
   inventory: number;
   images: string[];
   categories: any[];
-  reviews: { rating: number }[]; 
+  reviews: { rating: number }[];
 }
 
 interface InventoryProps {
@@ -60,7 +60,7 @@ const Reviews: React.FC<InventoryProps> = ({ searchParams }) => {
 
       if (order) {
         fetchedProducts.sort((a, b) =>
-          order === "ASC" ? a.price - b.price : b.price - a.price
+          order === "ASC" ? a.price - b.price : b.price - a.price,
         );
       }
 

@@ -57,7 +57,7 @@ const CreateProductPage = ({ searchParams }: any) => {
   } | null>(null);
   const [packageData, setPackageData] = useState<Package | null>(null);
   const [discount, setDiscount] = useState(
-    packageData?.Checkout.manualDiscount || 0
+    packageData?.Checkout.manualDiscount || 0,
   );
   const router = useRouter();
   const { error, data } = useQuery(PACKAGE_BY_ID_QUERY, {
@@ -81,7 +81,7 @@ const CreateProductPage = ({ searchParams }: any) => {
           Checkout: {
             ...prevPackage.Checkout,
             productInCheckout: prevPackage.Checkout.productInCheckout.filter(
-              (item) => item.product.id !== productToDelete.id
+              (item) => item.product.id !== productToDelete.id,
             ),
           },
         };
@@ -106,7 +106,7 @@ const CreateProductPage = ({ searchParams }: any) => {
           const itemPrice = item.discountedPrice || item.price;
           return acc + itemPrice * item.productQuantity;
         },
-        0
+        0,
       );
 
       const couponDiscount = packageData.Checkout.Coupons?.discount
@@ -169,13 +169,13 @@ const CreateProductPage = ({ searchParams }: any) => {
               (product) =>
                 product.product.id === productId
                   ? { ...product, productQuantity: newQuantity }
-                  : product
+                  : product,
             ),
           },
         };
       });
     },
-    []
+    [],
   );
 
   const handleProductSelect = useCallback((selectedProduct: any) => {
@@ -183,7 +183,7 @@ const CreateProductPage = ({ searchParams }: any) => {
       if (!prevPackage) return null;
       const existingProductIndex =
         prevPackage.Checkout.productInCheckout.findIndex(
-          (item) => item.product.id === selectedProduct.id
+          (item) => item.product.id === selectedProduct.id,
         );
 
       if (existingProductIndex !== -1) {

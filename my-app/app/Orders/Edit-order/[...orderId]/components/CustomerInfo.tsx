@@ -1,17 +1,15 @@
-
 import React from "react";
 import { MdOutlineEdit } from "react-icons/md";
 
-const CustomerInfo = ({ order,governmentInfo }: any) => {
-
-  const governorateName = governmentInfo[order?.Checkout?.governorateId] || "N/A";
+const CustomerInfo = ({ order, governmentInfo }: any) => {
+  const governorateName =
+    governmentInfo[order?.Checkout?.governorateId] || "N/A";
 
   return (
     <div className="client w-full md:w-1/2 lg:w-1/3 mx-2 my-4">
       <div className="rounded-lg border bg-white shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Client</h2>
-         
         </div>
 
         <div className="mb-6">
@@ -49,7 +47,7 @@ const CustomerInfo = ({ order,governmentInfo }: any) => {
             </p>
             <p className="mb-2">
               <span className="font-semibold">Gouvernorat:</span>{" "}
-              { governorateName|| "N/A"}
+              {governorateName || "N/A"}
             </p>
             <p>
               <span className="font-semibold">Adresse:</span>{" "}

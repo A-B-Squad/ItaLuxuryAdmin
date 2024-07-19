@@ -29,7 +29,6 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
           <Image
             className=" w-full h-full rounded-full"
             objectFit="contain"
-            
             src={
               product.images[0] ||
               "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
@@ -48,7 +47,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
             target="_blank"
             href={{
               pathname: `http://localhost:3000/products/tunisie/${prepRoute(
-                product.name
+                product.name,
               )}`,
               query: {
                 productId: product.id,
@@ -77,7 +76,9 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
     <td className="text-center px-4 py-3 text-ms font-semibold">
       {product.solde}
     </td>
-    <td className="text-center px-4 py-3 text-sm font-semibold">{product.inventory}</td>
+    <td className="text-center px-4 py-3 text-sm font-semibold">
+      {product.inventory}
+    </td>
     <td className="text-center px-4 py-3 text-sm">
       <div className="flex items-center justify-center space-x-2">
         <input

@@ -70,7 +70,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
       result = result.filter(
         (coupon) =>
           coupon.code.toLowerCase().includes(q.toLowerCase()) ||
-          coupon.checkout[0]?.id.toLowerCase().includes(q.toLowerCase())
+          coupon.checkout[0]?.id.toLowerCase().includes(q.toLowerCase()),
       );
     }
 
@@ -79,7 +79,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
       result.sort((a, b) =>
         order === "UNUSED"
           ? Number(a.available) - Number(b.available)
-          : Number(b.available) - Number(a.available)
+          : Number(b.available) - Number(a.available),
       );
     }
 
@@ -126,7 +126,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
             <CouponsTable
               coupons={filteredCoupons.slice(
                 (page - 1) * PAGE_SIZE,
-                page * PAGE_SIZE
+                page * PAGE_SIZE,
               )}
               onDeleteClick={(coupon: Coupon) => {
                 setCouponsToDelete(coupon.id);

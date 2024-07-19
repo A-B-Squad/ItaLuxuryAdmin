@@ -45,11 +45,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               ))
             ) : (
               <tr>
-                <td
-                className="py-5 text-center" 
-                >
-                  Aucun produit disponible
-                </td>
+                <td className="py-5 text-center">Aucun produit disponible</td>
               </tr>
             )}
           </tbody>

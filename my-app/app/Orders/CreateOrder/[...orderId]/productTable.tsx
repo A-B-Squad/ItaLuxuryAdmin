@@ -42,9 +42,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
             </TableHeader>
             <TableBody>
               {packageData?.Checkout.productInCheckout.map((item: any) => {
-                const existingProductInCheckout = packageData.Checkout.productInCheckout.find(
-                  (checkoutItem: any) => checkoutItem.product.id === item.product.id
-                );
+                const existingProductInCheckout =
+                  packageData.Checkout.productInCheckout.find(
+                    (checkoutItem: any) =>
+                      checkoutItem.product.id === item.product.id,
+                  );
 
                 return (
                   <ProductRow

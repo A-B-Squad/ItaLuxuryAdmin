@@ -37,8 +37,7 @@ const CreateCoupons = () => {
       });
       return;
     }
-    console.log(couponCode,percentage);
-    
+    console.log(couponCode, percentage);
 
     createCoupons({
       variables: {

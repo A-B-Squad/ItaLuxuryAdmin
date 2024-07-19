@@ -15,7 +15,7 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [searchProducts, { loading, data, error }] = useLazyQuery(
-    SEARCH_PRODUCTS_QUERY
+    SEARCH_PRODUCTS_QUERY,
   );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {

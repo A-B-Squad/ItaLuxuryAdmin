@@ -17,7 +17,7 @@ import prepRoute from "../../Helpers/_prepRoute";
 const Categories = ({ searchParams }: any) => {
   const [categories, setCategories] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<{
@@ -41,7 +41,7 @@ const Categories = ({ searchParams }: any) => {
     if (query) {
       filteredCategories = filteredCategories.filter(
         (category: { name: string }) =>
-          category.name.toLowerCase().includes(query.toLowerCase())
+          category.name.toLowerCase().includes(query.toLowerCase()),
       );
     }
     return filteredCategories;
@@ -150,7 +150,7 @@ const Categories = ({ searchParams }: any) => {
               <Link
                 target="_blank"
                 href={`http://localhost:3000/Collections/tunisie/${prepRoute(
-                  category.name
+                  category.name,
                 )}/?category=${category.id}`}
                 className="p-2 hover:opacity-40 transition-opacity shadow-md w-10 h-10 rounded-full border-2"
               >
@@ -161,7 +161,7 @@ const Categories = ({ searchParams }: any) => {
         </tr>
         {isExpanded &&
           category.subcategories?.map((subcategory: any) =>
-            renderCategoryRow(subcategory, depth + 1)
+            renderCategoryRow(subcategory, depth + 1),
           )}
       </>
     );
@@ -196,7 +196,7 @@ const Categories = ({ searchParams }: any) => {
             <tbody className="bg-white border">
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((category) =>
-                  renderCategoryRow(category)
+                  renderCategoryRow(category),
                 )
               ) : (
                 <>
@@ -204,9 +204,7 @@ const Categories = ({ searchParams }: any) => {
                     <td className="text-center  w-full py-5   ">
                       Aucune catégorie trouvée
                     </td>
-                    <td className="text-center  w-full py-5 ">
-                      
-                    </td>
+                    <td className="text-center  w-full py-5 "></td>
                   </tr>
                 </>
               )}

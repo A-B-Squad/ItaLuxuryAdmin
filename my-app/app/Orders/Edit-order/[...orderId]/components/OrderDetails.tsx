@@ -23,7 +23,7 @@ const OrderDetails = ({
     if (!order || !order.Checkout) return 0;
 
     let total = order.Checkout.total;
-   
+
     // // Subtract delivery fee if total is less than 499
     total -= 8;
 
@@ -67,13 +67,19 @@ const OrderDetails = ({
         <h2 className="text-base font-medium w-36">Détails de la commande</h2>
         <div className="space-x-2 flex items-center">
           {order?.status === "CANCELLED" && (
-            <p className="py-1 px-2 bg-blue-200 text-blue-600">COMMANDE FERMÉE</p>
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE FERMÉE
+            </p>
           )}
           {order?.status === "REFUNDED" && (
-            <p className="py-1 px-2 bg-blue-200 text-blue-600">COMMANDE REMBOURSÉE</p>
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE REMBOURSÉE
+            </p>
           )}
           {order?.status === "PAYED" && (
-            <p className="py-1 px-2 bg-blue-200 text-blue-600">COMMANDE PAYÉE</p>
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE PAYÉE
+            </p>
           )}
           {order?.status === "PROCESSING" && (
             <>
@@ -87,7 +93,7 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "transférer à la société de livraison",
-                    handleTransferToDeliveryOrder
+                    handleTransferToDeliveryOrder,
                   )
                 }
                 label="Transférer à la société de livraison"
@@ -106,11 +112,11 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "marquer comme payée",
-                    handlePayedPackageOrder
+                    handlePayedPackageOrder,
                   )
                 }
                 label={`Marquer comme payée (${order?.Checkout?.total.toFixed(
-                  3
+                  3,
                 )} DT)`}
               />
             </>

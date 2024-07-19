@@ -46,7 +46,7 @@ const CompanyInfopage = () => {
     email: "",
   });
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const { data: companyInfoData } = useQuery(COMPANY_INFO_QUERY);
@@ -139,7 +139,7 @@ const CompanyInfopage = () => {
 
   const handleInputChange = (
     field: keyof CompanyData,
-    value: string | number[]
+    value: string | number[],
   ) => {
     setCompanyInfo((prev) => ({
       ...prev,
@@ -149,7 +149,7 @@ const CompanyInfopage = () => {
 
   const handlePhoneInputChange = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newPhone = [...companyInfo.phone];
     newPhone[index] = e.target.value;
@@ -161,7 +161,7 @@ const CompanyInfopage = () => {
 
   const handleNumberInputChange = (
     field: keyof CompanyData,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = parseFloat(e.target.value);
     setCompanyInfo((prev) => ({

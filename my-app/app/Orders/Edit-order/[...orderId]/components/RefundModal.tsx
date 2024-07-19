@@ -8,28 +8,28 @@ const RefundModal = ({
   handleRefundSubmit,
   setShowRefundModal,
 }: any) => {
-    const handleStatusChange = (
-        productId: string,
-        index: number,
-        isBroken: boolean
-      ) => {
-        setProductStatuses((prev: any) => ({
-          ...prev,
-          [productId]: {
-            ...prev[productId],
-            items: prev[productId].items.map((item: boolean, i: number) =>
-              i === index ? isBroken : item
-            ),
-          },
-        }));
-      };
+  const handleStatusChange = (
+    productId: string,
+    index: number,
+    isBroken: boolean,
+  ) => {
+    setProductStatuses((prev: any) => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        items: prev[productId].items.map((item: boolean, i: number) =>
+          i === index ? isBroken : item,
+        ),
+      },
+    }));
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-800">
-            Rembourser la commande 
+            Rembourser la commande
           </h2>
         </div>
         <div className="p-6">
@@ -97,8 +97,8 @@ const RefundModal = ({
                   Object.entries(prev).map(([id, status]: any) => [
                     id,
                     { ...status, items: status.items.map(() => false) },
-                  ])
-                )
+                  ]),
+                ),
               )
             }
             className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

@@ -91,13 +91,13 @@ const Dashboard: React.FC = () => {
   }, [packageData]);
 
   const deliveredPackagesCount = packageData.filter(
-    (pkg) => pkg.status === "PAYED"
+    (pkg) => pkg.status === "PAYED",
   ).length;
 
   const totalEarningsDelivered = packageData.reduce(
     (total, pkg) =>
       pkg.status === "PAYED" ? total + pkg.Checkout.total : total,
-    0
+    0,
   );
 
   return (
@@ -119,25 +119,23 @@ const Dashboard: React.FC = () => {
                 {loading ? <SmallSpinner /> : <span>{stats.today[0]}</span>}
               </div>
               <div className="flex justify-between items-center   p-4">
-                <span >Hier</span>
+                <span>Hier</span>
                 {loading ? <SmallSpinner /> : <span>{stats.lastDay[0]}</span>}
               </div>
               <div className="flex justify-between items-center  p-4">
-                <span >Cette semaine</span>
+                <span>Cette semaine</span>
                 {loading ? <SmallSpinner /> : <span>{stats.thisWeek[0]}</span>}
               </div>
               <div className="flex justify-between items-center  p-4">
-                <span >Ce mois-ci</span>
+                <span>Ce mois-ci</span>
                 {loading ? <SmallSpinner /> : <span>{stats.thisMonth[0]}</span>}
               </div>
               <div className="flex justify-between items-center  p-4">
-                <span >Cette année</span>
+                <span>Cette année</span>
                 {loading ? <SmallSpinner /> : <span>{stats.thisYear[0]}</span>}
               </div>
               <div className="flex font-bold justify-between items-center  p-4">
-                <span  >
-                  Total des livraisons
-                </span>
+                <span>Total des livraisons</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (
@@ -189,9 +187,7 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
               <div className="flex font-bold justify-between items-center border-b-2 p-4">
-                <span >
-                  Total des gains livrés
-                </span>
+                <span>Total des gains livrés</span>
                 {loading ? (
                   <SmallSpinner />
                 ) : (

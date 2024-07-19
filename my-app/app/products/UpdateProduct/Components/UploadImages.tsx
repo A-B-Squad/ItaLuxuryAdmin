@@ -58,7 +58,6 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
               alt={`Uploaded image ${index + 1}`}
               className="h-32 w-32  rounded-md"
               objectFit="contain"
-
             />
             <button
               type="button"

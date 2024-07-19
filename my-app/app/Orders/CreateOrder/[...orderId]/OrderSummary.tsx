@@ -42,23 +42,22 @@ const OrderSummary: React.FC<OrderSummaryProps> = React.memo(
             discountedPrice: number;
             price: number;
             productQuantity: number;
-          }
+          },
         ) => {
           const itemPrice =
             item.discountedPrice !== 0 ? item.discountedPrice : item.price;
           return acc + itemPrice * item.productQuantity;
         },
-        0
+        0,
       );
 
       const couponDiscount = packageData.Checkout.Coupons
         ? subtotal * (packageData.Checkout.Coupons.discount / 100)
         : 0;
 
-      const manualDiscount =discount|| packageData.Checkout.manualDiscount  ;
+      const manualDiscount = discount || packageData.Checkout.manualDiscount;
       const shippingCost = subtotal > 499 ? 0 : 8.0;
-      const total =
-        subtotal - couponDiscount - manualDiscount  + shippingCost;
+      const total = subtotal - couponDiscount - manualDiscount + shippingCost;
 
       const couponPercentage = packageData.Checkout.Coupons
         ? packageData.Checkout.Coupons.discount
@@ -77,14 +76,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = React.memo(
     if (!packageData || !packageData.Checkout) {
       return <div>No order data available</div>;
     }
-console.log({
-  subtotal,
-  couponDiscount,
-  manualDiscount,
-  shippingCost,
-  total,
-  couponPercentage,
-});
+    console.log({
+      subtotal,
+      couponDiscount,
+      manualDiscount,
+      shippingCost,
+      total,
+      couponPercentage,
+    });
 
     return (
       <div className="orderTotalPrice bg-white shadow-md rounded-lg p-6 mb-6">
@@ -103,9 +102,7 @@ console.log({
             <TableRow>
               <TableCell>DT {subtotal.toFixed(2)}</TableCell>
               <TableCell>
-                {couponPercentage > 0
-                  ? `- ${couponPercentage}%`
-                  : "0 %"}
+                {couponPercentage > 0 ? `- ${couponPercentage}%` : "0 %"}
               </TableCell>
               <TableCell>-DT {couponDiscount.toFixed(2)}</TableCell>
               <TableCell>-DT {manualDiscount.toFixed(2)}</TableCell>
@@ -118,7 +115,7 @@ console.log({
         </Table>
       </div>
     );
-  }
+  },
 );
 
 export default OrderSummary;

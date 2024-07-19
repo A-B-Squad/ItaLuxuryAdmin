@@ -85,7 +85,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
     });
     if (order?.Checkout.userId) {
       const user = userData?.fetchAllUsers.find(
-        (u: User) => u.id === order.Checkout.userId
+        (u: User) => u.id === order.Checkout.userId,
       );
       setSelectedUser(user || null);
     }
@@ -153,7 +153,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
   const filteredUsers = allUsers.filter(
     (user: User) =>
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (usersLoading || govLoading) {
@@ -380,7 +380,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
               <div className="py-3">
                 <span className="font-semibold">Région : </span>
                 {governmentInfo.find(
-                  (gov): any => gov.id === customerInfo.governorate
+                  (gov): any => gov.id === customerInfo.governorate,
                 )?.name || "N/A"}
               </div>
               <div className="py-3">

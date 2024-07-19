@@ -49,7 +49,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
   const PAGE_SIZE = 10;
   const numberOfPages = useMemo(
     () => Math.ceil(totalCount / PAGE_SIZE),
-    [totalCount]
+    [totalCount],
   );
 
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -62,7 +62,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
 
         const sortedProducts = order
           ? [...fetchedProducts].sort((a, b) =>
-              order === "ASC" ? a.price - b.price : b.price - a.price
+              order === "ASC" ? a.price - b.price : b.price - a.price,
             )
           : fetchedProducts;
 
@@ -78,7 +78,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
           duration: 5000,
         });
       },
-    }
+    },
   );
 
   const fetchProducts = useCallback(() => {
@@ -214,8 +214,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
           inventory: inventoryToAdd,
         },
       });
-      console.log(updateData,"kd,lk,d");
-      
+      console.log(updateData, "kd,lk,d");
 
       if (updateData && updateData.addProductInventory) {
         await refetch();

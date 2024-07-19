@@ -30,7 +30,6 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
               }
               layout="fill"
               objectFit="contain"
-
               alt=""
               loading="lazy"
             />
@@ -90,7 +89,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
             target="_blank"
             href={{
               pathname: `http://localhost:3000/products/tunisie/${prepRoute(
-                product.name
+                product.name,
               )}`,
               query: {
                 productId: product.id,

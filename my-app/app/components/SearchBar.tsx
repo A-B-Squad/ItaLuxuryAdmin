@@ -5,7 +5,12 @@ import { IoSearch } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 
 interface SearchBarProps {
-  page: "Products/Categories" | "Products/Inventory" | "Products/Reviews" | "Products" | "Coupons";
+  page:
+    | "Products/Categories"
+    | "Products/Inventory"
+    | "Products/Reviews"
+    | "Products"
+    | "Coupons";
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ page }) => {

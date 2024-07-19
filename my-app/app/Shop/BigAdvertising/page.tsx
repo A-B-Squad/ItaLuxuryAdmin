@@ -29,7 +29,7 @@ const BigAdvertisingPage = () => {
     linkImage: "",
   });
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const { data: centerCarouselAds, loading: loadingCenterCarouselAds } =

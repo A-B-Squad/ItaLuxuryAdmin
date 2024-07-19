@@ -1,12 +1,15 @@
-import React from 'react';
-import ProductRow from './productRow';
+import React from "react";
+import ProductRow from "./productRow";
 
 interface ProductTableProps {
   products: any;
   onDeleteClick: (product: { id: string; name: string }) => void;
 }
 
-const ProductTable: React.FC<ProductTableProps> = ({ products, onDeleteClick }) => {
+const ProductTable: React.FC<ProductTableProps> = ({
+  products,
+  onDeleteClick,
+}) => {
   return (
     <section className="container mx-auto py-6 px-3  relative">
       <div className="w-full mb-8 overflow-hidden rounded-lg shadow-lg">
@@ -26,7 +29,11 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, onDeleteClick }) 
             </thead>
             <tbody className="bg-white">
               {products.map((product: any) => (
-                <ProductRow key={product.id} product={product} onDeleteClick={onDeleteClick} />
+                <ProductRow
+                  key={product.id}
+                  product={product}
+                  onDeleteClick={onDeleteClick}
+                />
               ))}
             </tbody>
           </table>

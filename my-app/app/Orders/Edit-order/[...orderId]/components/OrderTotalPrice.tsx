@@ -18,20 +18,23 @@ const OrderTotalPrice: React.FC<OrderTotalPriceProps> = ({ order }) => {
   }
 
   const calculateTotals = () => {
-    const subtotal = order.Checkout.productInCheckout.reduce((acc: number, item: any) => {
-      const itemPrice = item.discountedPrice !== 0 ? item.discountedPrice : item.price;
-      return acc + itemPrice * item.productQuantity;
-    }, 0);
+    const subtotal = order.Checkout.productInCheckout.reduce(
+      (acc: number, item: any) => {
+        const itemPrice =
+          item.discountedPrice !== 0 ? item.discountedPrice : item.price;
+        return acc + itemPrice * item.productQuantity;
+      },
+      0,
+    );
 
     const couponPercentage = order.Checkout.Coupons?.discount || 0;
     const couponDiscount = (subtotal * couponPercentage) / 100;
     const manualDiscount = order.Checkout.manualDiscount || 0;
     const shippingCost = subtotal >= 499 ? 0 : 8;
-    const totalWithDiscount = subtotal - couponDiscount - manualDiscount + shippingCost;
+    const totalWithDiscount =
+      subtotal - couponDiscount - manualDiscount + shippingCost;
 
-    console.log(
-      subtotal, manualDiscount, couponDiscount
-    );
+    console.log(subtotal, manualDiscount, couponDiscount);
 
     return {
       subtotal,
@@ -39,7 +42,7 @@ const OrderTotalPrice: React.FC<OrderTotalPriceProps> = ({ order }) => {
       couponDiscount,
       manualDiscount,
       shippingCost,
-      totalWithDiscount
+      totalWithDiscount,
     };
   };
 
@@ -49,18 +52,16 @@ const OrderTotalPrice: React.FC<OrderTotalPriceProps> = ({ order }) => {
     couponDiscount,
     manualDiscount,
     shippingCost,
-    totalWithDiscount
+    totalWithDiscount,
   } = calculateTotals();
-console.log(
-  {
+  console.log({
     subtotal,
     couponPercentage,
     couponDiscount,
     manualDiscount,
     shippingCost,
-    totalWithDiscount
-  }
-);
+    totalWithDiscount,
+  });
 
   return (
     <div className="orderTotalPrice bg-white shadow-md rounded-lg p-6 mb-6">
