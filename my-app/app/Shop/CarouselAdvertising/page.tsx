@@ -32,14 +32,14 @@ const Loader = () => (
 
 const CarouselAdvertisingPage = () => {
   const { toast } = useToast();
-
+  const [showBackUp, setShowBackUp] = useState(false);
   const [imagesSlider, setImagesSlider] = useState<ImageData[]>([]);
   const [inputFields, setInputFields] = useState<ImageData[]>([
     { urlImage: "", linkImage: "" },
   ]);
   const [largeImageTest, setLargeImageTest] = useState<string>("");
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {},
+    {}
   );
 
   const { data: centerCarouselAds, loading: loadingCenterCarouselAds } =
@@ -47,7 +47,7 @@ const CarouselAdvertisingPage = () => {
       variables: { position: "slider" },
     });
   const [createAdvertisement] = useMutation(
-    CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS,
+    CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS
   );
 
   const handleSave = async () => {
@@ -60,7 +60,7 @@ const CarouselAdvertisingPage = () => {
 
       // Check if any input field is empty
       const hasEmptyFields = input.some(
-        (field) => !field.link || field.images.length === 0,
+        (field) => !field.link || field.images.length === 0
       );
 
       if (hasEmptyFields) {
@@ -96,7 +96,7 @@ const CarouselAdvertisingPage = () => {
             ad.images.map((image: string) => ({
               urlImage: image,
               linkImage: ad.link,
-            })),
+            }))
         );
       setImagesSlider(allImages);
       setInputFields(allImages);
@@ -104,6 +104,7 @@ const CarouselAdvertisingPage = () => {
   }, [centerCarouselAds]);
 
   const handleSuccessUpload = (result: any, index: number) => {
+    setShowBackUp(true);
     const file = result.info;
     if (file) {
       setInputFields((prevFields) => {
@@ -126,8 +127,9 @@ const CarouselAdvertisingPage = () => {
   const handleInputChange = (
     index: number,
     field: keyof ImageData,
-    value: string,
+    value: string
   ) => {
+    setShowBackUp(true);
     setInputFields((prevFields) => {
       const newFields = [...prevFields];
       newFields[index][field] = value;
@@ -140,13 +142,6 @@ const CarouselAdvertisingPage = () => {
       setImagesSlider([...imagesSlider, { urlImage: url, linkImage: link }]);
     }
     setLargeImageTest(url);
-  };
-
-  const hasContent = () => {
-    return (
-      inputFields.some((field) => field.urlImage || field.linkImage) ||
-      imagesSlider.length > 0
-    );
   };
 
   const handleDeleteImage = (indexToDelete: number) => {
@@ -294,7 +289,7 @@ const CarouselAdvertisingPage = () => {
           ))}
         </div>
       </div>
-      {hasContent() && <BackUp onSave={handleSave} />}
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
     </div>
   );
 };

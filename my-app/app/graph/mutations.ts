@@ -1,29 +1,31 @@
 import { gql } from "@apollo/client";
 
 export const CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS = gql`
-  mutation CreateAdvertisement($input: [advertisementInput]) {
-    createAdvertisement(input: $input)
-  }
+ 
+
+ mutation CreateCarouselAdvertisement($input: [advertisementInput]) {
+  createCarouselAdvertisement(input: $input)
+}
 `;
 export const CREATE_BANNER_ADVERTISEMENT_MUTATIONS = gql`
-  mutation CreateBannerAdvertisement($input: [advertisementInput]) {
-    createBannerAdvertisement(input: $input)
-  }
+mutation CreateBannerAdvertisement($input: [advertisementInput]) {
+  createBannerAdvertisement(input: $input)
+}
 `;
 export const CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS = gql`
-  mutation CreateLeftNextToCarouselAds($input: [advertisementInput]) {
-    createLeftNextToCarouselAds(input: $input)
-  }
+mutation CreateLeftNextToCarouselAds($input: [advertisementInput]) {
+  createLeftNextToCarouselAds(input: $input)
+}
 `;
 export const CREATE_BIG_ADVERTISEMENT_MUTATIONS = gql`
-  mutation CreateBigAds($input: advertisementInput) {
-    createBigAds(input: $input)
-  }
+mutation CreateBigAds($input: advertisementInput) {
+  createBigAds(input: $input)
+}
 `;
 export const CREATE_SIDE_ADVERTISEMENT_MUTATIONS = gql`
-  mutation CreateSideAdvertisement($input: [advertisementInput]) {
-    createSideAdvertisement(input: $input)
-  }
+mutation CreateSideAdvertisement($input: [advertisementInput]) {
+  createSideAdvertisement(input: $input)
+}
 `;
 export const CREATE_COMPANY_INFO_MUTATIONS = gql`
   mutation CreateOrUpdateCompanyInfo($input: CompanyInfoInput!) {
@@ -111,6 +113,11 @@ export const CREATE_PACKAGE_COMMENTS_MUTATIONS = gql`
   mutation CreatePackageComments($packageId: ID!, $comment: [String!]!) {
     createPackageComments(packageId: $packageId, comment: $comment)
   }
+`;
+export const CREATE_CHECKOUT_FROM_ADMIN_MUTATIONS = gql`
+mutation CreateCheckoutFromAdmin($input: CreateCheckoutFromAdminInput!) {
+  createCheckoutFromAdmin(input: $input)
+}
 `;
 
 export const CREATE_CATEGORY_MUTATIONS = gql`

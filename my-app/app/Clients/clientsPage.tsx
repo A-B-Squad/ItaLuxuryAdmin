@@ -1,0 +1,397 @@
+"use client";
+
+import { useQuery } from "@apollo/client";
+import React, { useState } from "react";
+import { FETCH_ALL_USERS } from "../graph/queries";
+import { translateStatus } from "../Helpers/_translateStatus";
+import {
+  FaUser,
+  FaBox,
+  FaStar,
+  FaEnvelope,
+  FaStarHalfAlt,
+  FaRegStar,
+} from "react-icons/fa";
+
+interface Review {
+  productId: string;
+  rating: number;
+  product: {
+    reference: string;
+  };
+}
+
+interface ContactUs {
+  id: string;
+  subject: string;
+  document: string;
+  message: string;
+}
+
+interface Package {
+  id: string;
+  customId: string;
+  status: string;
+}
+
+interface Checkout {
+  id: string;
+  Governorate: {
+    name: string;
+  };
+  package: Package[];
+}
+
+interface User {
+  fullName: string;
+  reviews: Review[];
+  ContactUs: ContactUs[];
+  checkout: Checkout[];
+}
+
+interface FetchAllUsersData {
+  fetchAllUsers: User[];
+}
+
+const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
+  const stars = [];
+  const roundedRating = Math.round(rating * 2) / 2;
+
+  for (let i = 1; i <= 5; i++) {
+    if (i <= roundedRating) {
+      stars.push(<FaStar key={i} className="text-yellow-400" />);
+    } else if (i - 0.5 === roundedRating) {
+      stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
+    } else {
+      stars.push(<FaRegStar key={i} className="text-yellow-400" />);
+    }
+  }
+
+  return <div className="flex">{stars}</div>;
+};
+const UserRow: React.FC<{ user: User; onClick: () => void }> = ({
+  user,
+  onClick,
+}) => {
+  const averageRating =
+    user.reviews.length > 0
+      ? user.reviews.reduce((sum, review) => sum + review.rating, 0) /
+        user.reviews.length
+      : 0;
+
+  return (
+    <tr
+      className="hover:bg-gray-100 cursor-pointer transition-colors duration-150"
+      onClick={onClick}
+    >
+      <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-center">
+        {user.checkout.length}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-center">
+        {user.reviews.length}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-center">
+        {user.reviews.length > 0 ? (
+          <div className="flex justify-center">
+            <StarRating rating={averageRating} />
+            <span className="ml-2 text-sm text-gray-600">
+              ({averageRating.toFixed(1)})
+            </span>
+          </div>
+        ) : (
+          "N/A"
+        )}
+      </td>
+    </tr>
+  );
+};
+
+const ClientsPage: React.FC = () => {
+  const { data, loading, error } = useQuery<FetchAllUsersData>(FETCH_ALL_USERS);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
+
+  if (loading) return <div className="text-center mt-8">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-center mt-8 text-red-500">
+        Error: {error.message}
+      </div>
+    );
+
+  const users = data?.fetchAllUsers || [];
+
+  const openModal = (imageSrc: string) => {
+    setSelectedImage(imageSrc);
+    setIsModalOpen(true);
+    setIsImageZoomed(false);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedImage(null);
+  };
+
+  const toggleZoom = () => {
+    setIsImageZoomed(!isImageZoomed);
+  };
+
+  return (
+    <section className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800">
+        Client Management
+      </h1>
+      <div className="bg-white shadow-xl rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-[#202939]">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Name
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Orders
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Reviews
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Avg. Rating
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <UserRow
+                    key={user.fullName}
+                    user={user}
+                    onClick={() => setSelectedUser(user)}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td
+                    className="px-6 py-4 text-center text-gray-500"
+                    colSpan={4}
+                  >
+                    No users available.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {selectedUser && (
+        <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
+          <div className="bg-[#202939] text-white px-6 py-4">
+            <h2 className="text-2xl font-bold">{selectedUser.fullName}</h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <UserInfoSection
+                title="Orders"
+                icon={<FaBox className="text-[#202939]" />}
+                content={
+                  selectedUser.checkout.length > 0 ? (
+                    <div className="overflow-y-auto max-h-60">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Custom ID
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Governorate
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedUser.checkout.map((checkout: Checkout) => (
+                            <tr key={checkout.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                {checkout.package[0]?.customId || "N/A"}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {checkout.Governorate.name || "N/A"}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {translateStatus(checkout.package[0]?.status) ||
+                                  "N/A"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No orders available.</p>
+                  )
+                }
+              />
+              <UserInfoSection
+                title="Reviews"
+                icon={<FaStar className="text-[#202939]" />}
+                content={
+                  selectedUser.reviews.length > 0 ? (
+                    <div className="overflow-y-auto max-h-60">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Product SKU
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Rating
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedUser.reviews.map((review: Review) => (
+                            <tr
+                              key={review.productId}
+                              className="hover:bg-gray-50"
+                            >
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                {review.product.reference}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                <StarRating rating={review.rating} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No reviews available.</p>
+                  )
+                }
+              />
+            </div>
+            <div className="mt-8">
+              <UserInfoSection
+                title="Messages"
+                icon={<FaEnvelope className="text-[#202939]" />}
+                content={
+                  selectedUser.ContactUs.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Subject
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Document
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Message
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedUser.ContactUs.map(
+                            (contactUs: ContactUs) => (
+                              <tr
+                                key={contactUs.id}
+                                className="hover:bg-gray-50"
+                              >
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                  {contactUs.subject}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap">
+                                  <img
+                                    src={contactUs.document}
+                                    alt={contactUs.id}
+                                    className="w-16 h-16 object-cover rounded cursor-pointer"
+                                    onClick={() =>
+                                      openModal(contactUs.document)
+                                    }
+                                  />
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-500">
+                                  {contactUs.message}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No messages available.</p>
+                  )
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {isModalOpen && selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+          onClick={closeModal}
+        >
+          <div className="relative bg-white p-2 rounded-lg max-w-3xl max-h-3xl">
+            <img
+              src={selectedImage}
+              alt="Enlarged view"
+              className={`max-w-[600px] max-h-[600px] object-contain transition-transform duration-300 ${
+                isImageZoomed ? "scale-150" : "scale-100"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleZoom();
+              }}
+            />
+            <button
+              className="absolute top-2 right-2 text-white bg-[#202939] rounded-full w-8 h-8 flex items-center justify-center"
+              onClick={closeModal}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+const UserInfoSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  content: React.ReactNode;
+}> = ({ title, icon, content }) => (
+  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-[#202939] text-white px-4 py-2 flex items-center">
+      {icon}
+      <h3 className="text-lg font-semibold ml-2">{title}</h3>
+    </div>
+    <div className="p-4">{content}</div>
+  </div>
+);
+
+export default ClientsPage;

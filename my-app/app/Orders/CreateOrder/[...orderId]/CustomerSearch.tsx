@@ -1,7 +1,5 @@
-"use client";
-import { GET_ALL_USERS, GET_GOVERMENT_INFO } from "@/app/graph/queries";
-import { useMutation, useQuery } from "@apollo/client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery, useMutation } from "@apollo/client";
 import { MdOutlineEdit } from "react-icons/md";
 import {
   Select,
@@ -11,150 +9,141 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
-import { UPDATE_CUSTOMER_MUTATIONS } from "@/app/graph/mutations";
 import { useToast } from "@/components/ui/use-toast";
+import { GET_ALL_USERS, GET_GOVERMENT_INFO } from "@/app/graph/queries";
+import { UPDATE_CUSTOMER_MUTATIONS } from "@/app/graph/mutations";
+import { User, GovernmentInfo, CustomerInfo, Order } from "@/app/types/index"; // Define these types
 
-interface User {
-  id: string;
-  fullName: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+interface CustomerSearchProps {
+  order: any;
+  customerInfo: CustomerInfo;
+  setCustomerInfo: any;
 }
 
-interface GovernmentInfo {
-  id: string;
-  name: string;
-}
-
-interface CustomerInfo {
-  userName: string;
-  familyName: string;
-  email: string;
-  phone1: string;
-  phone2: string;
-  governorate: string;
-  address: string;
-}
-
-const CustomerSearch = ({ order }: { order: any }) => {
+const CustomerSearch: React.FC<CustomerSearchProps> = ({
+  order,
+  customerInfo,
+  setCustomerInfo,
+}) => {
   const { toast } = useToast();
-
   const [isEditing, setIsEditing] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [governmentInfo, setGovernmentInfo] = useState<GovernmentInfo[]>([]);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    userName: order?.Checkout.userName.split(" ")[0] || "",
-    familyName: order?.Checkout.userName.split(" ")[1] || "",
-    email: order?.Checkout.User.email || "",
-    phone1: order?.Checkout.phone[0] || "",
-    phone2: order?.Checkout.phone[1] || "",
-    governorate: order?.Checkout.governorateId || "",
-    address: order?.Checkout.address.split(",")[0] || "",
-  });
+  const [showAllUsers, setShowAllUsers] = useState(false);
+
+  const filteredUsers = useMemo(() => {
+    let users = allUsers;
+    if (searchTerm) {
+      users = allUsers.filter(
+        (user) =>
+          user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return showAllUsers ? users : users.slice(0, 5);
+  }, [allUsers, searchTerm, showAllUsers]);
+  const { loading: usersLoading, data: userData } = useQuery(GET_ALL_USERS);
+  const { loading: govLoading, data: governmentData } =
+    useQuery(GET_GOVERMENT_INFO);
   const [updateCustomerCheckout] = useMutation(UPDATE_CUSTOMER_MUTATIONS);
 
-  const {
-    loading: usersLoading,
-    error: usersError,
-    data: userData,
-  } = useQuery(GET_ALL_USERS, {
-    onCompleted: (data) => {
-      setAllUsers(data.fetchAllUsers);
-    },
-  });
-
-  const { loading: govLoading } = useQuery(GET_GOVERMENT_INFO, {
-    onCompleted: (data) => {
-      setGovernmentInfo(data.allGovernorate);
-    },
-  });
+  useEffect(() => {
+    if (userData) setAllUsers(userData.fetchAllUsers);
+    if (governmentData) setGovernmentInfo(governmentData.allGovernorate);
+  }, [userData, governmentData]);
 
   useEffect(() => {
-    setCustomerInfo({
-      userName: order?.Checkout.userName.split(" ")[0] || "",
-      familyName: order?.Checkout.userName.split(" ")[1] || "",
-      email: order?.Checkout.User.email || "",
-      phone1: order?.Checkout.phone[0] || "",
-      phone2: order?.Checkout.phone[1] || "",
-      governorate: order?.Checkout.governorateId || "",
-      address: order?.Checkout.address.split(",")[0] || "",
-    });
-    if (order?.Checkout.userId) {
-      const user = userData?.fetchAllUsers.find(
-        (u: User) => u.id === order.Checkout.userId,
-      );
-      setSelectedUser(user || null);
+    if (order?.Checkout) {
+      const { userName, User, phone, governorateId, address } = order.Checkout;
+      setCustomerInfo({
+        userName: userName.split(" ")[0] || "",
+        familyName: userName.split(" ")[1] || "",
+        email: User?.email || "",
+        phone1: phone[0] || "",
+        phone2: phone[1] || "",
+        governorate: governorateId || "",
+        address: address.split(",")[0] || "",
+      });
+      if (User) setSelectedUser(User);
     }
-  }, [order, userData]);
+  }, [order, setCustomerInfo]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomerInfo({ ...customerInfo, [e.target.name]: e.target.value });
-  };
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setCustomerInfo((prev: any) => ({ ...prev, [name]: value }));
+    },
+    [setCustomerInfo]
+  );
 
-  const handleRegionChange = (value: string) => {
-    setCustomerInfo({ ...customerInfo, governorate: value });
-  };
+  const handleRegionChange = useCallback(
+    (value: string) => {
+      setCustomerInfo((prev: any) => ({ ...prev, governorate: value }));
+    },
+    [setCustomerInfo]
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsEditing(false);
+    if (!order.id) {
+      setIsEditing(false);
+      return;
+    }
 
     try {
       const { userName, familyName, phone1, phone2, governorate, address } =
         customerInfo;
 
-      // Convertir les numéros de téléphone en nombres et filtrer les vides
-      const phone = [phone1, phone2]
-        .map((item) => Number(item))
-        .filter((item) => !isNaN(item) && item !== 0);
-      var fullName = `${userName} ${familyName}`;
+      const phone = [phone1, phone2].map(Number).filter(Boolean);
+      const fullName = `${userName} ${familyName}`.trim();
 
       await updateCustomerCheckout({
         variables: {
           input: {
-            userName: fullName.trim(),
-            phone: phone,
+            userName: fullName,
+            phone,
             governorateId: governorate,
             address,
             userId: order.Checkout.userId || selectedUser?.id,
-            checkoutId: order?.Checkout.id,
+            checkoutId: order.Checkout.id,
           },
         },
       });
 
       toast({
-        title: "la sauvegarde",
-        className: "text-white bg-mainColorAdminDash border-0",
+        title: "Sauvegarde réussie",
         description:
           "Les informations du client ont été sauvegardées avec succès.",
-        duration: 5000,
+        className: "bg-green-500",
+        duration: 3000,
       });
       setIsEditing(false);
     } catch (error) {
-      console.log(error);
-
       toast({
-        title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        title: "Erreur de sauvegarde",
         description: "Erreur lors de la sauvegarde des informations du client.",
+        className: "bg-red-500",
         duration: 5000,
       });
     }
   };
 
-  const handleUserSelect = (userId: string) => {
-    const user = allUsers.find((u) => u.id === userId);
-    setSelectedUser(user || null);
-  };
-
-  const filteredUsers = allUsers.filter(
-    (user: User) =>
-      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+  const handleUserSelect = useCallback(
+    (userId: string) => {
+      const user = allUsers.find((u) => u.id === userId);
+      setSelectedUser(user || null);
+      setCustomerInfo((prev: any) => ({ ...prev, userId }));
+    },
+    [allUsers, setCustomerInfo]
   );
+
+  // const filteredUsers = allUsers.filter(
+  //   (user) =>
+  //     user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
 
   if (usersLoading || govLoading) {
     return <div>Chargement des informations...</div>;
@@ -173,13 +162,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
       </h2>
       <div className="space-y-2 mt-3">
         <div className="UserAcompte bg-gray-50 border">
-          {selectedUser ? (
-            <div className="p-4">
-              <h3 className="font-semibold">
-                ID de l'utilisateur : {selectedUser.id}
-              </h3>
-            </div>
-          ) : (
+          {!selectedUser && (
             <div className="p-4">
               <h3 className="font-semibold mb-2">
                 Sélectionner un utilisateur :
@@ -188,10 +171,13 @@ const CustomerSearch = ({ order }: { order: any }) => {
                 type="text"
                 placeholder="Rechercher un utilisateur..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowAllUsers(true);
+                }}
                 className="w-full p-2 border rounded mb-2"
               />
-              <div className="w-full border rounded p-2">
+              <div className="w-full border rounded p-2 bg-white divide-y max-h-60 overflow-y-auto">
                 {filteredUsers.map((user) => (
                   <div
                     key={user.id}
@@ -201,6 +187,14 @@ const CustomerSearch = ({ order }: { order: any }) => {
                     {user.fullName} - {user.email}
                   </div>
                 ))}
+                {!showAllUsers && allUsers.length > 5 && (
+                  <div
+                    className="cursor-pointer p-2 text-sm hover:bg-gray-100 text-center text-blue-500"
+                    onClick={() => setShowAllUsers(true)}
+                  >
+                    Voir plus...
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -254,7 +248,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
                     name="email"
                     id="email"
                     readOnly
-                    value={customerInfo.email}
+                    value={customerInfo.email || selectedUser?.email}
                     className="mt-1 block w-full py-1 text-sm px-2  bg-neutral-200 rounded-sm cursor-not-allowed border-gray-300 outline-none border-b shadow-sm"
                   />
                 </div>
@@ -367,7 +361,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
               </div>
               <div className="py-3">
                 <span className="font-semibold">Email : </span>
-                {customerInfo.email || "N/A"}
+                {customerInfo.email || selectedUser?.email || "N/A"}
               </div>
               <div className="py-3">
                 <span className="font-semibold">Téléphone 1 : </span>
@@ -380,7 +374,7 @@ const CustomerSearch = ({ order }: { order: any }) => {
               <div className="py-3">
                 <span className="font-semibold">Région : </span>
                 {governmentInfo.find(
-                  (gov): any => gov.id === customerInfo.governorate,
+                  (gov): any => gov.id === customerInfo.governorate
                 )?.name || "N/A"}
               </div>
               <div className="py-3">

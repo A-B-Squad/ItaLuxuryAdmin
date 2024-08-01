@@ -191,6 +191,72 @@ export const GET_ALL_USERS = gql`
     }
   }
 `;
+
+export const FETCH_ALL_BASKET = gql`
+  query FetchAllBasket {
+    fetchAllBasket {
+      id
+      userId
+      quantity
+      Product {
+        id
+        reference
+        name
+        price
+        images
+        productDiscounts {
+          newPrice
+        }
+        categories {
+          id
+          name
+          subcategories {
+            id
+            name
+            subcategories {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const FETCH_ALL_USERS = gql`
+query FetchAllUsers {
+  fetchAllUsers {
+    fullName
+    ContactUs {
+      id
+      subject
+      document
+      message
+    }
+    reviews {
+      productId
+      rating
+      product {
+        reference
+      }
+    }
+    checkout {
+      id
+      Governorate {
+        name
+      }
+      package {
+        id
+        customId
+        status
+      }
+    }
+  }
+}
+
+
+`;
 export const PACKAGE_BY_ID_QUERY = gql`
   query PackageById($packageId: ID!) {
     packageById(packageId: $packageId) {

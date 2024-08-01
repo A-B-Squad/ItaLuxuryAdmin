@@ -76,14 +76,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = React.memo(
     if (!packageData || !packageData.Checkout) {
       return <div>No order data available</div>;
     }
-    console.log({
-      subtotal,
-      couponDiscount,
-      manualDiscount,
-      shippingCost,
-      total,
-      couponPercentage,
-    });
+  
 
     return (
       <div className="orderTotalPrice bg-white shadow-md rounded-lg p-6 mb-6">

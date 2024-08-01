@@ -35,7 +35,7 @@ const Loader = () => (
 
 const CompanyInfopage = () => {
   const { toast } = useToast();
-
+  const [showBackUp, setShowBackUp] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyData>({
     phone: ["", ""],
     deliveringPrice: 0,
@@ -46,7 +46,7 @@ const CompanyInfopage = () => {
     email: "",
   });
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {},
+    {}
   );
 
   const { data: companyInfoData } = useQuery(COMPANY_INFO_QUERY);
@@ -123,6 +123,8 @@ const CompanyInfopage = () => {
   }, [companyInfoData]);
 
   const handleSuccessUpload = (result: any) => {
+    setShowBackUp(true);
+
     const file = result.info;
     if (file) {
       setCompanyInfo((prev) => ({
@@ -132,15 +134,16 @@ const CompanyInfopage = () => {
 
       setLoadingImages((prev) => ({
         ...prev,
-        [file.url]: true, // Set true to show the loader until the companyInfo is fully loaded
+        [file.url]: true,
       }));
     }
   };
 
   const handleInputChange = (
     field: keyof CompanyData,
-    value: string | number[],
+    value: string | number[]
   ) => {
+    setShowBackUp(true);
     setCompanyInfo((prev) => ({
       ...prev,
       [field]: value,
@@ -149,8 +152,10 @@ const CompanyInfopage = () => {
 
   const handlePhoneInputChange = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    setShowBackUp(true);
+
     const newPhone = [...companyInfo.phone];
     newPhone[index] = e.target.value;
     setCompanyInfo((prev) => ({
@@ -161,8 +166,10 @@ const CompanyInfopage = () => {
 
   const handleNumberInputChange = (
     field: keyof CompanyData,
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    setShowBackUp(true);
+
     const value = parseFloat(e.target.value);
     setCompanyInfo((prev) => ({
       ...prev,
@@ -171,7 +178,7 @@ const CompanyInfopage = () => {
   };
 
   return (
-    <div className="company-info">
+    <div className="company-info ">
       <div className=" container flex flex-col items-start pb-32 h-full w-full relative">
         <div className="flex mb-4 gap-2">
           <h1 className="text-3xl font-semibold">
@@ -219,7 +226,7 @@ const CompanyInfopage = () => {
                   <button
                     type="button"
                     className="uppercase shadow-xl flex-col border-dashed text-sm h-[50px] w-[100px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors cursor-pointer"
-                    onClick={() => open()}
+                    onClick={() => open && open()}
                   >
                     <IoImageOutline />
                   </button>
@@ -308,9 +315,8 @@ const CompanyInfopage = () => {
           />
         </div>
       </div>
-      <div className="mt-4">
-        <BackUp onSave={handleSave} />
-      </div>
+     
+          <BackUp onSave={handleSave} showBackUp={showBackUp} />
     </div>
   );
 };

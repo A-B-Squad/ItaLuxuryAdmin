@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { CREATE_SIDE_ADVERTISEMENT_MUTATIONS } from "@/app/graph/mutations";
 import BackUp from "@/app/components/BackUp";
@@ -18,7 +18,7 @@ interface ImageData {
 
 const SideAdvertisingPage = () => {
   const { toast } = useToast();
-
+  const [showBackUp, setShowBackUp] = useState(false);
   // State for input fields
   const [InputFieldOfSidePromotion, setInputFieldOfSidePromotion] =
     useState<ImageData>({
@@ -37,12 +37,12 @@ const SideAdvertisingPage = () => {
       images: "",
       link: "",
       position: "clinetContactSideAds",
-    },
+    }
   );
 
   // Mutation hook
   const [createAdvertisement] = useMutation(
-    CREATE_SIDE_ADVERTISEMENT_MUTATIONS,
+    CREATE_SIDE_ADVERTISEMENT_MUTATIONS
   );
 
   // Function to handle saving
@@ -55,7 +55,7 @@ const SideAdvertisingPage = () => {
 
     // Check if any input field is empty
     const isEmpty = input.some(
-      (field) => !field.images || !field.link || !field.position,
+      (field) => !field.images || !field.link || !field.position
     );
 
     if (isEmpty) {
@@ -88,6 +88,18 @@ const SideAdvertisingPage = () => {
     (InputFieldSideNewProduct.images && InputFieldSideNewProduct.link) ||
     (InputFieldOfSidePromotion.images && InputFieldOfSidePromotion.link) ||
     (InputFieldSideContact.images && InputFieldSideContact.link);
+  // useEffect to manage showBackUp state
+  useEffect(() => {
+    if (hasContent()) {
+      setShowBackUp(true);
+    } else {
+      setShowBackUp(false);
+    }
+  }, [
+    InputFieldSideNewProduct,
+    InputFieldOfSidePromotion,
+    InputFieldSideContact,
+  ]);
   return (
     <div className="advertising">
       <div className="container flex flex-col gap-8  pb-32 h-full relative divide-y">
@@ -104,7 +116,7 @@ const SideAdvertisingPage = () => {
           inputField={InputFieldSideContact}
         />
       </div>
-      {hasContent() && <BackUp onSave={handleSave} />}
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
     </div>
   );
 };
