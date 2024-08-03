@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 import React, { useState, useRef, useMemo } from "react";
+import "jodit/es5/jodit.min.css";
 
 const AddDescription = ({ description, setDescription }: any) => {
   const editor = useRef(null);
@@ -16,30 +17,59 @@ const AddDescription = ({ description, setDescription }: any) => {
       spellcheck: true,
       height: 159,
       minHeight: 500,
-      // Configure table styles for Jodit Editor output
       extraButtons: [
         {
           name: "table",
           icon: "table",
           exec: (editor: any) => {
-            editor.selection.insertHTML(`
-              <table style="border: 1px solid; border-collapse: collapse; width: 100%;">
-                <tr style="border: 1px solid;">
-                  <td style="border: 1px solid; padding: 8px;"></td>
-                  <td style="border: 1px solid; padding: 8px;"></td>
-                </tr>
-                <tr style="border: 1px solid;">
-                  <td style="border: 1px solid; padding: 8px;"></td>
-                  <td style="border: 1px solid; padding: 8px;"></td>
-                </tr>
-              </table>
-            `);
+            try {
+              editor.selection.insertHTML(`
+                <table style="border: 2px solid #e5e7eb; border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px;">
+                  <thead style="background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                    <tr>
+                      <th style="border: 2px solid #e5e7eb; padding: 12px; text-align: left;">Header 1</th>
+                      <th style="border: 2px solid #e5e7eb; padding: 12px; text-align: left;">Header 2</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="border: 2px solid #e5e7eb; padding: 12px;">Cell 1</td>
+                      <td style="border: 2px solid #e5e7eb; padding: 12px;">Cell 2</td>
+                    </tr>
+                    <tr>
+                      <td style="border: 2px solid #e5e7eb; padding: 12px;">Cell 3</td>
+                      <td style="border: 2px solid #e5e7eb; padding: 12px;">Cell 4</td>
+                    </tr>
+                  </tbody>
+                </table>
+              `);
+            } catch (error) {
+              console.error("Error inserting table HTML:", error);
+            }
           },
         },
       ],
-
       buttons:
-        "bold,italic,underline,strikethrough,eraser,ul,ol,font,fontsize,paragraph,lineHeight,superscript,subscript,spellcheck,cut,copy,paste,selectall,copyformat",
+        "bold,italic,underline,strikethrough,eraser,ul,ol,font,fontsize,paragraph,lineHeight,superscript,subscript,spellcheck,cut,copy,paste,selectall,copyformat,table",
+      createAttributes: {
+        table: {
+          style:
+            "border: 2px solid #e5e7eb; border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 10px;",
+        },
+        thead: {
+          style: "background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;",
+        },
+        tr: {
+          style: "border: 2px solid #e5e7eb;",
+        },
+        th: {
+          style: "border: 2px solid #e5e7eb; padding: 12px; text-align: left;",
+        },
+        tbody: {},
+        td: {
+          style: "border: 2px solid #e5e7eb; padding: 12px;",
+        },
+      },
     }),
     [],
   );
@@ -51,7 +81,6 @@ const AddDescription = ({ description, setDescription }: any) => {
           ref={editor}
           value={description}
           config={config}
-          tabIndex={1}
           onBlur={(newContent) => setDescription(newContent)}
         />
       </div>

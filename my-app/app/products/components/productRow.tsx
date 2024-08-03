@@ -43,15 +43,18 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           </div>
         </div>
       </td>
-      <td className="Price text-center px-4 py-3 text-ms font-semibold border">
-        {product.price.toFixed(3)}
+      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+        {product.purchasePrice.toFixed(3)} DT
       </td>
-      <td className="Discount px-4 text-center py-3 text-ms font-semibold border">
+      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+        {product.price.toFixed(3)} DT
+      </td>
+      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
         {product.productDiscounts.length > 0
           ? product.productDiscounts[0].newPrice.toFixed(3) + "TND"
           : "_________"}
       </td>
-      <td className="Discount px-4 text-center py-3 text-ms font-semibold border">
+      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
         {product.productDiscounts.length > 0
           ? formatDate(product.productDiscounts[0].dateOfEnd)
           : "_________"}

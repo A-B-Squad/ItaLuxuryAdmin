@@ -16,8 +16,6 @@ const useProducts = (
   const [searchProducts] = useLazyQuery(SEARCH_PRODUCTS_QUERY);
 
   const fetchProducts = useCallback(async () => {
-    console.log(page, pageSize);
-
     setLoading(true);
     try {
       const { data } = await searchProducts({

@@ -5,7 +5,7 @@ import { FETCH_ALL_BASKET } from "@/app/graph/queries";
 import Image from "next/image";
 import Link from "next/link";
 import prepRoute from "@/app/Helpers/_prepRoute";
-import { FaShoppingBasket, FaInfoCircle, FaTag, FaBox } from 'react-icons/fa';
+import { FaShoppingBasket, FaInfoCircle, FaTag, FaBox } from "react-icons/fa";
 
 interface ProductDiscount {
   newPrice: number;
@@ -51,19 +51,26 @@ const ClientAbandonedBasketPage: React.FC = () => {
   const basketItems: BasketItem[] = data?.fetchAllBasket || [];
 
   // Group items by userId
-  const baskets = basketItems.reduce((acc, item) => {
-    if (!acc[item.userId]) {
-      acc[item.userId] = [];
-    }
-    acc[item.userId].push(item);
-    return acc;
-  }, {} as Record<string, BasketItem[]>);
+  const baskets = basketItems.reduce(
+    (acc, item) => {
+      if (!acc[item.userId]) {
+        acc[item.userId] = [];
+      }
+      acc[item.userId].push(item);
+      return acc;
+    },
+    {} as Record<string, BasketItem[]>,
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-start">Paniers Abandonnés </h1>
+      <h1 className="text-3xl font-bold mb-6 text-start">
+        Paniers Abandonnés{" "}
+      </h1>
       {Object.keys(baskets).length === 0 ? (
-        <p className="text-center text-gray-600">Aucun panier abandonné trouvé.</p>
+        <p className="text-center text-gray-600">
+          Aucun panier abandonné trouvé.
+        </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
@@ -86,14 +93,16 @@ const ClientAbandonedBasketPage: React.FC = () => {
           <div className="md:col-span-2 border p-4 rounded-lg shadow-lg">
             {selectedBasket ? (
               <>
-                <h2 className="text-xl font-semibold mb-4">Produits dans le panier</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Produits dans le panier
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {baskets[selectedBasket].length > 0 ? (
                     baskets[selectedBasket].map((item) => (
                       <Link
                         href={{
                           pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
-                            item.Product.name
+                            item.Product.name,
                           )}`,
                           query: {
                             productId: item.Product.id,
@@ -126,21 +135,32 @@ const ClientAbandonedBasketPage: React.FC = () => {
                         </div>
                         <div className="p-4">
                           <h3 className="font-bold text-lg mb-2 text-gray-800">
-                            {item.Product.name} <FaInfoCircle size={15} className="inline-block ml-2" />
+                            {item.Product.name}{" "}
+                            <FaInfoCircle
+                              size={15}
+                              className="inline-block ml-2"
+                            />
                           </h3>
                           <p className="text-gray-600 mb-1">
-                            <span className="font-semibold">Référence:</span> {item.Product.reference}
+                            <span className="font-semibold">Référence:</span>{" "}
+                            {item.Product.reference}
                           </p>
                           <p className="text-gray-600 mb-1">
-                            <span className="font-semibold">Quantité:</span> {item.quantity}
+                            <span className="font-semibold">Quantité:</span>{" "}
+                            {item.quantity}
                           </p>
                           <p className="text-gray-600 mb-1">
-                            <span className="font-semibold">Prix:</span> {item.Product.productDiscounts.length > 0
-                              ? item.Product.productDiscounts[0].newPrice.toFixed(3)
-                              : item.Product.price.toFixed(3)} TND
+                            <span className="font-semibold">Prix:</span>{" "}
+                            {item.Product.productDiscounts.length > 0
+                              ? item.Product.productDiscounts[0].newPrice.toFixed(
+                                  3,
+                                )
+                              : item.Product.price.toFixed(3)}{" "}
+                            TND
                           </p>
                           <p className="text-gray-600">
-                            <span className="font-semibold">Catégorie:</span> {item.Product.categories[0]?.name || "N/A"}
+                            <span className="font-semibold">Catégorie:</span>{" "}
+                            {item.Product.categories[0]?.name || "N/A"}
                           </p>
                         </div>
                       </Link>
@@ -151,7 +171,9 @@ const ClientAbandonedBasketPage: React.FC = () => {
                 </div>
               </>
             ) : (
-              <p className="flex items-center justify-center">Sélectionnez un panier pour voir les produits.</p>
+              <p className="flex items-center justify-center">
+                Sélectionnez un panier pour voir les produits.
+              </p>
             )}
           </div>
         </div>

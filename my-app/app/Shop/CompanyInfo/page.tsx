@@ -46,7 +46,7 @@ const CompanyInfopage = () => {
     email: "",
   });
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const { data: companyInfoData } = useQuery(COMPANY_INFO_QUERY);
@@ -141,7 +141,7 @@ const CompanyInfopage = () => {
 
   const handleInputChange = (
     field: keyof CompanyData,
-    value: string | number[]
+    value: string | number[],
   ) => {
     setShowBackUp(true);
     setCompanyInfo((prev) => ({
@@ -152,7 +152,7 @@ const CompanyInfopage = () => {
 
   const handlePhoneInputChange = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setShowBackUp(true);
 
@@ -166,7 +166,7 @@ const CompanyInfopage = () => {
 
   const handleNumberInputChange = (
     field: keyof CompanyData,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setShowBackUp(true);
 
@@ -315,8 +315,8 @@ const CompanyInfopage = () => {
           />
         </div>
       </div>
-     
-          <BackUp onSave={handleSave} showBackUp={showBackUp} />
+
+      <BackUp onSave={handleSave} showBackUp={showBackUp} />
     </div>
   );
 };

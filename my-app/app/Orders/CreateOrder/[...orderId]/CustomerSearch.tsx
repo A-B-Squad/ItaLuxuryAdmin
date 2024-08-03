@@ -39,7 +39,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
       users = allUsers.filter(
         (user) =>
           user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     return showAllUsers ? users : users.slice(0, 5);
@@ -75,14 +75,14 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
       const { name, value } = e.target;
       setCustomerInfo((prev: any) => ({ ...prev, [name]: value }));
     },
-    [setCustomerInfo]
+    [setCustomerInfo],
   );
 
   const handleRegionChange = useCallback(
     (value: string) => {
       setCustomerInfo((prev: any) => ({ ...prev, governorate: value }));
     },
-    [setCustomerInfo]
+    [setCustomerInfo],
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,7 +116,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
         title: "Sauvegarde réussie",
         description:
           "Les informations du client ont été sauvegardées avec succès.",
-        className: "bg-green-500",
+        className: "bg-mainColorAdminDash",
         duration: 3000,
       });
       setIsEditing(false);
@@ -136,21 +136,15 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
       setSelectedUser(user || null);
       setCustomerInfo((prev: any) => ({ ...prev, userId }));
     },
-    [allUsers, setCustomerInfo]
+    [allUsers, setCustomerInfo],
   );
-
-  // const filteredUsers = allUsers.filter(
-  //   (user) =>
-  //     user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
 
   if (usersLoading || govLoading) {
     return <div>Chargement des informations...</div>;
   }
 
   return (
-    <div className="client w-1/3 ml-6 bg-white shadow-md h-fit p-2">
+    <div className="client w-1/3  ml-6 bg-white shadow-md h-fit p-2">
       <h2 className="text-xl font-semibold bg-white px-2 border-b w-full py-2 flex justify-between items-center">
         Informations client
         <button
@@ -374,7 +368,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
               <div className="py-3">
                 <span className="font-semibold">Région : </span>
                 {governmentInfo.find(
-                  (gov): any => gov.id === customerInfo.governorate
+                  (gov): any => gov.id === customerInfo.governorate,
                 )?.name || "N/A"}
               </div>
               <div className="py-3">

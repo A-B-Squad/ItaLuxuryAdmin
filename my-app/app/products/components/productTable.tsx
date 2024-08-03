@@ -15,16 +15,19 @@ const ProductTable: React.FC<ProductTableProps> = ({
       <div className="w-full mb-8 overflow-hidden rounded-lg shadow-lg">
         <div className="w-full overflow-x-auto">
           <table className="w-full">
-          <thead className="bg-mainColorAdminDash text-white">
+            <thead className="bg-mainColorAdminDash text-white">
               <tr>
-                <th className="px-4 py-3 text-center">Nom</th>
-                <th className="px-4 py-3 text-center">Prix</th>
-                <th className="px-4 py-3 text-center">Promotion</th>
-                <th className="px-4 py-3 text-center">Promo Fini</th>
-                <th className="px-4 py-3 text-center">Visibilité</th>
-                <th className="px-4 py-3 text-center">Date de création</th>
-                <th className="px-4 py-3 text-center">Commandes</th>
-                <th className="px-4 py-3 text-center">Actions</th>
+                <th className="px-4 py-3 text-sm text-center">Nom</th>
+                <th className="px-4 py-3 text-sm text-center">Prix d'achat</th>
+                <th className="px-4 py-3 text-sm text-center">Prix de vente</th>
+                <th className="px-4 py-3 text-sm text-center">Promotion</th>
+                <th className="px-4 py-3 text-sm text-center">Promo Fini</th>
+                <th className="px-4 py-3 text-sm text-center">Visibilité</th>
+                <th className="px-4 py-3 text-sm text-center">
+                  Date de création
+                </th>
+                <th className="px-4 py-3 text-sm text-center">Commandes</th>
+                <th className="px-4 py-3 text-sm text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white">

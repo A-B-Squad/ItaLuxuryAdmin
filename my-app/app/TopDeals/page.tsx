@@ -1,13 +1,12 @@
 import React from "react";
-import ProductPage from "./ProductPage";
+import TopDealsPage from "./TopDealsPage";
 interface ProductsProps {
   searchParams: {
     q?: string;
-    order?: "ASC" | "DESC";
   };
 }
 const page = ({ searchParams }: ProductsProps) => {
-  return <ProductPage searchParams={searchParams} />;
+  return <TopDealsPage />;
 };
 
 export default page;

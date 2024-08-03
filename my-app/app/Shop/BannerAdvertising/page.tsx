@@ -42,7 +42,7 @@ const BannerAdvertisingPage = () => {
 
   // Mutation hook
   const [createAdvertisement] = useMutation(
-    CREATE_BANNER_ADVERTISEMENT_MUTATIONS
+    CREATE_BANNER_ADVERTISEMENT_MUTATIONS,
   );
 
   // Function to handle saving
@@ -55,7 +55,7 @@ const BannerAdvertisingPage = () => {
 
     // Check if any input field is empty
     const isEmpty = input.some(
-      (field) => !field.images || !field.link || !field.position
+      (field) => !field.images || !field.link || !field.position,
     );
 
     if (isEmpty) {

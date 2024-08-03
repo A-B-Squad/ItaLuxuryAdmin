@@ -34,7 +34,7 @@ const SideAdvertisingPage = () => {
 
   // Mutation hook
   const [createAdvertisement] = useMutation(
-    CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS
+    CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS,
   );
 
   // Function to handle saving
@@ -46,7 +46,7 @@ const SideAdvertisingPage = () => {
 
     // Check if any input field is empty
     const isEmpty = input.some(
-      (field) => !field.images || !field.link || !field.position
+      (field) => !field.images || !field.link || !field.position,
     );
 
     if (isEmpty) {

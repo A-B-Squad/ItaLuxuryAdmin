@@ -29,7 +29,7 @@ const EditOrderPage = ({ searchParams }: any) => {
   const [getPackage, { data, loading, error, refetch }] =
     useLazyQuery(PACKAGE_BY_ID_QUERY);
   const [payedOrToDeliveryPackage] = useMutation(
-    PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS
+    PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
   );
   const [cancelPackage] = useMutation(CANCEL_PACKAGE_MUTATIONS);
   const [refundPackage] = useMutation(REFUND_PACKAGE_MUTATIONS);
@@ -76,7 +76,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           };
           return acc;
         },
-        {}
+        {},
       );
     setProductStatuses(initialStatuses);
   };
@@ -96,7 +96,7 @@ const EditOrderPage = ({ searchParams }: any) => {
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
-      }
+      },
     );
 
     try {
@@ -121,7 +121,7 @@ const EditOrderPage = ({ searchParams }: any) => {
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
-      }
+      },
     );
 
     try {

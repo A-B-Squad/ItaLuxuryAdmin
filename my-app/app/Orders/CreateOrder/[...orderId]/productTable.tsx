@@ -1,6 +1,6 @@
 import React from "react";
 import ProductRow from "./productRow";
-import SearchProduct from "./searchProduct";
+import SearchProduct from "../../../components/searchProduct";
 import {
   Table,
   TableBody,
@@ -26,7 +26,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
 }) => {
   return (
     <section className="mx-auto relative">
-      <div className="w-full mb-8 overflow-hidden rounded-lg shadow-lg">
+      <div className="w-full mb-8  rounded-lg shadow-lg">
         <SearchProduct onProductSelect={handleProductSelect} />
         <div className="w-full overflow-x-auto">
           <Table>

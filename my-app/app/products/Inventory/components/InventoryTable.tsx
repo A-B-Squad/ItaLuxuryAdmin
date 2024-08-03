@@ -6,6 +6,8 @@ interface Product {
   reference: string;
   solde: number;
   inventory: number;
+  purchasePrice: number;
+  broken: number;
   images: string[];
   categories: any[];
 }
@@ -27,10 +29,11 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
           <thead className="bg-mainColorAdminDash text-white">
             <tr>
               <th className="px-4 py-3 text-left">Nom</th>
-              <th className="px-4 py-3 text-left">SKU</th>
-              <th className="px-4 py-3 text-left">Commandes</th>
-              <th className="px-4 py-3 text-left">Inventaire</th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-center">SKU</th>
+              <th className="px-4 py-3 text-center">Prix d'achat</th>
+              <th className="px-4 py-3 text-center">Casse</th>
+              <th className="px-4 py-3 text-center">Inventaire</th>
+              <th className="px-4 py-3 text-center">
                 Ajouter à la quantité disponible
               </th>
             </tr>

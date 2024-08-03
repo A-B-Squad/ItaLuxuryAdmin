@@ -12,6 +12,7 @@ import {
   FaStarHalfAlt,
   FaRegStar,
 } from "react-icons/fa";
+import { CiImageOn } from "react-icons/ci";
 
 interface Review {
   productId: string;
@@ -140,9 +141,12 @@ const ClientsPage: React.FC = () => {
   };
 
   return (
-    <section className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">
-        Client Management
+    <section className="container py-8 ">
+      <h1 className="font-bold text-2xl py-5 px-4 border-b-2 w-full">
+        Client Management{" "}
+        <span className="text-gray-600  font-medium text-base">
+          ({users.length || 0})
+        </span>
       </h1>
       <div className="bg-white shadow-xl rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
@@ -208,7 +212,7 @@ const ClientsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <UserInfoSection
                 title="Orders"
-                icon={<FaBox className="text-[#202939]" />}
+                icon={<FaBox color="white" />}
                 content={
                   selectedUser.checkout.length > 0 ? (
                     <div className="overflow-y-auto max-h-60">
@@ -251,7 +255,7 @@ const ClientsPage: React.FC = () => {
               />
               <UserInfoSection
                 title="Reviews"
-                icon={<FaStar className="text-[#202939]" />}
+                icon={<FaStar color="white" />}
                 content={
                   selectedUser.reviews.length > 0 ? (
                     <div className="overflow-y-auto max-h-60">
@@ -292,7 +296,7 @@ const ClientsPage: React.FC = () => {
             <div className="mt-8">
               <UserInfoSection
                 title="Messages"
-                icon={<FaEnvelope className="text-[#202939]" />}
+                icon={<FaEnvelope color="white" />}
                 content={
                   selectedUser.ContactUs.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -334,7 +338,7 @@ const ClientsPage: React.FC = () => {
                                   {contactUs.message}
                                 </td>
                               </tr>
-                            )
+                            ),
                           )}
                         </tbody>
                       </table>
@@ -356,17 +360,21 @@ const ClientsPage: React.FC = () => {
           onClick={closeModal}
         >
           <div className="relative bg-white p-2 rounded-lg max-w-3xl max-h-3xl">
-            <img
-              src={selectedImage}
-              alt="Enlarged view"
-              className={`max-w-[600px] max-h-[600px] object-contain transition-transform duration-300 ${
-                isImageZoomed ? "scale-150" : "scale-100"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleZoom();
-              }}
-            />
+            {selectedImage === null ? (
+              <CiImageOn />
+            ) : (
+              <img
+                src={selectedImage}
+                alt="Enlarged view"
+                className={`max-w-[600px] max-h-[600px] object-contain transition-transform duration-300 ${
+                  isImageZoomed ? "scale-150" : "scale-100"
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleZoom();
+                }}
+              />
+            )}
             <button
               className="absolute top-2 right-2 text-white bg-[#202939] rounded-full w-8 h-8 flex items-center justify-center"
               onClick={closeModal}

@@ -71,7 +71,6 @@
     @apply border-border;
   }
   body {
-    
     @apply bg-background text-foreground;
   }
 }
@@ -475,8 +474,14 @@
   width: 3px;
   height: 3px;
 }
+.big-spinner {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
 
-.small-spinner div {
+.small-spinner div,
+.big-spinner div {
   position: absolute;
   width: 50%;
   height: 150%;
@@ -486,61 +491,71 @@
   animation: small-spinner-fzua35 1s calc(var(--delay) * 1s) infinite ease;
 }
 
-.small-spinner div:nth-child(1) {
+.small-spinner div:nth-child(1),
+.big-spinner div:nth-child(1) {
   --delay: 0.1;
   --rotation: 36;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(2) {
+.small-spinner div:nth-child(2),
+.big-spinner div:nth-child(2) {
   --delay: 0.2;
   --rotation: 72;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(3) {
+.small-spinner div:nth-child(3),
+.big-spinner div:nth-child(3) {
   --delay: 0.3;
   --rotation: 108;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(4) {
+.small-spinner div:nth-child(4),
+.big-spinner div:nth-child(4) {
   --delay: 0.4;
   --rotation: 144;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(5) {
+.small-spinner div:nth-child(5),
+.big-spinner div:nth-child(5) {
   --delay: 0.5;
   --rotation: 180;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(6) {
+.small-spinner div:nth-child(6),
+.big-spinner div:nth-child(6) {
   --delay: 0.6;
   --rotation: 216;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(7) {
+.small-spinner div:nth-child(7),
+.big-spinner div:nth-child(7) {
   --delay: 0.7;
   --rotation: 252;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(8) {
+.small-spinner div:nth-child(8),
+.big-spinner div:nth-child(8) {
   --delay: 0.8;
   --rotation: 288;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(9) {
+.small-spinner div:nth-child(9),
+.big-spinner div:nth-child(9) {
   --delay: 0.9;
   --rotation: 324;
   --translation: 150;
 }
 
-.small-spinner div:nth-child(10) {
+.small-spinner div:nth-child(10),
+.big-spinner div:nth-child(10) {
   --delay: 1;
   --rotation: 360;
   --translation: 150;

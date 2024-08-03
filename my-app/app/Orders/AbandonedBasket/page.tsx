@@ -1,8 +1,8 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 const ClientAbandonedBasketPage = dynamic(
-  () => import('./AbandonedBasketPage'),
-  { ssr: false }
+  () => import("./AbandonedBasketPage"),
+  { ssr: false },
 );
 
 const AbandonedBasketPage: React.FC = () => {

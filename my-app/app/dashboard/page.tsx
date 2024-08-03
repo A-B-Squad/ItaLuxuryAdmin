@@ -42,7 +42,7 @@ const getStats = (packages: Package[]): Stats => {
   packages.forEach((pkg) => {
     if (pkg.status === "PAYED") {
       const packageDate = moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE);
-      
+
       if (packageDate.isSame(moment(), "day")) {
         stats.orders[0]++;
         stats.earnings[0] += pkg.Checkout.total;
@@ -92,7 +92,9 @@ const Dashboard: React.FC = () => {
     }
   }, [packageData]);
 
-  const totalPayedPackagesCount = packageData.filter(pkg => pkg.status === "PAYED").length;
+  const totalPayedPackagesCount = packageData.filter(
+    (pkg) => pkg.status === "PAYED",
+  ).length;
 
   const totalEarningsDelivered = packageData.reduce(
     (total, pkg) =>
@@ -152,23 +154,43 @@ const Dashboard: React.FC = () => {
             <div className="m-5 border  flex flex-col bg-white text-sm text-gray-600 font-semibold tracking-wider rounded-md divide-y ">
               <div className="flex justify-between items-center  p-4">
                 <span>Aujourd'hui</span>
-                {loading ? <SmallSpinner /> : <span>{stats.earnings[0].toFixed(2)} TND</span>}
+                {loading ? (
+                  <SmallSpinner />
+                ) : (
+                  <span>{stats.earnings[0].toFixed(2)} TND</span>
+                )}
               </div>
               <div className="flex justify-between items-center  p-4">
                 <span>Hier</span>
-                {loading ? <SmallSpinner /> : <span>{stats.earnings[1].toFixed(2)} TND</span>}
+                {loading ? (
+                  <SmallSpinner />
+                ) : (
+                  <span>{stats.earnings[1].toFixed(2)} TND</span>
+                )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
                 <span>Cette semaine</span>
-                {loading ? <SmallSpinner /> : <span>{stats.earnings[2].toFixed(2)} TND</span>}
+                {loading ? (
+                  <SmallSpinner />
+                ) : (
+                  <span>{stats.earnings[2].toFixed(2)} TND</span>
+                )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
                 <span>Ce mois-ci</span>
-                {loading ? <SmallSpinner /> : <span>{stats.earnings[3].toFixed(2)} TND</span>}
+                {loading ? (
+                  <SmallSpinner />
+                ) : (
+                  <span>{stats.earnings[3].toFixed(2)} TND</span>
+                )}
               </div>
               <div className="flex justify-between items-center border-b-2 p-4">
                 <span>Cette année</span>
-                {loading ? <SmallSpinner /> : <span>{stats.earnings[4].toFixed(2)} TND</span>}
+                {loading ? (
+                  <SmallSpinner />
+                ) : (
+                  <span>{stats.earnings[4].toFixed(2)} TND</span>
+                )}
               </div>
               <div className="flex font-bold justify-between items-center border-b-2 p-4">
                 <span>Total des gains</span>

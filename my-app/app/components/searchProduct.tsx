@@ -3,7 +3,7 @@ import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
 import { useOutsideClick } from "@/app/Helpers/_outsideClick";
 import { useLazyQuery } from "@apollo/client";
 import Image from "next/image";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useRef, useState } from "react";
 
 interface SearchProductProps {
   onProductSelect: (product: any) => void;
@@ -37,11 +37,12 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
   const clickOutside = useOutsideClick(() => {
     setShowSearchProduct(false);
   });
+
   return (
-    <div className=" h-full" ref={inputRef}>
+    <div className="relative w-full" ref={clickOutside}>
       <input
         ref={inputRef}
-        className="w-full my-3 px-3 py-2 border-2 text-sm outline-none"
+        className="w-full my-3 px-4 py-2 border rounded-md text-sm outline-none focus:border-blue-500"
         type="text"
         placeholder="Rechercher un produit"
         value={searchQuery}
@@ -51,30 +52,27 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
 
       {data && showSearchProduct && (
         <div
-          className={`search-results bg-white absolute border-2 w-full ${
+          className={`search-results bg-white absolute border w-full ${
             showSearchProduct ? "visible" : "invisible"
-          }    left-0  h-[200px] overflow-y-auto  rounded-md shadow-lg z-10`}
+          } left-0 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg z-10`}
         >
-          <div className="py-4 overflow-y-auto">
-            <h3 className="font-bold mb-2 px-4">
+          <div className="py-4">
+            <h3 className="font-bold mb-2 px-4 text-gray-700">
               Résultat de la recherche: (
               {data.searchProducts.results.products.length})
             </h3>
-            <div
-              className="flex flex-col h-96 overflow-y-auto"
-              ref={clickOutside}
-            >
+            <div className="flex flex-col">
               {data.searchProducts.results.products.map((product: any) => (
                 <div
                   key={product.id}
-                  className="product-item flex items-center  border-b  hover:bg-gray-50 mx-h-96 transition-shadow cursor-pointer"
+                  className="product-item flex items-center border-b last:border-none hover:bg-gray-50 px-4 py-2 transition-colors cursor-pointer"
                   onClick={() => {
                     onProductSelect(product);
                     setShowSearchProduct(false);
                     setSearchQuery("");
                   }}
                 >
-                  <div className="relative w-10 h-10 mb-2">
+                  <div className="relative w-10 h-10 mr-4">
                     <Image
                       layout="fill"
                       src={product.images[0]}
@@ -82,7 +80,7 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
                       alt={product.name}
                     />
                   </div>
-                  <p className="text-base font-light tracking-widest text-center">
+                  <p className="text-base font-medium text-gray-800">
                     {product.name}
                   </p>
                 </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import CreateOrderPage from "./CreateOrderPage";
 
-const page = ({searchParams}:any) => {
+const page = ({ searchParams }: any) => {
   return <CreateOrderPage searchParams={searchParams} />;
 };
 

@@ -32,6 +32,7 @@ const CreateProduct = () => {
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
   const [dateOfStartDiscount, setDateOfStartDiscount] = useState<Date | null>(
     null,
   );
@@ -59,7 +60,7 @@ const CreateProduct = () => {
     ) {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
@@ -82,7 +83,7 @@ const CreateProduct = () => {
       if (!discount.dateOfStart || !discount.dateOfEnd) {
         toast({
           title: "Erreur de création",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description:
             "Veuillez remplir les dates de début et de fin de remise.",
           duration: 5000,
@@ -92,7 +93,7 @@ const CreateProduct = () => {
       if (!manualDiscountPrice && !discountPercentage) {
         toast({
           title: "Erreur de création",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description: "Veuillez fournir un prix de remise ou un pourcentage.",
           duration: 5000,
         });
@@ -103,7 +104,7 @@ const CreateProduct = () => {
     if (!originalPrice && !hasDiscount) {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez fournir un prix ou une remise.",
         duration: 5000,
       });
@@ -127,6 +128,7 @@ const CreateProduct = () => {
         inventory: stock,
         isVisible: visibility,
         price: originalPrice,
+        purchasePrice: purchasePrice,
         colorsId: selectedColor,
         reference,
         ...(hasDiscount && { discount: [discount] }),
@@ -146,6 +148,7 @@ const CreateProduct = () => {
         setDiscountPercentage(0);
         setManualDiscountPrice(0);
         setOriginalPrice(0);
+        setPurchasePrice(0);
         setDateOfStartDiscount(null);
         setDateOfEndDiscount(null);
         setSelectedDicountId(null);
@@ -197,6 +200,8 @@ const CreateProduct = () => {
             setManualDiscountPrice={setManualDiscountPrice}
             originalPrice={originalPrice}
             setOriginalPrice={setOriginalPrice}
+            purchasePrice={purchasePrice}
+            setPurchasePrice={setPurchasePrice}
             dateOfEndDiscount={dateOfEndDiscount}
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}

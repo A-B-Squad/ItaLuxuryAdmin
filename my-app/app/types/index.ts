@@ -37,8 +37,6 @@ export interface ProductInCheckout {
   };
 }
 
-
-
 export interface Checkout {
   id: string;
   total: number;

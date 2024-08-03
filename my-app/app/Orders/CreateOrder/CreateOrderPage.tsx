@@ -5,7 +5,7 @@ import ProductTable from "./[...orderId]/productTable";
 import OrderSummary from "./[...orderId]/OrderSummary";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { PACKAGE_BY_ID_QUERY } from "@/app/graph/queries";
-import DeleteModal from "./[...orderId]/DeleteModal";
+import DeleteModal from "@/app/components/DeleteModal";
 import {
   CREATE_CHECKOUT_FROM_ADMIN_MUTATIONS,
   UPDATE_CHECKOUT_MUTATIONS,
@@ -98,7 +98,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
             manualDiscount: 0,
             productInCheckout: [],
           },
-        }
+        },
   );
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     userId: "",
@@ -111,7 +111,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
     address: packageData?.Checkout?.address?.split(",")[0] || "",
   });
   const [discount, setDiscount] = useState(
-    packageData?.Checkout.manualDiscount || 0
+    packageData?.Checkout.manualDiscount || 0,
   );
   const router = useRouter();
 
@@ -119,7 +119,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
   const [updateCheckout] = useMutation(UPDATE_CHECKOUT_MUTATIONS);
   const [createCheckoutFromAdmin] = useMutation(
-    CREATE_CHECKOUT_FROM_ADMIN_MUTATIONS
+    CREATE_CHECKOUT_FROM_ADMIN_MUTATIONS,
   );
 
   useEffect(() => {
@@ -142,7 +142,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
           Checkout: {
             ...prevPackage.Checkout,
             productInCheckout: prevPackage.Checkout.productInCheckout.filter(
-              (item) => item.product.id !== productToDelete.id
+              (item) => item.product.id !== productToDelete.id,
             ),
           },
         };
@@ -167,7 +167,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
           const itemPrice = item.discountedPrice || item.price;
           return acc + itemPrice * item.productQuantity;
         },
-        0
+        0,
       );
 
       const couponDiscount = packageData.Checkout.Coupons?.discount
@@ -210,7 +210,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
     } catch (error) {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
@@ -244,7 +244,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
           const itemPrice = item.discountedPrice || item.price;
           return acc + itemPrice * item.productQuantity;
         },
-        0
+        0,
       );
 
       const manualDiscount = discount || packageData.Checkout.manualDiscount;
@@ -283,13 +283,13 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
       setTimeout(() => {
         router.replace(
-          `/Orders/Edit-order?orderId=${data.createCheckoutFromAdmin}`
+          `/Orders/Edit-order?orderId=${data.createCheckoutFromAdmin}`,
         );
       }, 1000);
     } catch (error) {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description:
           "Une erreur est survenue lors de la création de la commande.",
         duration: 5000,
@@ -300,7 +300,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
   const handleQuantityChange = useCallback(
     (productId: string, newQuantity: number) => {
-      setShowBackUp(true)
+      setShowBackUp(true);
       setPackageData((prevPackage) => {
         if (!prevPackage) return null;
         return {
@@ -311,18 +311,18 @@ const CreateOrderPage = ({ searchParams }: any) => {
               (product) =>
                 product.product.id === productId
                   ? { ...product, productQuantity: newQuantity }
-                  : product
+                  : product,
             ),
           },
         };
       });
     },
-    []
+    [],
   );
 
   const handleProductSelect = useCallback(
     (selectedProduct: any) => {
-      setShowBackUp(true)
+      setShowBackUp(true);
       setPackageData((prevPackage: any) => {
         if (!prevPackage) {
           // If there's no existing package, create a new one
@@ -358,7 +358,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
         const existingProductIndex =
           prevPackage.Checkout.productInCheckout.findIndex(
-            (item: any) => item.product.id === selectedProduct.id
+            (item: any) => item.product.id === selectedProduct.id,
           );
 
         let updatedProductInCheckout;
@@ -408,7 +408,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
         };
       });
     },
-    [customerInfo, discount]
+    [customerInfo, discount],
   );
 
   if (error) return <p>Error: {error.message}</p>;
@@ -428,6 +428,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
             />
             {productToDelete && (
               <DeleteModal
+                sectionName="Product"
                 productName={productToDelete.name}
                 onConfirm={handleConfirmDelete}
                 onCancel={handleCancelDelete}

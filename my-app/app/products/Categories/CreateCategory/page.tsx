@@ -52,7 +52,7 @@ const CreateCategory = () => {
     if (!smallImage || !description || !name) {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });

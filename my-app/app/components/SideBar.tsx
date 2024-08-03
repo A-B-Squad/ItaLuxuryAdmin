@@ -1,19 +1,29 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Sidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
 import { IoMenu } from "react-icons/io5";
 import { CiHome, CiSettings } from "react-icons/ci";
 import { LuPackage2, LuUsers2, LuNewspaper } from "react-icons/lu";
-import { TbPackages } from "react-icons/tb";
+import { TbBrandGoogleHome, TbPackages } from "react-icons/tb";
+import { TiMessages } from "react-icons/ti";
+import { RiCoupon3Line } from "react-icons/ri";
+
 import { MdKeyboardDoubleArrowUp } from "react-icons/md";
 import { FaRegChartBar } from "react-icons/fa";
 import { FcAdvertising } from "react-icons/fc";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ORDERS_QUERY } from "../graph/queries";
+import { useQuery } from "@apollo/client";
 
 const SideBar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const pathname = usePathname();
+  const { data } = useQuery(ORDERS_QUERY);
+
+  const hasProcessingOrders = data?.getAllPackages.some(
+    (order: { status: string }) => order.status === "PROCESSING",
+  );
 
   const toggleSidebar = () => {
     setIsExpanded(!isExpanded);
@@ -22,13 +32,20 @@ const SideBar = () => {
   // Sidebar items with submenus
   const sidebarItems = [
     {
-      icon: <CiHome size={24} />,
+      icon: <TbBrandGoogleHome size={24} />,
       text: "Tableau de bord",
       href: "/Dashboard",
       subItems: [],
     },
     {
-      icon: <LuPackage2 size={24} />,
+      icon: (
+        <div className="relative">
+          <LuPackage2 size={24} />
+          {hasProcessingOrders && (
+            <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+          )}
+        </div>
+      ),
       text: "Commandes",
       href: "/packages",
       subItems: [
@@ -50,7 +67,7 @@ const SideBar = () => {
       ],
     },
     {
-      icon: <TbPackages size={24} />,
+      icon: <RiCoupon3Line size={24} />,
       text: "Coupons",
       href: "/Coupons",
       subItems: [
@@ -68,9 +85,13 @@ const SideBar = () => {
       icon: <LuUsers2 size={24} />,
       text: "Clients",
       href: "/Clients",
-      subItems: [
-        // { text: "Clients", href: "/c" },
-      ],
+      subItems: [{ text: "Clients", href: "/Clients" }],
+    },
+    {
+      icon: <FaRegChartBar size={24} />,
+      text: "brands",
+      href: "/statistics",
+      subItems: [],
     },
     {
       icon: <FaRegChartBar size={24} />,
@@ -79,17 +100,14 @@ const SideBar = () => {
       subItems: [],
     },
     {
-      icon: <LuNewspaper size={24} />,
-      text: "Factures",
-      href: "/invoices",
-      subItems: [],
-    },
-    {
       icon: <FcAdvertising size={24} />,
       text: "Boutique",
       href: "/Shop",
       subItems: [
-
+        {
+          text: "Meilleures offres",
+          href: "/TopDeals",
+        },
         {
           text: "Publicités en Carrousel",
           href: "/Shop/CarouselAdvertising",
@@ -114,8 +132,19 @@ const SideBar = () => {
           text: "Informations sur l'Entreprise",
           href: "/Shop/CompanyInfo",
         },
-
       ],
+    },
+    {
+      icon: <LuNewspaper size={24} />,
+      text: "Factures",
+      href: "/invoices",
+      subItems: [],
+    },
+    {
+      icon: <TiMessages size={24} />,
+      text: "Boite Messagerie",
+      href: "/Inbox",
+      subItems: [],
     },
     {
       icon: <CiSettings size={24} />,
@@ -131,12 +160,10 @@ const SideBar = () => {
       backgroundColor="#202939"
       style={{
         zIndex: "100",
-        
-        height: "100vh", 
+        height: "100vh",
         position: "sticky",
         top: 0,
         left: 0,
-  
       }}
     >
       <Menu
@@ -187,7 +214,7 @@ const SideBar = () => {
             >
               {isExpanded && item.text}
             </MenuItem>
-          )
+          ),
         )}
       </Menu>
     </Sidebar>

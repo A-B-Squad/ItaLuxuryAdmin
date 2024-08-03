@@ -65,11 +65,13 @@ export const SEARCH_PRODUCTS_QUERY = gql`
           id
           name
           price
+          purchasePrice
           isVisible
           reference
           description
           inventory
           solde
+          broken
           reviews {
             rating
           }
@@ -224,38 +226,49 @@ export const FETCH_ALL_BASKET = gql`
   }
 `;
 
-export const FETCH_ALL_USERS = gql`
-query FetchAllUsers {
-  fetchAllUsers {
-    fullName
-    ContactUs {
+export const ALL_CONTACTS = gql`
+  query AllContactUs {
+    allContactUs {
       id
-      subject
+      userId
       document
+      email
       message
+      subject
     }
-    reviews {
-      productId
-      rating
-      product {
-        reference
-      }
-    }
-    checkout {
-      id
-      Governorate {
-        name
-      }
-      package {
+  }
+`;
+
+export const FETCH_ALL_USERS = gql`
+  query FetchAllUsers {
+    fetchAllUsers {
+      fullName
+      ContactUs {
         id
-        customId
-        status
+        subject
+        document
+        message
+      }
+      reviews {
+        productId
+        rating
+        product {
+          reference
+        }
+      }
+      checkout {
+        id
+        Governorate {
+          name
+        }
+        package {
+          id
+          customId
+          status
+        }
       }
     }
   }
-}
-
-
 `;
 export const PACKAGE_BY_ID_QUERY = gql`
   query PackageById($packageId: ID!) {
@@ -343,6 +356,29 @@ export const COMPANY_INFO_QUERY = gql`
     }
   }
 `;
+export const PRODUCT_IN_TOP_DEALS = gql`
+  query AllDeals {
+    allDeals {
+      id
+      product {
+        id
+        images
+        price
+        name
+        reference
+        productDiscounts {
+          dateOfEnd
+          dateOfStart
+          newPrice
+          price
+          Discount {
+            percentage
+          }
+        }
+      }
+    }
+  }
+`;
 
 export const PRODUCT_BY_ID_QUERY = gql`
   query ProductById($productByIdId: ID!) {
@@ -350,6 +386,7 @@ export const PRODUCT_BY_ID_QUERY = gql`
       id
       name
       price
+      purchasePrice
       isVisible
       reference
       description

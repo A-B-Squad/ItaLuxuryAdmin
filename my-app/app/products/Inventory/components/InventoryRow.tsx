@@ -8,6 +8,9 @@ interface Product {
   reference: string;
   solde: number;
   inventory: number;
+  purchasePrice: number;
+
+  broken: number;
   images: string[];
   categories: any[];
 }
@@ -22,7 +25,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
   inputRef,
   onAddInventory,
 }) => (
-  <tr className="text-gray-700">
+  <tr className="text-gray-700 border">
     <td className="px-4 py-3">
       <div className="flex items-center text-sm">
         <div className="relative w-12 h-12 mr-3 rounded-full md:block">
@@ -46,9 +49,9 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
           <Link
             target="_blank"
             href={{
-              pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
-                product.name,
-              )}`,
+              pathname: `${
+                process.env.NEXT_PUBLIC_BASE_URL_DOMAIN
+              }/products/tunisie/${prepRoute(product.name)}`,
               query: {
                 productId: product.id,
                 collection: [
@@ -70,16 +73,21 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
         </div>
       </div>
     </td>
-    <td className="text-center px-4 py-3 text-ms font-semibold">
+    <td className="text-center px-4 py-3 text-ms font-semibold border">
       {product.reference}
     </td>
-    <td className="text-center px-4 py-3 text-ms font-semibold">
-      {product.solde}
+    <td className="text-center px-4 py-3 text-sm font-semibold border">
+      {product.purchasePrice.toFixed(3)} DT
     </td>
-    <td className="text-center px-4 py-3 text-sm font-semibold">
+
+    <td className="text-center px-4 py-3 text-ms font-semibold border">
+      {product.broken}
+    </td>
+
+    <td className="text-center px-4 py-3 text-sm font-semibold border">
       {product.inventory}
     </td>
-    <td className="text-center px-4 py-3 text-sm">
+    <td className="text-center px-4 py-3 text-sm border">
       <div className="flex items-center justify-center space-x-2">
         <input
           type="number"

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { gql } from "@apollo/client";
 
-import SearchBar from "../../components/SearchBar";
+import SearchBarForTables from "@/app/components/SearchBarForTables";
 import SmallSpinner from "../../components/SmallSpinner";
 import Pagination from "../../components/Paginations";
 import ReviewsTable from "./components/ReviewsTable";
@@ -87,7 +87,7 @@ const Reviews: React.FC<InventoryProps> = ({ searchParams }) => {
           </span>
         </h1>
         <div className="mt-5 ">
-          <SearchBar page="Products/Reviews" />
+          <SearchBarForTables page="Products/Reviews" />
           {loading ? (
             <div className="flex justify-center ">
               <SmallSpinner />

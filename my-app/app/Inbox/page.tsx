@@ -1,8 +1,8 @@
 import React from "react";
-import ClientsPage from "./clientsPage";
+import InboxPage from "./InboxPage";
 
 const page = () => {
-  return <ClientsPage />;
+  return <InboxPage />;
 };
 
 export default page;
