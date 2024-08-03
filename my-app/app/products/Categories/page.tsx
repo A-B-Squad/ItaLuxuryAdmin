@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
 import Link from "next/link";
 import { DELETE_CATEGORIES_MUTATIONS } from "../../graph/mutations";
-import SearchBar from "../../components/SearchBar";
+import SearchBarForTables from "@/app/components/SearchBarForTables";
 import Loading from "./loading";
 import { CiSquareMinus, CiSquarePlus } from "react-icons/ci";
 import AddCategories from "./AddCategoriesButton";
@@ -17,7 +17,7 @@ import prepRoute from "../../Helpers/_prepRoute";
 const Categories = ({ searchParams }: any) => {
   const [categories, setCategories] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<{
@@ -41,7 +41,7 @@ const Categories = ({ searchParams }: any) => {
     if (query) {
       filteredCategories = filteredCategories.filter(
         (category: { name: string }) =>
-          category.name.toLowerCase().includes(query.toLowerCase())
+          category.name.toLowerCase().includes(query.toLowerCase()),
       );
     }
     return filteredCategories;
@@ -149,9 +149,11 @@ const Categories = ({ searchParams }: any) => {
               </button>
               <Link
                 target="_blank"
-                href={`http://localhost:3000/Collections/tunisie/${prepRoute(
-                  category.name
-                )}/?category=${category.id}`}
+                href={`${
+                  process.env.NEXT_PUBLIC_BASE_URL_DOMAIN
+                }/Collections/tunisie/${prepRoute(category.name)}/?category=${
+                  category.id
+                }`}
                 className="p-2 hover:opacity-40 transition-opacity shadow-md w-10 h-10 rounded-full border-2"
               >
                 <BiShow size={20} />
@@ -161,7 +163,7 @@ const Categories = ({ searchParams }: any) => {
         </tr>
         {isExpanded &&
           category.subcategories?.map((subcategory: any) =>
-            renderCategoryRow(subcategory, depth + 1)
+            renderCategoryRow(subcategory, depth + 1),
           )}
       </>
     );
@@ -184,31 +186,26 @@ const Categories = ({ searchParams }: any) => {
         </span>
       </h1>
       <div className="mt-5">
-        <SearchBar page="Products/Categories" />
+        <SearchBarForTables page="Products/Categories" />
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-sm font-semibold text-gray-900 bg-gray-100 border-b border-gray-600">
+          <table className="w-full shadow-md">
+            <thead className="bg-mainColorAdminDash text-white">
+              <tr>
                 <th className="px-4 py-3 text-left">Nom</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-3 text">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white border">
+            <tbody className="bg-white">
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((category) =>
-                  renderCategoryRow(category)
+                  renderCategoryRow(category),
                 )
               ) : (
-                <>
-                  <tr className="bg-gray-50">
-                    <td className="text-center  w-full py-5   ">
-                      Aucune catégorie trouvée
-                    </td>
-                    <td className="text-center  w-full py-5 ">
-                      
-                    </td>
-                  </tr>
-                </>
+                <tr>
+                  <td colSpan={2} className="text-center py-5">
+                    Aucune catégorie trouvée
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

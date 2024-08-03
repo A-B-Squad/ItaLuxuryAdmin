@@ -65,11 +65,13 @@ export const SEARCH_PRODUCTS_QUERY = gql`
           id
           name
           price
+          purchasePrice
           isVisible
           reference
           description
           inventory
           solde
+          broken
           reviews {
             rating
           }
@@ -174,15 +176,115 @@ export const ORDERS_QUERY = gql`
     }
   }
 `;
+export const GET_GOVERMENT_INFO = gql`
+  query AllGovernorate {
+    allGovernorate {
+      id
+      name
+    }
+  }
+`;
+export const GET_ALL_USERS = gql`
+  query FetchAllUsers {
+    fetchAllUsers {
+      id
+      fullName
+      email
+    }
+  }
+`;
+
+export const FETCH_ALL_BASKET = gql`
+  query FetchAllBasket {
+    fetchAllBasket {
+      id
+      userId
+      quantity
+      Product {
+        id
+        reference
+        name
+        price
+        images
+        productDiscounts {
+          newPrice
+        }
+        categories {
+          id
+          name
+          subcategories {
+            id
+            name
+            subcategories {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const ALL_CONTACTS = gql`
+  query AllContactUs {
+    allContactUs {
+      id
+      userId
+      document
+      email
+      message
+      subject
+    }
+  }
+`;
+
+export const FETCH_ALL_USERS = gql`
+  query FetchAllUsers {
+    fetchAllUsers {
+      fullName
+      ContactUs {
+        id
+        subject
+        document
+        message
+      }
+      reviews {
+        productId
+        rating
+        product {
+          reference
+        }
+      }
+      checkout {
+        id
+        Governorate {
+          name
+        }
+        package {
+          id
+          customId
+          status
+        }
+      }
+    }
+  }
+`;
 export const PACKAGE_BY_ID_QUERY = gql`
   query PackageById($packageId: ID!) {
     packageById(packageId: $packageId) {
+      id
       comments
       createdAt
       customId
       status
       Checkout {
-        total
+        id
+        User {
+          fullName
+          email
+          number
+        }
         Coupons {
           discount
         }
@@ -191,15 +293,27 @@ export const PACKAGE_BY_ID_QUERY = gql`
         phone
         address
         governorateId
+        manualDiscount
+        total
         productInCheckout {
+          id
           productQuantity
           price
           discountedPrice
           product {
             id
             name
+            inventory
             reference
             images
+            productDiscounts {
+              dateOfEnd
+              price
+              newPrice
+              Discount {
+                percentage
+              }
+            }
           }
         }
       }
@@ -242,6 +356,29 @@ export const COMPANY_INFO_QUERY = gql`
     }
   }
 `;
+export const PRODUCT_IN_TOP_DEALS = gql`
+  query AllDeals {
+    allDeals {
+      id
+      product {
+        id
+        images
+        price
+        name
+        reference
+        productDiscounts {
+          dateOfEnd
+          dateOfStart
+          newPrice
+          price
+          Discount {
+            percentage
+          }
+        }
+      }
+    }
+  }
+`;
 
 export const PRODUCT_BY_ID_QUERY = gql`
   query ProductById($productByIdId: ID!) {
@@ -249,6 +386,7 @@ export const PRODUCT_BY_ID_QUERY = gql`
       id
       name
       price
+      purchasePrice
       isVisible
       reference
       description

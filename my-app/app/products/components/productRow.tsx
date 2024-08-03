@@ -30,7 +30,6 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
               }
               layout="fill"
               objectFit="contain"
-
               alt=""
               loading="lazy"
             />
@@ -44,15 +43,18 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           </div>
         </div>
       </td>
-      <td className="Price text-center px-4 py-3 text-ms font-semibold border">
-        {product.price.toFixed(3)}
+      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+        {product.purchasePrice.toFixed(3)} DT
       </td>
-      <td className="Discount px-4 text-center py-3 text-ms font-semibold border">
+      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+        {product.price.toFixed(3)} DT
+      </td>
+      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
         {product.productDiscounts.length > 0
           ? product.productDiscounts[0].newPrice.toFixed(3) + "TND"
           : "_________"}
       </td>
-      <td className="Discount px-4 text-center py-3 text-ms font-semibold border">
+      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
         {product.productDiscounts.length > 0
           ? formatDate(product.productDiscounts[0].dateOfEnd)
           : "_________"}
@@ -89,8 +91,8 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           <Link
             target="_blank"
             href={{
-              pathname: `http://localhost:3000/products/tunisie/${prepRoute(
-                product.name
+              pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
+                product.name,
               )}`,
               query: {
                 productId: product.id,

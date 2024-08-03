@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { CREATE_BANNER_ADVERTISEMENT_MUTATIONS } from "@/app/graph/mutations";
 import BackUp from "@/app/components/BackUp";
@@ -17,6 +17,8 @@ interface ImageData {
 
 const BannerAdvertisingPage = () => {
   const { toast } = useToast();
+
+  const [showBackUp, setShowBackUp] = useState(false);
 
   // State for input fields
   const [InputFieldOfTopDealsBanner, setInputFieldOfTopDealsBanner] =
@@ -82,10 +84,26 @@ const BannerAdvertisingPage = () => {
   };
 
   // Function to check if any input field has content
-  const hasContent = () =>
-    (InputFieldLessThen20Banner.images && InputFieldLessThen20Banner.link) ||
-    (InputFieldOfTopDealsBanner.images && InputFieldOfTopDealsBanner.link) ||
-    (InputFieldPromotionBanner.images && InputFieldPromotionBanner.link);
+  const hasContent = () => {
+    return (
+      (InputFieldLessThen20Banner.images && InputFieldLessThen20Banner.link) ||
+      (InputFieldOfTopDealsBanner.images && InputFieldOfTopDealsBanner.link) ||
+      (InputFieldPromotionBanner.images && InputFieldPromotionBanner.link)
+    );
+  };
+
+  // useEffect to manage showBackUp state
+  useEffect(() => {
+    if (hasContent()) {
+      setShowBackUp(true);
+    } else {
+      setShowBackUp(false);
+    }
+  }, [
+    InputFieldOfTopDealsBanner,
+    InputFieldLessThen20Banner,
+    InputFieldPromotionBanner,
+  ]);
 
   return (
     <div className="advertising">
@@ -103,7 +121,7 @@ const BannerAdvertisingPage = () => {
           inputField={InputFieldPromotionBanner}
         />
       </div>
-      {hasContent() && <BackUp onSave={handleSave} />}
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
     </div>
   );
 };

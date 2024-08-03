@@ -3,6 +3,7 @@ import OrderRow from "./OrderRow";
 
 interface Order {
   id: string;
+  customId: string;
   createdAt: string;
   Checkout: {
     userName: string;
@@ -24,35 +25,39 @@ const OrderTable: React.FC<OrderTableProps> = ({
   translateStatus,
   generateInvoice,
 }) => (
-  <section className=" mx-auto py-6   relative">
-    <div className="w-full mb-8 overflow-hidden rounded-lg">
-      <div className="w-full ">
-        <table className="w-full">
-          <thead>
-            <tr className="text-center">
-              <th>Réf</th>
-              <th>Date de création</th>
-              <th>Client</th>
-              <th>Statut</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order: any) => (
-              <OrderRow
-                key={order.id}
-                order={order}
-                formatDate={formatDate}
-                translateStatus={translateStatus}
-                generateInvoice={generateInvoice}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+  <div className="overflow-x-auto">
+    <table className="min-w-full bg-white">
+      <thead className="bg-gray-800 text-white">
+        <tr>
+          <th className="py-3 px-4 text-left">Réf</th>
+          <th className="py-3 px-4 text-left">Date de création</th>
+          <th className="py-3 px-4 text-left">Client</th>
+          <th className="py-3 px-4 text-left">Statut</th>
+          <th className="py-3 px-4 text-left">Total</th>
+          <th className="py-3 px-4 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.length === 0 ? (
+          <tr>
+            <td colSpan={6} className="text-center py-4">
+              Aucune commande disponible
+            </td>
+          </tr>
+        ) : (
+          orders.map((order: Order) => (
+            <OrderRow
+              key={order.id}
+              order={order}
+              formatDate={formatDate}
+              translateStatus={translateStatus}
+              generateInvoice={generateInvoice}
+            />
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
 );
 
 export default OrderTable;

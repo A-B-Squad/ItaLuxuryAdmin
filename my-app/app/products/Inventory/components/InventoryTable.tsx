@@ -6,6 +6,8 @@ interface Product {
   reference: string;
   solde: number;
   inventory: number;
+  purchasePrice: number;
+  broken: number;
   images: string[];
   categories: any[];
 }
@@ -24,13 +26,16 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
     <div className="w-full mb-8 overflow-hidden rounded-lg">
       <div className="w-full overflow-x-auto">
         <table className="w-full border shadow-md">
-          <thead>
-            <tr className="text-sm font-semibold tracking-wide text-center text-gray-900 bg-gray-100 uppercase border-b border-gray-600">
-              <th className="px-4 py-3">Nom</th>
-              <th className="px-4 py-3">SKU</th>
-              <th className="px-4 py-3">Commandes</th>
-              <th className="px-4 py-3">Inventaire</th>
-              <th className="px-4 py-3">Ajouter à la quantité disponible</th>
+          <thead className="bg-mainColorAdminDash text-white">
+            <tr>
+              <th className="px-4 py-3 text-left">Nom</th>
+              <th className="px-4 py-3 text-center">SKU</th>
+              <th className="px-4 py-3 text-center">Prix d'achat</th>
+              <th className="px-4 py-3 text-center">Casse</th>
+              <th className="px-4 py-3 text-center">Inventaire</th>
+              <th className="px-4 py-3 text-center">
+                Ajouter à la quantité disponible
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -45,11 +50,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               ))
             ) : (
               <tr>
-                <td
-                className="py-5 text-center" 
-                >
-                  Aucun produit disponible
-                </td>
+                <td className="py-5 text-center">Aucun produit disponible</td>
               </tr>
             )}
           </tbody>

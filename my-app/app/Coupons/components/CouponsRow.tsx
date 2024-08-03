@@ -22,7 +22,7 @@ const CouponsRow = ({ coupons, onDeleteClick }: any) => {
       </td>
       <td className="text-center  w-5 text-sm   font-semibold">
         {coupons.available ? (
-          <p className="bg-green-500 text-white   py-1 rounded-md">
+          <p className="bg-mainColorAdminDash text-white   py-1 rounded-md">
             Non Utilisé
           </p>
         ) : (

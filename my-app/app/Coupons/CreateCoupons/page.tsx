@@ -31,14 +31,12 @@ const CreateCoupons = () => {
     if (!couponCode || percentage === "") {
       toast({
         title: "Erreur de création",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
       return;
     }
-    console.log(couponCode,percentage);
-    
 
     createCoupons({
       variables: {
@@ -63,7 +61,7 @@ const CreateCoupons = () => {
       onError(error) {
         toast({
           title: "Erreur de création",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description:
             error.message ||
             "Une erreur est survenue lors de la création du coupon.",
@@ -129,7 +127,7 @@ const CreateCoupons = () => {
         <div className="flex items-center justify-center">
           <button
             type="submit"
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="bg-mainColorAdminDash hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           >
             Créer le Coupon
           </button>

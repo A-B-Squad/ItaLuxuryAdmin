@@ -1,22 +1,38 @@
+import React from "react";
 import SmallSpinner from "@/app/components/SmallSpinner";
 import CouponsRow from "./CouponsRow";
 
-const CouponsTable = ({ coupons, onDeleteClick, loading }: any) => (
-  <section className="container mx-auto py-6 px-3  relative">
-    <div className="w-full mb-8 overflow-hidden rounded-lg">
+interface Coupon {
+  id: string;
+  // Add other properties as needed
+}
+
+interface CouponsTableProps {
+  coupons: Coupon[];
+  onDeleteClick: any;
+  loading: boolean;
+}
+
+const CouponsTable: React.FC<CouponsTableProps> = ({
+  coupons,
+  onDeleteClick,
+  loading,
+}) => (
+  <section className="container mx-auto py-6 px-3 relative">
+    <div className="w-full mb-8 overflow-hidden rounded-lg shadow-md">
       <div className="w-full overflow-x-auto">
-        <table className="w-full border shadow-md">
-          <thead>
-            <tr className="text-sm font-semibold tracking-wide text-center text-gray-900 bg-gray-100 uppercase border-b border-gray-600">
-              <th className="px-4 py-3">Coupon Code</th>
-              <th className="px-4 py-3">Available</th>
-              <th className="px-4 py-3">Discount %</th>
-              <th className="px-4 py-3">Utilisée</th>
-              <th className="px-4 py-3">checkout Id</th>
-              <th className="px-4 py-3">Edits</th>
+        <table className="w-full">
+          <thead className="bg-gray-800 text-white">
+            <tr>
+              <th className="px-4 py-3 text-left">Coupon Code</th>
+              <th className="px-4 py-3 text-left">Available</th>
+              <th className="px-4 py-3 text-left">Discount %</th>
+              <th className="px-4 py-3 text-left">Utilisée</th>
+              <th className="px-4 py-3 text-left">Checkout Id</th>
+              <th className="px-4 py-3 text-left">Edits</th>
             </tr>
           </thead>
-          <tbody className="bg-white border p-2 ">
+          <tbody className="bg-white">
             {loading ? (
               <tr>
                 <td colSpan={6} className="h-64">
@@ -24,7 +40,7 @@ const CouponsTable = ({ coupons, onDeleteClick, loading }: any) => (
                 </td>
               </tr>
             ) : (
-              coupons.map((coupon: any) => (
+              coupons.map((coupon: Coupon) => (
                 <CouponsRow
                   key={coupon.id}
                   coupons={coupon}
@@ -38,4 +54,5 @@ const CouponsTable = ({ coupons, onDeleteClick, loading }: any) => (
     </div>
   </section>
 );
+
 export default CouponsTable;

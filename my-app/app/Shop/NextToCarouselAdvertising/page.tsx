@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS } from "@/app/graph/mutations";
 import BackUp from "@/app/components/BackUp";
@@ -17,7 +17,7 @@ interface ImageData {
 
 const SideAdvertisingPage = () => {
   const { toast } = useToast();
-
+  const [showBackUp, setShowBackUp] = useState(false);
   // State for input fields
   const [InputFieldOfNextToCarouselAds1, setInputFieldOfNextToCarouselAds1] =
     useState<ImageData>({
@@ -80,6 +80,20 @@ const SideAdvertisingPage = () => {
       InputFieldOfNextToCarouselAds2.link) ||
     (InputFieldOfNextToCarouselAds1.images &&
       InputFieldOfNextToCarouselAds1.link);
+
+  // useEffect to manage showBackUp state
+  useEffect(() => {
+    if (hasContent()) {
+      setShowBackUp(true);
+    } else {
+      setShowBackUp(false);
+    }
+  }, [
+    InputFieldOfNextToCarouselAds1.images,
+    InputFieldOfNextToCarouselAds1.link,
+    InputFieldOfNextToCarouselAds2.images,
+    InputFieldOfNextToCarouselAds2.link,
+  ]);
   return (
     <div className="advertising">
       <div className="container flex flex-col gap-8  pb-32 h-full relative divide-y">
@@ -92,7 +106,7 @@ const SideAdvertisingPage = () => {
           inputField={InputFieldOfNextToCarouselAds2}
         />
       </div>
-      {hasContent() && <BackUp onSave={handleSave} />}
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
     </div>
   );
 };

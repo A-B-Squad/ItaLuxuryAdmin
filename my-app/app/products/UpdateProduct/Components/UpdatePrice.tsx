@@ -22,6 +22,8 @@ const UpdatePrice = ({
   setManualDiscountPrice,
   originalPrice,
   setOriginalPrice,
+  purchasePrice,
+  setPurchasePrice,
   dateOfEndDiscount,
   setDateOfEndDiscount,
   dateOfStartDiscount,
@@ -46,6 +48,7 @@ const UpdatePrice = ({
   const handleDiscountPercentageChange = (value: string) => {
     const percentage = parseInt(value) || 0;
     setDiscountPercentage(percentage);
+    console.log(percentage);
 
     // Find the corresponding discount option and get its ID
     const selectedOption = discountOptions.find(
@@ -54,6 +57,7 @@ const UpdatePrice = ({
 
     if (selectedOption) {
       setSelectedDicountId(selectedOption.id);
+      console.log(selectedOption, "eeeeeeeeeeeeeeee");
     } else {
       setSelectedDicountId(null);
     }
@@ -89,7 +93,10 @@ const UpdatePrice = ({
 
     setDiscountedPrice(finalPrice.toFixed(2));
   };
-
+  const handlePurchasePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const price = parseFloat(e.target.value) || 0;
+    setPurchasePrice(price);
+  };
   const calculateManualDiscountedPrice = (
     price: number,
     discountPrice: number,
@@ -107,9 +114,24 @@ const UpdatePrice = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto">
       <h1 className="text-lg font-bold mb-4">Tarification</h1>
+
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2">
-          Prix
+          Prix d'achat
+        </label>
+        <input
+          type="number"
+          value={purchasePrice}
+          onChange={handlePurchasePriceChange}
+          min="0"
+          step="0.01"
+          className="w-full p-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Prix de vente
         </label>
         <input
           type="number"

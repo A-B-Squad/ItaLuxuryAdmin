@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useCallback, useEffect } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
@@ -6,7 +6,7 @@ import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
 const useProducts = (
   query: string | undefined,
   order: "ASC" | "DESC" | undefined,
-  pageSize: number
+  pageSize: number,
 ) => {
   const [products, setProducts] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -16,8 +16,6 @@ const useProducts = (
   const [searchProducts] = useLazyQuery(SEARCH_PRODUCTS_QUERY);
 
   const fetchProducts = useCallback(async () => {
-    console.log(page,pageSize);
-    
     setLoading(true);
     try {
       const { data } = await searchProducts({

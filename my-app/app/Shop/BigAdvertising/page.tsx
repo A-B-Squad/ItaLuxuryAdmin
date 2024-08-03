@@ -23,13 +23,13 @@ const Loader = () => (
 
 const BigAdvertisingPage = () => {
   const { toast } = useToast();
-
+  const [showBackUp, setShowBackUp] = useState(false);
   const [image, setImage] = useState<ImageData>({
     urlImage: "",
     linkImage: "",
   });
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const { data: centerCarouselAds, loading: loadingCenterCarouselAds } =
@@ -82,6 +82,7 @@ const BigAdvertisingPage = () => {
   }, [centerCarouselAds]);
 
   const handleSuccessUpload = (result: any) => {
+    setShowBackUp(true);
     const file = result.info;
     if (file) {
       setImage({ urlImage: file.url, linkImage: image.linkImage });
@@ -94,6 +95,7 @@ const BigAdvertisingPage = () => {
   };
 
   const handleInputChange = (field: keyof ImageData, value: string) => {
+    setShowBackUp(true);
     setImage((prevImage) => ({
       ...prevImage,
       [field]: value,
@@ -185,7 +187,7 @@ const BigAdvertisingPage = () => {
           </div>
         </div>
       </div>
-      {image.urlImage && image.linkImage && <BackUp onSave={handleSave} />}
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
     </div>
   );
 };

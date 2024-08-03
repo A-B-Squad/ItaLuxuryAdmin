@@ -22,6 +22,8 @@ const AddPrice = ({
   setManualDiscountPrice,
   originalPrice,
   setOriginalPrice,
+  purchasePrice,
+  setPurchasePrice,
   dateOfEndDiscount,
   setDateOfEndDiscount,
   dateOfStartDiscount,
@@ -83,7 +85,6 @@ const AddPrice = ({
     const discount = (price * percentage) / 100;
     const finalPrice = price - discount;
     setManualDiscountPrice(finalPrice);
-
     setDiscountedPrice(finalPrice.toFixed(2));
   };
 
@@ -96,8 +97,9 @@ const AddPrice = ({
     setDiscountedPrice(finalPrice.toFixed(2));
   };
 
-  const formatDate = (date: Date | null): string => {
-    return date ? format(date, "yyyy-MM-dd HH:mm:ss.SSS") : "";
+  const handlePurchasePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const price = parseFloat(e.target.value) || 0;
+    setPurchasePrice(price);
   };
 
   if (loading) return <p>Loading...</p>;
@@ -108,9 +110,24 @@ const AddPrice = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto">
       <h1 className="text-lg font-bold mb-4">Tarification</h1>
+
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2">
-          Prix
+          Prix d'achat
+        </label>
+        <input
+          type="number"
+          value={purchasePrice}
+          onChange={handlePurchasePriceChange}
+          min="0"
+          step="0.01"
+          className="w-full p-2 border border-gray-300 rounded-md"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Prix de vente
         </label>
         <input
           type="number"

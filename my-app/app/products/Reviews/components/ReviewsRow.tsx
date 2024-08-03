@@ -50,8 +50,8 @@ const ReviewsRow: React.FC<InventoryRowProps> = ({ product }) => {
             <Link
               target="_blank"
               href={{
-                pathname: `http://localhost:3000/products/tunisie/${prepRoute(
-                  product.name
+                pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
+                  product.name,
                 )}`,
                 query: {
                   productId: product.id,

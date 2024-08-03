@@ -4,12 +4,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { COUPONS_QUERY } from "@/app/graph/queries";
 
-import SearchBar from "../components/SearchBar";
+import SearchBarForTables from "../components/SearchBarForTables";
 import SmallSpinner from "../components/SmallSpinner";
 import Pagination from "../components/Paginations";
 import CouponsTable from "./components/CouponsTable";
-import DeleteModal from "./components/DeleteModal";
 import { DELETE_COUPONS_MUTATIONS } from "../graph/mutations";
+import DeleteModal from "../components/DeleteModal";
 
 interface Coupon {
   id: string;
@@ -70,7 +70,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
       result = result.filter(
         (coupon) =>
           coupon.code.toLowerCase().includes(q.toLowerCase()) ||
-          coupon.checkout[0]?.id.toLowerCase().includes(q.toLowerCase())
+          coupon.checkout[0]?.id.toLowerCase().includes(q.toLowerCase()),
       );
     }
 
@@ -79,7 +79,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
       result.sort((a, b) =>
         order === "UNUSED"
           ? Number(a.available) - Number(b.available)
-          : Number(b.available) - Number(a.available)
+          : Number(b.available) - Number(a.available),
       );
     }
 
@@ -117,7 +117,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
           </span>
         </h1>
         <div className="mt-5 ">
-          <SearchBar page="Coupons" />
+          <SearchBarForTables page="Coupons" />
           {loading ? (
             <div className="flex justify-center ">
               <SmallSpinner />
@@ -126,7 +126,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
             <CouponsTable
               coupons={filteredCoupons.slice(
                 (page - 1) * PAGE_SIZE,
-                page * PAGE_SIZE
+                page * PAGE_SIZE,
               )}
               onDeleteClick={(coupon: Coupon) => {
                 setCouponsToDelete(coupon.id);
@@ -146,6 +146,7 @@ const Coupons: React.FC<InventoryProps> = ({ searchParams }) => {
       </div>
       {showDeleteModal && couponsToDelete && (
         <DeleteModal
+          sectionName="Coupons"
           onConfirm={handleDeleteCoupons}
           onCancel={() => setShowDeleteModal(false)}
         />

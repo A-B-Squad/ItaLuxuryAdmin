@@ -37,6 +37,8 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
+
   const [dateOfStartDiscount, setDateOfStartDiscount] = useState<Date | null>(
     null,
   );
@@ -73,6 +75,7 @@ const UpdateProduct = ({ searchParams }: any) => {
       setReference(product.reference);
       setUploadedImages(product.images);
       setOriginalPrice(product.price);
+      setPurchasePrice(product.purchasePrice);
       setVisibility(product.isVisible);
       setSelectedColor(product.Colors?.id);
       setBrand(product.Brand?.id);
@@ -122,7 +125,7 @@ const UpdateProduct = ({ searchParams }: any) => {
     ) {
       toast({
         title: "Erreur de mise à jour",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
@@ -137,14 +140,12 @@ const UpdateProduct = ({ searchParams }: any) => {
     };
 
     const hasDiscount = manualDiscountPrice || selectedDiscountId;
-    console.log(discount);
 
     if (!!hasDiscount) {
-      console.log(hasDiscount);
       if (!discount.dateOfStart || !discount.dateOfEnd) {
         toast({
           title: "Erreur de mise à jour",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description:
             "Veuillez remplir les dates de début et de fin de remise.",
           duration: 5000,
@@ -154,7 +155,7 @@ const UpdateProduct = ({ searchParams }: any) => {
       if (discountType === "manual" && !manualDiscountPrice) {
         toast({
           title: "Erreur de mise à jour",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description: "Veuillez fournir un prix de remise manuel.",
           duration: 5000,
         });
@@ -163,7 +164,7 @@ const UpdateProduct = ({ searchParams }: any) => {
       if (discountType === "percentage" && !selectedDiscountId) {
         toast({
           title: "Erreur de mise à jour",
-          className: "text-white bg-red-600 border-0",
+          variant: "destructive",
           description: "Veuillez sélectionner un type de remise.",
           duration: 5000,
         });
@@ -174,7 +175,7 @@ const UpdateProduct = ({ searchParams }: any) => {
     if (!originalPrice && !hasDiscount) {
       toast({
         title: "Erreur de mise à jour",
-        className: "text-white bg-red-600 border-0",
+        variant: "destructive",
         description: "Veuillez fournir un prix ou une remise.",
         duration: 5000,
       });
@@ -199,6 +200,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         inventory: stock,
         isVisible: visibility,
         price: originalPrice,
+        purchasePrice,
         colorsId: selectedColor,
         reference,
         ...(hasDiscount && { discount: [discount] }),
@@ -218,6 +220,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         setDiscountPercentage(0);
         setManualDiscountPrice(0);
         setOriginalPrice(0);
+        setPurchasePrice(0);
         setDateOfStartDiscount(null);
         setDateOfEndDiscount(null);
         setSelectedDicountId(null);
@@ -277,6 +280,8 @@ const UpdateProduct = ({ searchParams }: any) => {
             setManualDiscountPrice={setManualDiscountPrice}
             originalPrice={originalPrice}
             setOriginalPrice={setOriginalPrice}
+            purchasePrice={purchasePrice}
+            setPurchasePrice={setPurchasePrice}
             dateOfEndDiscount={dateOfEndDiscount}
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}
