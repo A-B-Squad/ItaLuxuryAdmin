@@ -15,6 +15,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ORDERS_QUERY } from "../graph/queries";
 import { useQuery } from "@apollo/client";
+import { SiMoneygram } from "react-icons/si";
 
 const SideBar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -94,6 +95,12 @@ const SideBar = () => {
       subItems: [],
     },
     {
+      icon: <SiMoneygram size={24} />,
+      text: "Meilleures ventes",
+      href: "/TopSells",
+      subItems: [],
+    },
+    {
       icon: <FaRegChartBar size={24} />,
       text: "Statistiques",
       href: "/statistics",
@@ -107,6 +114,26 @@ const SideBar = () => {
         {
           text: "Meilleures offres",
           href: "/TopDeals",
+        },
+        {
+          text: "Section visibility",
+          href: "/Shop/SectionVisibility",
+        },
+        {
+          text: "Publicités en Carrousel",
+          href: "/Shop/CarouselAdvertising",
+        },
+        {
+          text: "Creation de Marques",
+          href: "/Shop/Brands",
+        },
+        {
+          text: "Client Service",
+          href: "/Shop/CilentServices",
+        },
+        {
+          text: "Creation de Color",
+          href: "/Shop/Colors",
         },
         {
           text: "Publicités en Carrousel",

@@ -14,6 +14,7 @@ import UpdateColors from "./Components/UpdateColors";
 import { useToast } from "@/components/ui/use-toast";
 import { PRODUCT_BY_ID_QUERY } from "../../graph/queries";
 import Load from "./Load";
+import { formatDate } from "@/app/Helpers/_formatDate";
 
 interface Attribute {
   name: string;
@@ -26,9 +27,9 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [attributes, setAttributes] = useState<Attribute[]>([
     { name: "", value: "" },
   ]);
-  const [discountType, setDiscountType] = useState<"percentage" | "manual">(
-    "percentage",
-  );
+  const [discountType, setDiscountType] = useState<
+    "empty" | "percentage" | "manual"
+  >("empty");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -38,24 +39,27 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
   const [purchasePrice, setPurchasePrice] = useState<number>(0);
+  const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
 
-  const [dateOfStartDiscount, setDateOfStartDiscount] = useState<Date | null>(
-    null,
-  );
-  const [dateOfEndDiscount, setDateOfEndDiscount] = useState<Date | null>(null);
+  const [dateOfStartDiscount, setDateOfStartDiscount] = useState<
+    string | Date | null
+  >(null);
+  const [dateOfEndDiscount, setDateOfEndDiscount] = useState<
+    string | Date | null
+  >(null);
   const [selectedDiscountId, setSelectedDicountId] = useState<string | null>(
     null,
   );
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<boolean>(true);
-  const [discountedPrice, setDiscountedPrice] = useState<string>("0.00");
+  const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
 
   const [selectedIds, setSelectedIds] = useState({
     categoryId: "",
     subcategoryId: "",
     subSubcategoryId: "",
   });
-  const [brand, setBrand] = useState<string | null>(null);
+  const [brandId, setBrand] = useState<string | null>(null);
   const [updateProductMutation] = useMutation(UPDATE_PRODUCT_MUTATIONS);
 
   const {
@@ -112,6 +116,12 @@ const UpdateProduct = ({ searchParams }: any) => {
           setDiscountType("manual");
           setManualDiscountPrice(product.price - discount.newPrice);
         }
+        const startDate = formatDate(discount.dateOfStart);
+        const endDate = formatDate(discount.dateOfEnd);
+        setDateOfStartDiscount(startDate);
+        setDateOfEndDiscount(endDate);
+      } else {
+        setDiscountType("empty");
       }
     }
   }, [productDataById, loading, error]);
@@ -132,17 +142,10 @@ const UpdateProduct = ({ searchParams }: any) => {
       return;
     }
 
-    const discount = {
-      dateOfEnd: dateOfEndDiscount,
-      dateOfStart: dateOfStartDiscount,
-      discountId: selectedDiscountId,
-      newPrice: manualDiscountPrice,
-    };
+    const hasDiscount = isDiscountEnabled;
 
-    const hasDiscount = manualDiscountPrice || selectedDiscountId;
-
-    if (!!hasDiscount) {
-      if (!discount.dateOfStart || !discount.dateOfEnd) {
+    if (hasDiscount) {
+      if (!dateOfEndDiscount || !dateOfStartDiscount) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
@@ -188,7 +191,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         attributeInputs: attributes.filter(
           (attr) => attr.name.trim() !== "" && attr.value.trim() !== "",
         ),
-        brandId: brand,
+        brandId: brandId !== "empty" ? brandId : null,
         categories: [
           selectedIds.categoryId,
           selectedIds.subcategoryId,
@@ -203,36 +206,61 @@ const UpdateProduct = ({ searchParams }: any) => {
         purchasePrice,
         colorsId: selectedColor,
         reference,
-        ...(hasDiscount && { discount: [discount] }),
+        ...(hasDiscount &&
+          discountType === "manual" && {
+            discount: [
+              {
+                newPrice: finalDiscountPrice,
+                dateOfStart: dateOfStartDiscount,
+                dateOfEnd: dateOfEndDiscount,
+              },
+            ],
+          }),
+        ...(hasDiscount &&
+          discountType === "percentage" && {
+            discount: [
+              {
+                discountId: selectedDiscountId,
+                dateOfStart: dateOfStartDiscount,
+                dateOfEnd: dateOfEndDiscount,
+                newPrice: finalDiscountPrice,
+              },
+            ],
+          }),
       },
     };
 
     updateProductMutation({
       variables: productData,
+    });
+
+    updateProductMutation({
+      variables: productData,
       onCompleted() {
-        // Reset all inputs
-        setAttributes([{ name: "", value: "" }]);
-        setUploadedImages([]);
-        setTitle("");
-        setDescription("");
-        setStock(0);
-        setReference("");
-        setDiscountPercentage(0);
-        setManualDiscountPrice(0);
-        setOriginalPrice(0);
-        setPurchasePrice(0);
-        setDateOfStartDiscount(null);
-        setDateOfEndDiscount(null);
-        setSelectedDicountId(null);
-        setSelectedColor(null);
-        setVisibility(true);
-        setSelectedIds({
-          categoryId: "",
-          subcategoryId: "",
-          subSubcategoryId: "",
-        });
-        setBrand("");
-        window.close();
+        //   // Reset all inputs
+        //   setAttributes([{ name: "", value: "" }]);
+        //   setUploadedImages([]);
+        //   setTitle("");
+        //   setDescription("");
+        //   setStock(0);
+        //   setReference("");
+        //   setDiscountPercentage(0);
+        //   setManualDiscountPrice(0);
+        //   setOriginalPrice(0);
+        //   setPurchasePrice(0);
+        //   setFinalDiscountPrice(0);
+        //   setDateOfStartDiscount(null);
+        //   setDateOfEndDiscount(null);
+        //   setSelectedDicountId(null);
+        //   setSelectedColor(null);
+        //   setVisibility(true);
+        //   setSelectedIds({
+        //     categoryId: "",
+        //     subcategoryId: "",
+        //     subSubcategoryId: "",
+        //   });
+        //   setBrand("");
+        //   // window.close();
         toast({
           title: "Produit mis à jour",
           className: "text-white bg-mainColorAdminDash border-0",
@@ -287,9 +315,12 @@ const UpdateProduct = ({ searchParams }: any) => {
             dateOfStartDiscount={dateOfStartDiscount}
             setDateOfStartDiscount={setDateOfStartDiscount}
             selectedDiscountId={selectedDiscountId}
+            setFinalDiscountPrice={setFinalDiscountPrice}
             setSelectedDicountId={setSelectedDicountId}
             discountType={discountType}
             setDiscountType={setDiscountType}
+            isDiscountEnabled={isDiscountEnabled}
+            setIsDiscountEnabled={setIsDiscountEnabled}
           />
 
           <UpdateImage
@@ -315,7 +346,10 @@ const UpdateProduct = ({ searchParams }: any) => {
                   type="checkbox"
                   className="sr-only peer"
                   checked={visibility}
-                  onChange={(e) => setVisibility(e.target.checked)}
+                  onChange={(e) => {
+                    setVisibility(e.target.checked);
+                    console.log(e.target.checked);
+                  }}
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-mainColorAdminDash rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-mainColorAdminDash"></div>
               </label>
@@ -326,7 +360,7 @@ const UpdateProduct = ({ searchParams }: any) => {
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
           />
-          <UpdateBrand setBrand={setBrand} selectedBrandId={brand} />
+          <UpdateBrand setBrand={setBrand} selectedBrandId={brandId} />
           <UpdateInventory stock={stock} setStock={setStock} />
           <UpdateColors
             selectedColor={selectedColor}

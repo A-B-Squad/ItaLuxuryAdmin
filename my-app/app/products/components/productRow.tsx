@@ -16,6 +16,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
   const formatDate = (timestamp: string) => {
     return moment(parseInt(timestamp, 10)).format("DD/MM/YYYY");
   };
+  console.log(product);
 
   return (
     <tr className="text-gray-700">
@@ -59,15 +60,15 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           ? formatDate(product.productDiscounts[0].dateOfEnd)
           : "_________"}
       </td>
-      <td className="visibility text-center px-4 py-3 text-sm border">
+      <td className="visibility text-center  py-3 text-sm border">
         <span
-          className={`px-2 py-1 font-semibold leading-tight ${
-            !product.visibility
+          className={`px-2 py-1 w-full font-semibold leading-tight ${
+            product.isVisible
               ? "text-green-700 bg-green-100"
               : "text-red-700 bg-red-100"
           } rounded-sm`}
         >
-          {!product.visibility ? "Visible" : "Non visible"}
+          {product.isVisible ? "Visible" : "Non visible"}
         </span>
       </td>
       <td className="createdAt text-center px-4 py-3 text-sm border">

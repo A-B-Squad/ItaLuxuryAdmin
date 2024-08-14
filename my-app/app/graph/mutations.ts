@@ -10,6 +10,11 @@ export const CREATE_BANNER_ADVERTISEMENT_MUTATIONS = gql`
     createBannerAdvertisement(input: $input)
   }
 `;
+export const CREATE_CLIENT_SERVICE_MUTATIONS = gql`
+  mutation CreateClientService($input: [advertisementInput]) {
+    createClientService(input: $input)
+  }
+`;
 export const CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS = gql`
   mutation CreateLeftNextToCarouselAds($input: [advertisementInput]) {
     createLeftNextToCarouselAds(input: $input)
@@ -44,6 +49,49 @@ export const ADD_PRODUCT_TO_TOP_DEALS_MUTATION = gql`
   }
 `;
 
+export const ADD_COLOR_MUTATION = gql`
+  mutation AddColor($color: String!, $hex: String!) {
+    addColor(color: $color, Hex: $hex)
+  }
+`;
+
+export const DELETE_COLOR_MUTATION = gql`
+  mutation DeleteColor($hex: String!) {
+    deleteColor(Hex: $hex)
+  }
+`;
+export const ADD_BRAND_MUTATION = gql`
+  mutation AddBrand($name: String!, $logo: String!) {
+    addBrand(name: $name, logo: $logo)
+  }
+`;
+export const DELETE_BRAND_MUTATION = gql`
+  mutation DeleteBrand($brandId: ID!) {
+    deleteBrand(brandId: $brandId)
+  }
+`;
+
+export const UPDATE_SECTION_VISIBILITY_MUTATIONS = gql`
+  mutation UpdateSectionVisibility(
+    $section: String!
+    $visibilityStatus: Boolean!
+  ) {
+    updateSectionVisibility(
+      section: $section
+      visibilityStatus: $visibilityStatus
+    )
+  }
+`;
+export const ADD_BEST_SELLS_MUTATIONS = gql`
+  mutation AddBestSells($productId: String!, $categoryId: String) {
+    addBestSells(productId: $productId, categoryId: $categoryId)
+  }
+`;
+export const DELETE_BEST_SELLS_MUTATIONS = gql`
+  mutation AddBestSells($productId: String!) {
+    deleteProductBestSells(productId: $productId)
+  }
+`;
 export const DELETE_PRODUCT_MUTATIONS = gql`
   mutation DeleteProduct($productId: ID!) {
     deleteProduct(productId: $productId)

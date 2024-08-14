@@ -13,6 +13,7 @@ import {
   FaRegStar,
 } from "react-icons/fa";
 import { CiImageOn } from "react-icons/ci";
+import Image from "next/image";
 
 interface Review {
   productId: string;
@@ -324,11 +325,15 @@ const ClientsPage: React.FC = () => {
                                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                                   {contactUs.subject}
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap">
-                                  <img
-                                    src={contactUs.document}
+                                <td className="px-4 w-32 relative  h-16  py-2 whitespace-nowrap">
+                                  <Image
+                                    src={
+                                      contactUs.document ||
+                                      "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
+                                    }
+                                    layout="fill"
                                     alt={contactUs.id}
-                                    className="w-16 h-16 object-cover rounded cursor-pointer"
+                                    className="object-contain rounded cursor-pointer"
                                     onClick={() =>
                                       openModal(contactUs.document)
                                     }
@@ -356,7 +361,7 @@ const ClientsPage: React.FC = () => {
       {/* Image Modal */}
       {isModalOpen && selectedImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+          className="fixed inset-0   z-50 flex items-center justify-center bg-black bg-opacity-75"
           onClick={closeModal}
         >
           <div className="relative bg-white p-2 rounded-lg max-w-3xl max-h-3xl">

@@ -95,7 +95,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
         input: {
           query: query || undefined,
           page,
-          pageSize: PAGE_SIZE,
+          pageSize: totalCount,
         },
       },
     });

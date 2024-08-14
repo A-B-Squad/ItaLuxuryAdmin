@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { IoImageOutline } from "react-icons/io5";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
@@ -28,7 +28,7 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
         uploadPreset="MaisonNg"
         onSuccess={(result, { widget }) => {
           handleSuccessUpload(result);
-          // widget.close();
+          widget.close();
         }}
       >
         {({ open }) => (

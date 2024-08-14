@@ -95,6 +95,7 @@ export const SEARCH_PRODUCTS_QUERY = gql`
             Hex
           }
           productDiscounts {
+            dateOfStart
             dateOfEnd
             price
             newPrice
@@ -146,7 +147,53 @@ export const COUPONS_QUERY = gql`
     }
   }
 `;
+export const SECTION_VISIBILITY_QUERY = gql`
+  query GetAllSectionVisibility {
+    getAllSectionVisibility {
+      section
+      visibility_status
+    }
+  }
+`;
 
+export const BEST_SELLS_QUERY = gql`
+  query GetBestSells {
+    getBestSells {
+      Product {
+        id
+        name
+        images
+        price
+        productDiscounts {
+          newPrice
+          price
+          Discount {
+            id
+            percentage
+          }
+        }
+        categories {
+          id
+          name
+          subcategories {
+            id
+            name
+            parentId
+            subcategories {
+              id
+              name
+              parentId
+            }
+          }
+        }
+      }
+      Category {
+        id
+        name
+      }
+    }
+  }
+`;
 export const ORDERS_QUERY = gql`
   query GetAllPackages {
     getAllPackages {
@@ -356,6 +403,7 @@ export const COMPANY_INFO_QUERY = gql`
     }
   }
 `;
+
 export const PRODUCT_IN_TOP_DEALS = gql`
   query AllDeals {
     allDeals {
@@ -412,6 +460,7 @@ export const PRODUCT_BY_ID_QUERY = gql`
         newPrice
         dateOfEnd
         dateOfStart
+        discountId
       }
       Colors {
         id

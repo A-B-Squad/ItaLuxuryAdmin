@@ -56,7 +56,7 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
               height={800}
               src={url}
               alt={`Uploaded image ${index + 1}`}
-              className="h-32 w-32  rounded-md"
+              className="h-full w-32  rounded-md"
               objectFit="contain"
             />
             <button
