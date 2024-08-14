@@ -1,8 +1,7 @@
-import React, { useState, ChangeEvent } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
-
+import React, { useState, ChangeEvent, useEffect } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -14,11 +13,40 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@apollo/client";
 import { DISCOUNT_PERCENTAGE_QUERY } from "@/app/graph/queries";
+import { formatDate } from "@/app/Helpers/_formatDate";
 
-const UpdatePrice = ({
+interface UpdatePriceProps {
+  discountPercentage: number;
+  setDiscountPercentage: (percentage: number) => void;
+  manualDiscountPrice: number;
+  setManualDiscountPrice: (price: number) => void;
+  originalPrice: number;
+  setOriginalPrice: (price: number) => void;
+  purchasePrice: number;
+  setPurchasePrice: (price: number) => void;
+  dateOfEndDiscount: string | Date | null;
+  setDateOfEndDiscount: (date: string | null) => void;
+  dateOfStartDiscount: string | Date | null;
+  setDateOfStartDiscount: (date: string | null) => void;
+  setSelectedDicountId: (id: string | null) => void;
+  setFinalDiscountPrice: (finalDiscountPrice: number) => void;
+  discountType: "percentage" | "manual" | "empty";
+  setDiscountType: (type: "percentage" | "manual") => void;
+  selectedDiscountId: string | null;
+  isDiscountEnabled: boolean;
+  setIsDiscountEnabled: (type: boolean) => void;
+}
+
+interface DiscountOption {
+  id: string;
+  percentage: number;
+}
+
+const UpdatePrice: React.FC<UpdatePriceProps> = ({
   discountPercentage,
   setDiscountPercentage,
   manualDiscountPrice,
+  setFinalDiscountPrice,
   setManualDiscountPrice,
   originalPrice,
   setOriginalPrice,
@@ -31,12 +59,50 @@ const UpdatePrice = ({
   setSelectedDicountId,
   discountType,
   setDiscountType,
-}: any) => {
+  selectedDiscountId,
+  isDiscountEnabled,
+  setIsDiscountEnabled,
+}) => {
   const [discountedPrice, setDiscountedPrice] = useState<string>("0.00");
+
   const { data, loading, error } = useQuery(DISCOUNT_PERCENTAGE_QUERY);
+  const [date, setDate] = useState<DateRange | undefined>(() => {
+    const startDate = dateOfStartDiscount
+      ? new Date(dateOfStartDiscount)
+      : undefined;
+    const endDate = dateOfEndDiscount ? new Date(dateOfEndDiscount) : undefined;
+
+    return {
+      from: startDate,
+      to: endDate,
+    };
+  });
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  const parseAndFormatDate = (
+    dateString: string | Date | null,
+  ): Date | null => {
+    if (!dateString) return null;
+
+    if (typeof dateString === "string") {
+      const [datePart, timePart] = dateString.split(" ");
+      const [day, month, year] = datePart.split("/");
+      const [hours, minutes] = timePart.split(":");
+      return new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes),
+      );
+    }
+
+    return dateString;
+  };
 
   const handleOriginalPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
     const price = parseFloat(e.target.value) || 0;
+
     setOriginalPrice(price);
     if (discountType === "percentage") {
       calculateDiscountedPrice(price, discountPercentage);
@@ -48,23 +114,19 @@ const UpdatePrice = ({
   const handleDiscountPercentageChange = (value: string) => {
     const percentage = parseInt(value) || 0;
     setDiscountPercentage(percentage);
-    console.log(percentage);
 
-    // Find the corresponding discount option and get its ID
     const selectedOption = discountOptions.find(
-      (option: { percentage: number }) => option.percentage === percentage,
+      (option: DiscountOption) => option.percentage === percentage,
     );
 
     if (selectedOption) {
       setSelectedDicountId(selectedOption.id);
-      console.log(selectedOption, "eeeeeeeeeeeeeeee");
     } else {
       setSelectedDicountId(null);
     }
 
     calculateDiscountedPrice(originalPrice, percentage);
   };
-
   const handleManualDiscountPriceChange = (
     e: ChangeEvent<HTMLInputElement>,
   ) => {
@@ -92,27 +154,100 @@ const UpdatePrice = ({
     setManualDiscountPrice(finalPrice);
 
     setDiscountedPrice(finalPrice.toFixed(2));
+    setFinalDiscountPrice(finalPrice);
   };
+
   const handlePurchasePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
     const price = parseFloat(e.target.value) || 0;
     setPurchasePrice(price);
   };
+
   const calculateManualDiscountedPrice = (
     price: number,
     discountPrice: number,
   ) => {
     const finalPrice = price - discountPrice;
-    setManualDiscountPrice(finalPrice);
+    setManualDiscountPrice(discountPrice);
     setDiscountedPrice(finalPrice.toFixed(2));
+    setFinalDiscountPrice(finalPrice);
   };
 
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDate(range);
+    if (range?.from) {
+      setDateOfStartDiscount(formatDate(range.from.getTime().toString()));
+    }
+    if (range?.to) {
+      setDateOfEndDiscount(formatDate(range.to.getTime().toString()));
+    }
+  };
+
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar);
+  };
+
+  const handleDiscountEnabledChange = () => {
+    setIsDiscountEnabled(!isDiscountEnabled);
+    if (isDiscountEnabled) {
+      // Reset discount values when disabling
+      setDiscountPercentage(0);
+      setManualDiscountPrice(0);
+      setDateOfStartDiscount(null);
+      setDateOfEndDiscount(null);
+      setSelectedDicountId(null);
+      setDiscountedPrice("0.00");
+      setFinalDiscountPrice(0);
+      setDate(undefined);
+    }
+  };
+  const discountOptions: DiscountOption[] = data?.DiscountsPercentage || [];
+  useEffect(() => {
+    if (discountType !== "empty") {
+      if (selectedDiscountId) {
+        const selectedOption = discountOptions.find(
+          (option: DiscountOption) => option.id === selectedDiscountId,
+        );
+        if (selectedOption) {
+          setDiscountPercentage(selectedOption.percentage);
+          calculateDiscountedPrice(originalPrice, selectedOption.percentage);
+        }
+      } else {
+        // Calculate discounted price based on the current discount type
+        if (discountType === "percentage") {
+          calculateDiscountedPrice(originalPrice, discountPercentage);
+        } else if (discountType === "manual") {
+          calculateManualDiscountedPrice(originalPrice, manualDiscountPrice);
+        }
+      }
+
+      setIsDiscountEnabled(true);
+      // Set initial dates
+      const startDate = parseAndFormatDate(dateOfStartDiscount);
+      const endDate = parseAndFormatDate(dateOfEndDiscount);
+
+      setDate({
+        from: startDate || undefined,
+        to: endDate || undefined,
+      });
+    } else {
+      setIsDiscountEnabled(false);
+      setDiscountedPrice(originalPrice.toFixed(2)); // Reset to original price when discount is disabled
+    }
+  }, [
+    discountType,
+    selectedDiscountId,
+    discountOptions,
+    originalPrice,
+    dateOfStartDiscount,
+    dateOfEndDiscount,
+    discountPercentage,
+    manualDiscountPrice,
+  ]);
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error loading discount percentages</p>;
 
-  const discountOptions = data?.DiscountsPercentage || [];
-
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto relative">
       <h1 className="text-lg font-bold mb-4">Tarification</h1>
 
       <div className="mb-4">
@@ -143,96 +278,132 @@ const UpdatePrice = ({
         />
       </div>
 
-      <div className="discount mb-4">
-        <label className="block text-gray-700">Type de remise</label>
-        <Select value={discountType} onValueChange={handleDiscountTypeChange}>
-          <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
-            <SelectValue placeholder="Sélectionner le type de remise" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Types de remise</SelectLabel>
-              <SelectItem value="percentage">Pourcentage</SelectItem>
-              <SelectItem value="manual">Valeur</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+      <div className="mb-4 bg-white bg-opacity-10 p-6 rounded-lg flex justify-between items-center shadow-lg ">
+        <span className="text-xl font-medium">Activer la remise</span>
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={isDiscountEnabled}
+            onChange={handleDiscountEnabledChange}
+          />
+          <div className="relative w-14 h-7 bg-gray-300 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600"></div>
+        </label>
+      </div>
 
-        {discountType === "percentage" && (
-          <div className="mt-4">
-            <label className="block text-gray-700">
-              Valeur de la remise (%)
-            </label>
+      {isDiscountEnabled && (
+        <>
+          <div className="discount mb-4">
+            <label className="block text-gray-700">Type de remise</label>
             <Select
-              value={discountPercentage}
-              onValueChange={handleDiscountPercentageChange}
+              value={discountType}
+              onValueChange={handleDiscountTypeChange}
             >
               <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
-                <SelectValue placeholder="Sélectionner la valeur de la remise" />
+                <SelectValue placeholder="Sélectionner le type de remise" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>Valeurs de la remise</SelectLabel>
-                  {discountOptions.map((option: any) => (
-                    <SelectItem key={option.id} value={option.percentage}>
-                      {option.percentage}%
-                    </SelectItem>
-                  ))}
+                  <SelectLabel>Types de remise</SelectLabel>
+                  <SelectItem value="percentage">Pourcentage</SelectItem>
+                  <SelectItem value="manual">Valeur</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
+
+            {discountType === "percentage" && (
+              <div className="mt-4">
+                <label className="block text-gray-700">
+                  Valeur de la remise (%)
+                </label>
+                <Select
+                  value={discountPercentage.toString()}
+                  onValueChange={handleDiscountPercentageChange}
+                >
+                  <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
+                    <SelectValue placeholder="Sélectionner la valeur de la remise" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Valeurs de la remise</SelectLabel>
+                      {discountOptions.map((option: DiscountOption) => (
+                        <SelectItem
+                          key={option.id}
+                          value={option.percentage.toString()}
+                        >
+                          {option.percentage}%
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {discountType === "manual" && (
+              <div className="mt-4">
+                <label className="block text-gray-700">
+                  Valeur de la remise (Direct)
+                </label>
+                <input
+                  type="number"
+                  className="w-full p-2 border border-gray-300 rounded mt-1"
+                  value={manualDiscountPrice}
+                  onChange={handleManualDiscountPriceChange}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            )}
           </div>
-        )}
-        {discountType === "manual" && (
-          <div className="mt-4">
-            <label className="block text-gray-700">
-              Valeur de la remise (Direct)
+
+          <div className="mb-4">
+            <label className="block text-gray-700">Période de remise</label>
+            <div className="mt-2">
+              <Button onClick={toggleCalendar}>
+                {showCalendar
+                  ? "Masquer le calendrier"
+                  : "Afficher le calendrier"}
+              </Button>
+              {showCalendar && (
+                <div className="absolute z-10 bg-white p-4 border rounded shadow-lg">
+                  <Calendar
+                    mode="range"
+                    selected={date}
+                    onSelect={handleDateRangeChange}
+                    numberOfMonths={2}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="mt-2">
+              <p>
+                Du:{" "}
+                {date?.from
+                  ? formatDate(date.from.getTime().toString())
+                  : "Non sélectionné"}
+              </p>
+              <p>
+                Au:{" "}
+                {date?.to
+                  ? formatDate(date.to.getTime().toString())
+                  : "Non sélectionné"}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Prix après remise
             </label>
             <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded mt-1"
-              placeholder={manualDiscountPrice}
-              onChange={handleManualDiscountPriceChange}
-              min="0"
-              step="0.01"
+              type="text"
+              value={discountedPrice}
+              readOnly
+              className="w-full outline-none p-2 border border-gray-300 rounded-md bg-gray-100"
             />
           </div>
-        )}
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-gray-700">Date de début</label>
-        <DatePicker
-          selected={dateOfStartDiscount}
-          onChange={(date) => setDateOfStartDiscount(date)}
-          dateFormat="dd/MM/yyyy HH:mm:ss.SSS"
-          showTimeInput
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-gray-700">Date de fin</label>
-        <DatePicker
-          selected={dateOfEndDiscount}
-          onChange={(date) => setDateOfEndDiscount(date)}
-          dateFormat="dd/MM/yyyy HH:mm:ss.SSS"
-          showTimeInput
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-        />
-      </div>
-
-      <div>
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          Prix après remise
-        </label>
-        <input
-          type="text"
-          value={discountedPrice}
-          readOnly
-          className="w-full outline-none p-2 border border-gray-300 rounded-md bg-gray-100"
-        />
-      </div>
+        </>
+      )}
     </div>
   );
 };

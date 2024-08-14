@@ -128,17 +128,22 @@ const TopDealsPage = () => {
                       <h2 className="text-2xl font-semibold text-gray-900">
                         {deal.product.name}
                       </h2>
-                      <p className="text-gray-600 mt-2">
-                        Prix original: {deal.product.price.toFixed(3)} DT
+                      <p className="text-gray-600 mt-2 inline-block ">
+                        Prix original:
+                        <span className="line-through">
+                          {" "}
+                          {deal.product.price.toFixed(3)} DT
+                        </span>
                       </p>
                       <p className="text-green-600 font-semibold mt-1">
                         Nouveau prix:{" "}
-                        {deal.product.productDiscounts[0].newPrice.toFixed(3)}{" "}
+                        {deal.product.productDiscounts[0]?.newPrice?.toFixed(3)}{" "}
                         DT
                       </p>
                       <p className="text-blue-600 font-semibold mt-1">
                         Réduction:{" "}
-                        {deal.product.productDiscounts[0].Discount.percentage}%
+                        {deal.product.productDiscounts[0]?.Discount?.percentage}
+                        %
                       </p>
                     </div>
                     <button
