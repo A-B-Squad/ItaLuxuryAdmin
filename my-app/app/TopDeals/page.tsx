@@ -5,7 +5,7 @@ interface ProductsProps {
     q?: string;
   };
 }
-const page = ({ searchParams }: ProductsProps) => {
+const page = () => {
   return <TopDealsPage />;
 };
 

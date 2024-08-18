@@ -3,18 +3,29 @@ import React, { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   DELETE_BRAND_MUTATION,
   ADD_BRAND_MUTATION,
 } from "@/app/graph/mutations";
-import { GET_BRANDS } from "@/app/graph/queries";
+import { CATEGORY_QUERY, GET_BRANDS } from "@/app/graph/queries";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Brand {
   id: string;
   name: string;
   logo: string;
+  Category?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface UploadResult {
@@ -29,16 +40,18 @@ interface GetBrandsData {
 
 const BrandPage = () => {
   const { data, loading, error } = useQuery<GetBrandsData>(GET_BRANDS);
+  const { data: categoryData } = useQuery(CATEGORY_QUERY);
   const [addBrand] = useMutation(ADD_BRAND_MUTATION);
   const [deleteBrand] = useMutation(DELETE_BRAND_MUTATION);
   const { toast } = useToast();
 
   const [newBrandName, setNewBrandName] = useState("");
   const [newBrandLogo, setNewBrandLogo] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const handleAddBrand = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBrandName || !newBrandLogo) {
+    if (!newBrandName || !newBrandLogo || !selectedCategory) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs",
@@ -63,7 +76,11 @@ const BrandPage = () => {
 
     try {
       await addBrand({
-        variables: { name: newBrandName, logo: newBrandLogo },
+        variables: {
+          name: newBrandName,
+          logo: newBrandLogo,
+          categoryId: selectedCategory,
+        },
         refetchQueries: [{ query: GET_BRANDS }],
       });
       toast({
@@ -73,6 +90,7 @@ const BrandPage = () => {
       });
       setNewBrandName("");
       setNewBrandLogo("");
+      setSelectedCategory("");
     } catch (err) {
       console.error(err);
       toast({
@@ -177,12 +195,34 @@ const BrandPage = () => {
                       <Image
                         src={newBrandLogo}
                         alt="Logo prévisualisé"
-                        width={100}
-                        height={100}
+                        width={80}
+                        height={80}
                         objectFit="contain"
                       />
                     </div>
                   )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Catégorie
+                  </label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={(value) => setSelectedCategory(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionnez une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryData?.categories
+                        .filter((category: any) => !category.parentId)
+                        .map((category: any) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <button
                   type="submit"
@@ -203,9 +243,9 @@ const BrandPage = () => {
                 {data?.fetchBrands.map((brand: Brand) => (
                   <div
                     key={brand.id}
-                    className="group relative border rounded-md"
+                    className="flex flex-col group relative border rounded-md p-4"
                   >
-                    <div className="aspect-w-1 aspect-h-1 w-fit h-20 rounded-lg overflow-hidden bg-gray-100">
+                    <div className="w-full h-20 relative rounded-lg overflow-hidden bg-gray-100">
                       <Image
                         src={brand.logo}
                         alt={brand.name}
@@ -216,6 +256,9 @@ const BrandPage = () => {
                     </div>
                     <p className="mt-2 text-sm font-medium text-gray-900 text-center">
                       {brand.name}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 text-center">
+                      {brand.Category?.name}
                     </p>
                     <button
                       onClick={() => handleDeleteBrand(brand.id)}

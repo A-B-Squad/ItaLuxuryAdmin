@@ -33,9 +33,11 @@ const OrdersPage: React.FC = () => {
   // Filtrage des commandes
   const filteredOrders = data.getAllPackages.filter((order: any) => {
     const orderDate = new Date(parseInt(order.createdAt));
-    const matchesSearch = order.customId
-      .toLowerCase()
-      .includes(searchCommande.toLowerCase());
+    const matchesSearch =
+      order.customId.toLowerCase().includes(searchCommande.toLowerCase()) ||
+      order.Checkout.userId
+        .toLowerCase()
+        .includes(searchCommande.toLowerCase());
     const matchesFilter =
       filter === "Toute" || translateStatus(order.status) === filter;
     const matchesDateRange =
@@ -173,58 +175,63 @@ const OrdersPage: React.FC = () => {
       },
     };
 
-    const range = XLSX.utils.decode_range(ws["!ref"]);
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const address = XLSX.utils.encode_col(C) + "1";
-      if (!ws[address]) continue;
-      ws[address].s = headerStyle;
-    }
-
-    // Add date range information
-    let dateRangeText = "All dates";
-    if (dateRange && dateRange.from && dateRange.to) {
-      dateRangeText = `From ${formatDate(
-        dateRange.from.getTime().toString(),
-      )} to ${formatDate(dateRange.to.getTime().toString())}`;
-    }
-    XLSX.utils.sheet_add_aoa(ws, [["Date Range:", dateRangeText]], {
-      origin: "A1",
-    });
-
-    // Style date range cells
-    ws.A1.s = { font: { bold: true } };
-    ws.B1.s = { font: { italic: true } };
-
-    // Auto-size columns
-    const colWidths = filteredOrders.reduce(
-      (widths: any[], row: { [x: string]: { toString: () => any } }) => {
-        Object.keys(row).forEach((key, i) => {
-          const value = row[key] ? row[key].toString() : "";
-          widths[i] = Math.max(widths[i] || 0, value.length);
-        });
-        return widths;
-      },
-      {},
-    );
-
-    ws["!cols"] = Object.keys(colWidths).map((i) => ({ wch: colWidths[i] }));
-
-    // Add border to all cells
-    const borderStyle = {
-      border: {
-        top: { style: "thin", color: { rgb: "000000" } },
-        bottom: { style: "thin", color: { rgb: "000000" } },
-        left: { style: "thin", color: { rgb: "000000" } },
-        right: { style: "thin", color: { rgb: "000000" } },
-      },
-    };
-
-    for (let R = range.s.r; R <= lastRow; ++R) {
+    if (ws["!ref"]) {
+      const range = XLSX.utils.decode_range(ws["!ref"]);
       for (let C = range.s.c; C <= range.e.c; ++C) {
-        const address = XLSX.utils.encode_cell({ r: R, c: C });
+        const address = XLSX.utils.encode_col(C) + "1";
         if (!ws[address]) continue;
-        ws[address].s = { ...ws[address].s, ...borderStyle };
+        ws[address].s = headerStyle;
       }
+
+      // Add date range information
+      let dateRangeText = "All dates";
+      if (dateRange && dateRange.from && dateRange.to) {
+        dateRangeText = `From ${formatDate(
+          dateRange.from.getTime().toString(),
+        )} to ${formatDate(dateRange.to.getTime().toString())}`;
+      }
+      XLSX.utils.sheet_add_aoa(ws, [["Date Range:", dateRangeText]], {
+        origin: "A1",
+      });
+
+      // Style date range cells
+      ws.A1.s = { font: { bold: true } };
+      ws.B1.s = { font: { italic: true } };
+
+      // Auto-size columns
+      const colWidths = filteredOrders.reduce(
+        (widths: any[], row: { [x: string]: { toString: () => any } }) => {
+          Object.keys(row).forEach((key, i) => {
+            const value = row[key] ? row[key].toString() : "";
+            widths[i] = Math.max(widths[i] || 0, value.length);
+          });
+          return widths;
+        },
+        {},
+      );
+
+      ws["!cols"] = Object.keys(colWidths).map((i) => ({ wch: colWidths[i] }));
+
+      // Add border to all cells
+      const borderStyle = {
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+
+      for (let R = range.s.r; R <= lastRow; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const address = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[address]) continue;
+          ws[address].s = { ...ws[address].s, ...borderStyle };
+        }
+      }
+    } else {
+      // Handle the case where ws["!ref"] is undefined
+      console.error("The worksheet reference is undefined.");
     }
 
     // Create workbook and write file

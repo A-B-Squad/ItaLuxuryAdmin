@@ -71,51 +71,77 @@ const UpdateProduct = ({ searchParams }: any) => {
   });
 
   useEffect(() => {
-    if (!loading && !error && productDataById) {
+    if (!loading && !error && productDataById && productDataById.productById) {
       const product = productDataById.productById;
-      setTitle(product.name);
-      setDescription(product.description);
-      setStock(product.inventory);
-      setReference(product.reference);
-      setUploadedImages(product.images);
-      setOriginalPrice(product.price);
-      setPurchasePrice(product.purchasePrice);
-      setVisibility(product.isVisible);
-      setSelectedColor(product.Colors?.id);
-      setBrand(product.Brand?.id);
-      setAttributes(
-        product.attributes.map((attr: { name: any; value: any }) => ({
-          name: attr.name,
-          value: attr.value,
-        })),
+
+      // Ne mettez à jour l'état que si les valeurs changent réellement
+      setTitle((prev) => (prev !== product.name ? product.name : prev));
+      setDescription((prev) =>
+        prev !== product.description ? product.description : prev,
       );
+      setStock((prev) =>
+        prev !== product.inventory ? product.inventory : prev,
+      );
+      setReference((prev) =>
+        prev !== product.reference ? product.reference : prev,
+      );
+      setUploadedImages((prev) =>
+        prev !== product.images ? product.images : prev,
+      );
+      setOriginalPrice((prev) =>
+        prev !== product.price ? product.price : prev,
+      );
+      setPurchasePrice((prev) =>
+        prev !== product.purchasePrice ? product.purchasePrice : prev,
+      );
+      setVisibility((prev) =>
+        prev !== product.isVisible ? product.isVisible : prev,
+      );
+      setSelectedColor((prev) =>
+        prev !== product.Colors?.id ? product.Colors?.id : prev,
+      );
+      setBrand((prev) =>
+        prev !== product.Brand?.id ? product.Brand?.id : prev,
+      );
+
+      // Mettre à jour les attributs uniquement si nécessaire
+      setAttributes((prev) => {
+        const newAttributes = product.attributes.map(
+          (attr: { name: any; value: any }) => ({
+            name: attr.name,
+            value: attr.value,
+          }),
+        );
+        return JSON.stringify(prev) !== JSON.stringify(newAttributes)
+          ? newAttributes
+          : prev;
+      });
 
       if (product.categories.length > 0) {
         const category = product.categories[0];
-        setSelectedIds({
-          categoryId: category.id,
-          subcategoryId:
-            category.subcategories.length > 0
-              ? category.subcategories[0].id
-              : "",
-          subSubcategoryId:
-            category.subcategories.length > 0 &&
-            category.subcategories[0].subcategories.length > 0
-              ? category.subcategories[0].subcategories[0].id
-              : "",
+        setSelectedIds((prev) => {
+          const newSelectedIds = {
+            categoryId: category.id,
+            subcategoryId:
+              category.subcategories.length > 0
+                ? category.subcategories[0].id
+                : "",
+            subSubcategoryId:
+              category.subcategories.length > 0 &&
+              category.subcategories[0].subcategories.length > 0
+                ? category.subcategories[0].subcategories[0].id
+                : "",
+          };
+          return JSON.stringify(prev) !== JSON.stringify(newSelectedIds)
+            ? newSelectedIds
+            : prev;
         });
       }
 
       if (product.productDiscounts && product.productDiscounts.length > 0) {
         const discount = product.productDiscounts[0];
-
-        if (discount.discountId) {
-          setDiscountType("percentage");
-          setSelectedDicountId(discount.discountId);
-        } else {
-          setDiscountType("manual");
-          setManualDiscountPrice(product.price - discount.newPrice);
-        }
+        setDiscountType(discount.discountId ? "percentage" : "manual");
+        setSelectedDicountId(discount.discountId || null);
         const startDate = formatDate(discount.dateOfStart);
         const endDate = formatDate(discount.dateOfEnd);
         setDateOfStartDiscount(startDate);

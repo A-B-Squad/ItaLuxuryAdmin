@@ -1,25 +1,24 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { BEST_SELLS_QUERY, SEARCH_PRODUCTS_QUERY } from "../graph/queries";
 import {
   ADD_BEST_SELLS_MUTATIONS,
   DELETE_BEST_SELLS_MUTATIONS,
 } from "../graph/mutations";
-
 import { CategorySection } from "./Components/CategorySection";
+import { useToast } from "@/components/ui/use-toast";
 
-// Define types for the API responses
 interface Product {
   id: string;
   name: string;
   images: string[];
   price: number;
-  productDiscounts: any[]; // Replace 'any' with a more specific type if needed
+  productDiscounts: any[];
   categories: {
     id: string;
     name: string;
-    subcategories: any[]; // Replace 'any' with a more specific type if needed
+    subcategories: any[];
   }[];
 }
 
@@ -52,31 +51,27 @@ interface CategorizedProducts {
   };
 }
 
-interface CategoryState {
-  id: string | null;
-  name: string | null;
-}
-
-interface CategoryStates {
-  [key: string]: CategoryState;
-}
-
 interface SearchInputs {
   [key: string]: string;
 }
 
-const TopSellsPage: React.FC = () => {
+const TopSellsPage = () => {
   const [searchInputs, setSearchInputs] = useState<SearchInputs>({});
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [categoryStates, setCategoryStates] = useState<CategoryStates>({
-    category1: { id: null, name: null },
-    category2: { id: null, name: null },
-    category3: { id: null, name: null },
-  });
+  const [searchResults, setSearchResults] = useState<{
+    [key: string]: Product[];
+  }>({});
+  const { toast } = useToast();
 
-  const { data: topSellsData, refetch } =
-    useQuery<TopSellsData>(BEST_SELLS_QUERY);
-  const [searchProducts] = useLazyQuery<SearchData>(SEARCH_PRODUCTS_QUERY);
+  const {
+    data: topSellsData,
+    loading: topSellsLoading,
+    error: topSellsError,
+    refetch,
+  } = useQuery<TopSellsData>(BEST_SELLS_QUERY);
+
+  const [searchProducts, { loading: searchLoading }] = useLazyQuery<SearchData>(
+    SEARCH_PRODUCTS_QUERY,
+  );
 
   const [addProductToBestSells] = useMutation(ADD_BEST_SELLS_MUTATIONS);
   const [deleteProductFromBestSells] = useMutation(DELETE_BEST_SELLS_MUTATIONS);
@@ -86,10 +81,11 @@ const TopSellsPage: React.FC = () => {
 
     return topSellsData.getBestSells.reduce(
       (acc: CategorizedProducts, item: BestSellItem) => {
-        const categoryId = item.Category.id;
+        const mainCategory = item.Product.categories[0];
+        const categoryId = mainCategory.id;
         if (!acc[categoryId]) {
           acc[categoryId] = {
-            name: item.Category.name,
+            name: mainCategory.name,
             products: [],
           };
         }
@@ -100,26 +96,51 @@ const TopSellsPage: React.FC = () => {
     );
   }, [topSellsData]);
 
+  const getSelectedProducts = () => {
+    return new Set(
+      Object.values(categorizedProducts).flatMap((category) =>
+        category.products.map((product) => product.id),
+      ),
+    );
+  };
+
   const handleSearch = async (categoryKey: string, value: string) => {
     setSearchInputs((prev) => ({ ...prev, [categoryKey]: value }));
 
     if (value.trim() === "") {
-      setSearchResults([]);
+      setSearchResults((prev) => ({ ...prev, [categoryKey]: [] }));
       return;
     }
 
-    const { data } = await searchProducts({
-      variables: {
-        input: {
-          query: value,
-          page: 1,
-          pageSize: 20,
+    try {
+      const { data } = await searchProducts({
+        variables: {
+          input: {
+            query: value,
+            page: 1,
+            pageSize: 20,
+            visibleProduct: true,
+          },
         },
-      },
-    });
+      });
 
-    if (data) {
-      setSearchResults(data.searchProducts.results.products);
+      if (data) {
+        const selectedProductIds = getSelectedProducts();
+        const filteredProducts = data.searchProducts.results.products.filter(
+          (product) => !selectedProductIds.has(product.id),
+        );
+        setSearchResults((prev) => ({
+          ...prev,
+          [categoryKey]: filteredProducts,
+        }));
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast({
+        title: "Erreur de recherche",
+        description: "Une erreur s'est produite lors de la recherche",
+        variant: "destructive",
+      });
     }
   };
 
@@ -128,71 +149,99 @@ const TopSellsPage: React.FC = () => {
     categoryId: string,
     categoryName: string,
   ) => {
-    await addProductToBestSells({ variables: { productId, categoryId } });
-    refetch();
-
-    // Update category state if it's the first product
-    setCategoryStates((prev) => {
-      const emptyKey = Object.keys(prev).find((key) => prev[key].id === null);
-      if (emptyKey) {
-        return { ...prev, [emptyKey]: { id: categoryId, name: categoryName } };
-      }
-      return prev;
-    });
+    try {
+      await addProductToBestSells({ variables: { productId, categoryId } });
+      await refetch();
+      toast({
+        title: "Succès",
+        description: "Produit ajouté aux meilleures ventes",
+      });
+    } catch (error) {
+      console.error("Add to Best Sells error:", error);
+      toast({
+        title: "Erreur",
+        description: "Échec de l'ajout du produit aux meilleures ventes",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveFromBestSells = async (
     productId: string,
     categoryId: string,
   ) => {
-    await deleteProductFromBestSells({ variables: { productId } });
-    await refetch();
-
-    // Check if this was the last product in the category
-    const updatedProducts = (await refetch()).data.getBestSells;
-    const categoryProducts = updatedProducts.filter(
-      (item: BestSellItem) => item.Category.id === categoryId,
-    );
-
-    if (categoryProducts.length === 0) {
-      // If no products left, set the category state back to null
-      setCategoryStates((prev) => {
-        const categoryKey = Object.keys(prev).find(
-          (key) => prev[key].id === categoryId,
-        );
-        if (categoryKey) {
-          return { ...prev, [categoryKey]: { id: null, name: null } };
-        }
-        return prev;
+    try {
+      await deleteProductFromBestSells({ variables: { productId } });
+      await refetch();
+      toast({
+        title: "Succès",
+        description: "Produit supprimé des meilleures ventes",
+      });
+    } catch (error) {
+      console.error("Remove from Best Sells error:", error);
+      toast({
+        title: "Erreur",
+        description: "Échec de la suppression du produit des meilleures ventes",
+        variant: "destructive",
       });
     }
   };
 
-  return (
-    <div className="container mx-auto px-4">
-      <h1 className="text-3xl font-bold mb-8">Best Sells</h1>
+  if (topSellsLoading) return <p>Chargement des meilleures ventes...</p>;
+  if (topSellsError)
+    return <p>Erreur de chargement : {topSellsError.message}</p>;
 
-      {Object.entries(categoryStates).map(([key, category], index) => (
-        <CategorySection
-          key={key}
-          categoryId={category.id || ""}
-          categoryName={category.name || `Category ${index + 1}`}
-          products={
-            category.id ? categorizedProducts[category.id]?.products || [] : []
-          }
-          searchResults={searchResults.filter(
-            (product) =>
-              !category.id ||
-              product.categories.some((cat) => cat.id === category.id),
-          )}
-          searchInput={searchInputs[key] || ""}
-          onSearch={(value: string) => handleSearch(key, value)}
-          onAddToBestSells={handleAddToBestSells}
-          onRemoveFromBestSells={(productId: string) =>
-            handleRemoveFromBestSells(productId, category.id || "")
-          }
-        />
-      ))}
+  const categories: [string, { name: string; products: Product[] }][] =
+    Object.keys(categorizedProducts).length > 0
+      ? Object.entries(categorizedProducts)
+      : [
+          ["category1", { name: "Catégorie 1", products: [] }],
+          ["category2", { name: "Catégorie 2", products: [] }],
+          ["category3", { name: "Catégorie 3", products: [] }],
+        ];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-extrabold text-center mb-12">
+        Meilleures Ventes
+      </h1>
+      {categories.length === 0 ? (
+        <p className="text-center">
+          Aucune catégorie disponible pour le moment.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {categories.map(([categoryId, category], index) => {
+            const categoryKey = `category${index + 1}`;
+            return (
+              <div
+                key={categoryId}
+                className="border rounded-lg shadow-md p-4 bg-white"
+              >
+                <CategorySection
+                  categoryId={categoryId}
+                  categoryName={category.name}
+                  products={category.products}
+                  searchResults={searchResults[categoryKey] || []}
+                  searchInput={searchInputs[categoryKey] || ""}
+                  onSearch={(value: string) => handleSearch(categoryKey, value)}
+                  onAddToBestSells={handleAddToBestSells}
+                  onRemoveFromBestSells={(productId: string) =>
+                    handleRemoveFromBestSells(productId, categoryId)
+                  }
+                  isSearchLoading={searchLoading}
+                />
+                {category.products.length === 0 && (
+                  <p className="text-center mt-4">
+                    Aucun produit dans cette catégorie. Utilisez la recherche
+                    pour ajouter des produits.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

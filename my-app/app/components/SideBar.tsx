@@ -4,11 +4,15 @@ import { Sidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
 import { IoMenu } from "react-icons/io5";
 import { CiHome, CiSettings } from "react-icons/ci";
 import { LuPackage2, LuUsers2, LuNewspaper } from "react-icons/lu";
-import { TbBrandGoogleHome, TbPackages } from "react-icons/tb";
+import {
+  TbBrandDatabricks,
+  TbBrandGoogleHome,
+  TbPackages,
+} from "react-icons/tb";
 import { TiMessages } from "react-icons/ti";
 import { RiCoupon3Line } from "react-icons/ri";
 
-import { MdKeyboardDoubleArrowUp } from "react-icons/md";
+import { MdDiscount } from "react-icons/md";
 import { FaRegChartBar } from "react-icons/fa";
 import { FcAdvertising } from "react-icons/fc";
 import Link from "next/link";
@@ -76,12 +80,7 @@ const SideBar = () => {
         { text: "Nouveau coupons", href: "/Coupons/CreateCoupons" },
       ],
     },
-    {
-      icon: <MdKeyboardDoubleArrowUp size={24} />,
-      text: "Up Sells",
-      href: "/best-sales",
-      subItems: [],
-    },
+
     {
       icon: <LuUsers2 size={24} />,
       text: "Clients",
@@ -89,9 +88,10 @@ const SideBar = () => {
       subItems: [{ text: "Clients", href: "/Clients" }],
     },
     {
-      icon: <FaRegChartBar size={24} />,
-      text: "brands",
-      href: "/statistics",
+      icon: <TbBrandDatabricks size={24} />,
+
+      text: "Creation de Marques",
+      href: "/Shop/Brands",
       subItems: [],
     },
     {
@@ -101,20 +101,41 @@ const SideBar = () => {
       subItems: [],
     },
     {
+      icon: <MdDiscount size={24} />,
+
+      text: "Meilleures offres",
+      href: "/TopDeals",
+
+      subItems: [],
+    },
+    {
       icon: <FaRegChartBar size={24} />,
       text: "Statistiques",
       href: "/statistics",
-      subItems: [],
+      subItems: [
+        {
+          text: "Livraison",
+          href: "/Statistical/Delivery",
+        },
+        {
+          text: "Clients",
+          href: "/Statistical/Customer",
+        },
+        {
+          text: "Marketing",
+          href: "/Statistical/Marketing",
+        },
+        {
+          text: "Produits",
+          href: "/Statistical/Products",
+        },
+      ],
     },
     {
       icon: <FcAdvertising size={24} />,
       text: "Boutique",
       href: "/Shop",
       subItems: [
-        {
-          text: "Meilleures offres",
-          href: "/TopDeals",
-        },
         {
           text: "Section visibility",
           href: "/Shop/SectionVisibility",
@@ -123,10 +144,7 @@ const SideBar = () => {
           text: "Publicités en Carrousel",
           href: "/Shop/CarouselAdvertising",
         },
-        {
-          text: "Creation de Marques",
-          href: "/Shop/Brands",
-        },
+
         {
           text: "Client Service",
           href: "/Shop/CilentServices",
@@ -212,14 +230,17 @@ const SideBar = () => {
           onClick={toggleSidebar}
           style={{ color: "#fff" }}
         >
-          {isExpanded && <span className="ml-2">MaisonNg</span>}
+          {isExpanded && <span style={{ fontSize: "18px" }}>MaisonNg</span>}
         </MenuItem>
+
         {sidebarItems.map((item, index) =>
           item.subItems.length > 0 ? (
             <SubMenu
               key={index}
               icon={item.icon}
-              label={isExpanded ? item.text : ""}
+              label={
+                isExpanded ? <span className="text-sm">{item.text}</span> : ""
+              }
             >
               {item.subItems.map((subItem, subIndex) => (
                 <MenuItem
@@ -228,7 +249,7 @@ const SideBar = () => {
                   component={<Link href={subItem.href} />}
                   active={pathname === subItem.href}
                 >
-                  {subItem.text}
+                  <span className="text-xs  ">{subItem.text}</span>
                 </MenuItem>
               ))}
             </SubMenu>
@@ -239,7 +260,7 @@ const SideBar = () => {
               component={<Link href={item.href} />}
               active={pathname === item.href}
             >
-              {isExpanded && item.text}
+              {isExpanded && <span className="text-base">{item.text}</span>}
             </MenuItem>
           ),
         )}

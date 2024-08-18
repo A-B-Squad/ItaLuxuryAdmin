@@ -5,7 +5,7 @@ import { FETCH_ALL_BASKET } from "@/app/graph/queries";
 import Image from "next/image";
 import Link from "next/link";
 import prepRoute from "@/app/Helpers/_prepRoute";
-import { FaShoppingBasket, FaInfoCircle, FaTag, FaBox } from "react-icons/fa";
+import { FaInfoCircle } from "react-icons/fa";
 
 interface ProductDiscount {
   newPrice: number;
@@ -107,15 +107,21 @@ const ClientAbandonedBasketPage: React.FC = () => {
                           query: {
                             productId: item.Product.id,
                             collection: [
+                              // Get the name of the first category
                               item.Product.categories[0]?.name,
+                              // Get the ID of the first category
                               item.Product.categories[0]?.id,
+                              // Get the name of the first subcategory of the first category, if available
                               item.Product.categories[0]?.subcategories[0]
                                 ?.name,
+                              // Get the ID of the first subcategory of the second category, if available
                               item.Product.categories[1]?.subcategories[0]?.id,
-                              item.Product.categories[0]?.subcategories[0]
-                                ?.subcategories[1]?.name,
-                              item.Product.categories[0]?.subcategories[0]
-                                ?.subcategories[1]?.id,
+                              // Get the name of the second subcategory of the first category, if available
+                              item.Product.categories[0]?.subcategories[1]
+                                ?.name,
+                              // Get the ID of the second subcategory of the first category, if available
+                              item.Product.categories[0]?.subcategories[1]?.id,
+                              // Get the product name
                               item.Product.name,
                             ],
                           },

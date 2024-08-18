@@ -102,13 +102,13 @@ const CreateOrderPage = ({ searchParams }: any) => {
   );
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     userId: "",
-    userName: packageData?.Checkout?.userName?.split(" ")[0] || "",
-    familyName: packageData?.Checkout?.userName?.split(" ")[1] || "",
-    email: packageData?.Checkout?.User?.email || "",
-    phone1: packageData?.Checkout?.phone?.[0] || "",
-    phone2: packageData?.Checkout?.phone?.[1] || "",
-    governorate: packageData?.Checkout?.governorateId || "",
-    address: packageData?.Checkout?.address?.split(",")[0] || "",
+    userName: "",
+    familyName: "",
+    email: "",
+    phone1: "",
+    phone2: "",
+    governorate: "",
+    address: "",
   });
   const [discount, setDiscount] = useState(
     packageData?.Checkout.manualDiscount || 0,
@@ -205,7 +205,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
       });
       console.log("Checkout updated successfully");
       setTimeout(() => {
-        router.replace(`/Orders/Edit-order?orderId=${packageData.id}`);
+        router.replace(`/Orders/UpdateOrder?orderId=${packageData.id}`);
       }, 1000);
     } catch (error) {
       toast({
@@ -219,10 +219,6 @@ const CreateOrderPage = ({ searchParams }: any) => {
   };
 
   const createCheckoutFromAdminDash = async () => {
-    if (!packageData || !packageData.Checkout) {
-      console.error("No package data or checkout available");
-      return;
-    }
     const {
       userId,
       userName,
@@ -232,6 +228,11 @@ const CreateOrderPage = ({ searchParams }: any) => {
       governorate,
       address,
     } = customerInfo;
+
+    if (!packageData || !packageData.Checkout) {
+      console.error("No package data or checkout available");
+      return;
+    }
 
     const phone = [phone1, phone2]
       .map((item) => Number(item))
@@ -272,7 +273,6 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
     try {
       const { data } = await createCheckoutFromAdmin({ variables: { input } });
-      console.log(data);
 
       toast({
         title: "Commande créée",
@@ -283,7 +283,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
       setTimeout(() => {
         router.replace(
-          `/Orders/Edit-order?orderId=${data.createCheckoutFromAdmin}`,
+          `/Orders/UpdateOrder?orderId=${data.createCheckoutFromAdmin}`,
         );
       }, 1000);
     } catch (error) {
@@ -339,7 +339,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
               userId: customerInfo.userId,
               email: customerInfo.email,
               userName: `${customerInfo.userName} ${customerInfo.familyName}`,
-              phone: [customerInfo.phone1, customerInfo.phone2],
+              phone: [customerInfo.phone1, customerInfo.phone2].filter(Boolean),
               address: customerInfo.address,
               governorateId: customerInfo.governorate,
               manualDiscount: discount || 0,
@@ -393,12 +393,13 @@ const CreateOrderPage = ({ searchParams }: any) => {
             userId: customerInfo.userId || prevPackage.Checkout.userId,
             email: customerInfo.email || prevPackage.Checkout.email,
             userName:
-              prevPackage.Checkout.userName ||
-              `${customerInfo.userName} ${customerInfo.familyName}`,
-            phone: prevPackage.Checkout.phone || [
-              customerInfo.phone1,
-              customerInfo.phone2,
-            ],
+              customerInfo.userName && customerInfo.familyName
+                ? `${customerInfo.userName} ${customerInfo.familyName}`
+                : prevPackage.Checkout.userName,
+            phone:
+              customerInfo.phone1 || customerInfo.phone2
+                ? [customerInfo.phone1, customerInfo.phone2].filter(Boolean)
+                : prevPackage.Checkout.phone,
             address: customerInfo.address || prevPackage.Checkout.address,
             governorateId:
               customerInfo.governorate || prevPackage.Checkout.governorateId,
@@ -410,7 +411,6 @@ const CreateOrderPage = ({ searchParams }: any) => {
     },
     [customerInfo, discount],
   );
-
   if (error) return <p>Error: {error.message}</p>;
 
   return (
@@ -441,7 +441,10 @@ const CreateOrderPage = ({ searchParams }: any) => {
                 type="number"
                 className="py-2 px-3 w-4/5 border outline-none rounded-md"
                 value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
+                onChange={(e) => {
+                  setDiscount(Number(e.target.value));
+                  setShowBackUp(true);
+                }}
               />
             </div>
             <OrderSummary packageData={packageData} discount={discount} />

@@ -40,7 +40,9 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
             ></div>
           </div>
           <div>
-            <p className="font-semibold text-black">{product.name}</p>
+            <p className="font-semibold text-sm w-full line-clamp-1 text-black">
+              {product.name}
+            </p>
           </div>
         </div>
       </td>

@@ -173,6 +173,23 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
+    console.log(range, "###############################");
+
+    // Get the current date
+    const currentDate = new Date();
+
+    // Check if from date is not in the past
+    if (range?.from && range.from < currentDate) {
+      alert("La date de début ne peut pas être dans le passé.");
+      return; // Exit the function to prevent state update
+    }
+
+    // Check if to date is not in the past
+    if (range?.to && range.to < currentDate) {
+      alert("La date de fin ne peut pas être dans le passé.");
+      return; // Exit the function to prevent state update
+    }
+
     setDate(range);
     if (range?.from) {
       setDateOfStartDiscount(formatDate(range.from.getTime().toString()));
