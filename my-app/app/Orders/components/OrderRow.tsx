@@ -8,6 +8,7 @@ interface Order {
   customId: string;
   createdAt: string;
   Checkout: {
+    userId: string;
     userName: string;
     total: number;
   };
@@ -43,7 +44,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
   >
     <td className="text-blue-600">{order.customId}</td>
     <td>{formatDate(order.createdAt)}</td>
-    <td>{order.Checkout.userName}</td>
+    <td>{order.Checkout.userId}</td>
     <td>
       <span
         className={`px-2 py-1 rounded ${
@@ -65,7 +66,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
       <div className="flex items-center gap-2">
         <Link
           href={{
-            pathname: "Orders/Edit-order",
+            pathname: "Orders/UpdateOrder",
             query: {
               orderId: order.id,
             },
@@ -78,7 +79,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
         <button
           type="button"
           onClick={() => generateInvoice(order)}
-          title="Imprimer facture"
+          title="Imprimer Bonne"
           className="p-2 w-9 h-9 flex items-center justify-center hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
         >
           <AiOutlinePrinter size={20} />

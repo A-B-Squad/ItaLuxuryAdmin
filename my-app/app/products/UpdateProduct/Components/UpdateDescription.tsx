@@ -51,7 +51,6 @@ const AddDescription = ({ description, setDescription }: any) => {
           ref={editor}
           value={description}
           config={config}
-          tabIndex={1}
           onBlur={(newContent) => setDescription(newContent)}
         />
       </div>

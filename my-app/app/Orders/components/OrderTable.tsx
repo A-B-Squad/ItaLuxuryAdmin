@@ -6,6 +6,7 @@ interface Order {
   customId: string;
   createdAt: string;
   Checkout: {
+    userId: string;
     userName: string;
     total: number;
   };
@@ -31,7 +32,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
         <tr>
           <th className="py-3 px-4 text-left">Réf</th>
           <th className="py-3 px-4 text-left">Date de création</th>
-          <th className="py-3 px-4 text-left">Client</th>
+          <th className="py-3 px-4 text-left">Client id</th>
           <th className="py-3 px-4 text-left">Statut</th>
           <th className="py-3 px-4 text-left">Total</th>
           <th className="py-3 px-4 text-left">Actions</th>

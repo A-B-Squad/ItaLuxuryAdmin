@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import { FETCH_ALL_USERS } from "../graph/queries";
 import { translateStatus } from "../Helpers/_translateStatus";
 import {
-  FaUser,
   FaBox,
   FaStar,
   FaEnvelope,
@@ -45,6 +44,7 @@ interface Checkout {
 }
 
 interface User {
+  id: string;
   fullName: string;
   reviews: Review[];
   ContactUs: ContactUs[];
@@ -71,6 +71,7 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
 
   return <div className="flex">{stars}</div>;
 };
+
 const UserRow: React.FC<{ user: User; onClick: () => void }> = ({
   user,
   onClick,
@@ -86,6 +87,7 @@ const UserRow: React.FC<{ user: User; onClick: () => void }> = ({
       className="hover:bg-gray-100 cursor-pointer transition-colors duration-150"
       onClick={onClick}
     >
+      <td className="px-6 py-4 whitespace-nowrap">{user.id}</td>
       <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
       <td className="px-6 py-4 whitespace-nowrap text-center">
         {user.checkout.length}
@@ -115,6 +117,7 @@ const ClientsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   if (loading) return <div className="text-center mt-8">Loading...</div>;
   if (error)
@@ -125,6 +128,14 @@ const ClientsPage: React.FC = () => {
     );
 
   const users = data?.fetchAllUsers || [];
+
+  // Filter users based on the search term
+  const filteredUsers = users.filter((user) => {
+    const searchResult =
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.id.toLowerCase().includes(searchTerm.toLowerCase());
+    return searchResult;
+  });
 
   const openModal = (imageSrc: string) => {
     setSelectedImage(imageSrc);
@@ -146,14 +157,32 @@ const ClientsPage: React.FC = () => {
       <h1 className="font-bold text-2xl py-5 px-4 border-b-2 w-full">
         Client Management{" "}
         <span className="text-gray-600  font-medium text-base">
-          ({users.length || 0})
+          ({filteredUsers.length || 0})
         </span>
       </h1>
+
+      {/* Search Input */}
+      <div className="mb-4 px-4">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-4 py-2 border rounded-lg w-full"
+        />
+      </div>
+
       <div className="bg-white shadow-xl rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-[#202939]">
               <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  User.Id
+                </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
@@ -181,10 +210,10 @@ const ClientsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.length > 0 ? (
-                users.map((user) => (
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
                   <UserRow
-                    key={user.fullName}
+                    key={user.id}
                     user={user}
                     onClick={() => setSelectedUser(user)}
                   />
@@ -193,9 +222,9 @@ const ClientsPage: React.FC = () => {
                 <tr>
                   <td
                     className="px-6 py-4 text-center text-gray-500"
-                    colSpan={4}
+                    colSpan={5}
                   >
-                    No users available.
+                    No users found.
                   </td>
                 </tr>
               )}
@@ -234,15 +263,14 @@ const ClientsPage: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {selectedUser.checkout.map((checkout: Checkout) => (
                             <tr key={checkout.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                                {checkout.package[0]?.customId || "N/A"}
+                              <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {checkout.package[0].customId}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                                {checkout.Governorate.name || "N/A"}
+                                {checkout.Governorate.name}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                                {translateStatus(checkout.package[0]?.status) ||
-                                  "N/A"}
+                                {translateStatus(checkout.package[0].status)}
                               </td>
                             </tr>
                           ))}
@@ -250,10 +278,11 @@ const ClientsPage: React.FC = () => {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-gray-500">No orders available.</p>
+                    <p>No orders available.</p>
                   )
                 }
               />
+
               <UserInfoSection
                 title="Reviews"
                 icon={<FaStar color="white" />}
@@ -264,10 +293,13 @@ const ClientsPage: React.FC = () => {
                         <thead className="bg-gray-50 sticky top-0">
                           <tr>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Product SKU
+                              Product ID
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Rating
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Reference
                             </th>
                           </tr>
                         </thead>
@@ -277,11 +309,14 @@ const ClientsPage: React.FC = () => {
                               key={review.productId}
                               className="hover:bg-gray-50"
                             >
-                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                                {review.product.reference}
+                              <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {review.productId}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                 <StarRating rating={review.rating} />
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {review.product.reference}
                               </td>
                             </tr>
                           ))}
@@ -289,18 +324,19 @@ const ClientsPage: React.FC = () => {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-gray-500">No reviews available.</p>
+                    <p>No reviews available.</p>
                   )
                 }
               />
             </div>
-            <div className="mt-8">
+
+            <div className="mt-8 w-full">
               <UserInfoSection
                 title="Messages"
                 icon={<FaEnvelope color="white" />}
                 content={
                   selectedUser.ContactUs.length > 0 ? (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto ">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
@@ -357,7 +393,6 @@ const ClientsPage: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* Image Modal */}
       {isModalOpen && selectedImage && (
         <div
@@ -393,18 +428,26 @@ const ClientsPage: React.FC = () => {
   );
 };
 
-const UserInfoSection: React.FC<{
+export default ClientsPage;
+
+interface UserInfoSectionProps {
   title: string;
   icon: React.ReactNode;
   content: React.ReactNode;
-}> = ({ title, icon, content }) => (
-  <div className="bg-white rounded-lg shadow-md overflow-hidden">
-    <div className="bg-[#202939] text-white px-4 py-2 flex items-center">
-      {icon}
-      <h3 className="text-lg font-semibold ml-2">{title}</h3>
-    </div>
-    <div className="p-4">{content}</div>
-  </div>
-);
+}
 
-export default ClientsPage;
+const UserInfoSection: React.FC<UserInfoSectionProps> = ({
+  title,
+  icon,
+  content,
+}) => {
+  return (
+    <div className="border rounded-lg shadow-md p-4">
+      <div className="flex items-center bg-[#202939] text-white px-4 py-2 rounded-md">
+        {icon}
+        <h3 className="ml-2 font-bold text-lg">{title}</h3>
+      </div>
+      <div className="mt-4">{content}</div>
+    </div>
+  );
+};

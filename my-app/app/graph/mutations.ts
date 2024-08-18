@@ -61,8 +61,8 @@ export const DELETE_COLOR_MUTATION = gql`
   }
 `;
 export const ADD_BRAND_MUTATION = gql`
-  mutation AddBrand($name: String!, $logo: String!) {
-    addBrand(name: $name, logo: $logo)
+  mutation AddBrand($name: String!, $logo: String!, $categoryId: String) {
+    addBrand(name: $name, logo: $logo, categoryId: $categoryId)
   }
 `;
 export const DELETE_BRAND_MUTATION = gql`

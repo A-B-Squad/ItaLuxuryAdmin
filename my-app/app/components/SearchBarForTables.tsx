@@ -3,6 +3,14 @@
 import React, { useCallback, useMemo } from "react";
 import { IoSearch } from "react-icons/io5";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SearchBarProps {
   page:
@@ -26,7 +34,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       } else {
         params.delete("q");
       }
-      if (newOrder) {
+      if (newOrder && newOrder !== "default") {
         params.set("order", newOrder);
       } else {
         params.delete("order");
@@ -38,14 +46,17 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSearchParams(e.target.value, searchParams.get("order") || "");
+      updateSearchParams(
+        e.target.value,
+        searchParams.get("order") || "default",
+      );
     },
     [updateSearchParams, searchParams],
   );
 
   const handleFilterChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      updateSearchParams(searchParams.get("q") || "", e.target.value);
+    (value: string) => {
+      updateSearchParams(searchParams.get("q") || "", value);
     },
     [updateSearchParams, searchParams],
   );
@@ -63,25 +74,21 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
 
   const filterOptions = useMemo(() => {
     if (page === "Coupons") {
-      return (
-        <>
-          <option value="">Filtres de recherche</option>
-          <option value="USED">Utilisé</option>
-          <option value="UNUSED">Non Utilisé</option>
-        </>
-      );
+      return [
+        { value: "default", label: "Filtres de recherche" },
+        { value: "USED", label: "Utilisé" },
+        { value: "UNUSED", label: "Non Utilisé" },
+      ];
     } else if (
       page !== "Products/Categories" &&
       page !== "Products/Inventory" &&
       page !== "TopDeals"
     ) {
-      return (
-        <>
-          <option value="">Filtres de recherche</option>
-          <option value="ASC">prix : Asc</option>
-          <option value="DESC">prix : Desc</option>
-        </>
-      );
+      return [
+        { value: "default", label: "Filtres de recherche" },
+        { value: "ASC", label: "prix : Asc" },
+        { value: "DESC", label: "prix : Desc" },
+      ];
     }
     return null;
   }, [page]);
@@ -114,14 +121,24 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
           <IoSearch size={24} />
         </button>
       </div>
-      {showFilter && (
-        <select
-          onChange={handleFilterChange}
-          className="w-[20%] h-10 border-2 border-sky-500 text-sky-500 rounded px-2 md:px-3 py-0 md:py-1 tracking-wider"
-          defaultValue={searchParams.get("order") || ""}
+      {showFilter && filterOptions && (
+        <Select
+          onValueChange={handleFilterChange}
+          defaultValue={searchParams.get("order") || "default"}
         >
-          {filterOptions}
-        </select>
+          <SelectTrigger className="w-[20%]">
+            <SelectValue placeholder="Filtres de recherche" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       )}
     </form>
   );

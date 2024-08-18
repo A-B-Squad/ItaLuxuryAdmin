@@ -56,8 +56,10 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
 
   useEffect(() => {
     if (order?.Checkout) {
-      const { userName, User, phone, governorateId, address } = order.Checkout;
+      const { userName, User, phone, governorateId, address, userId } =
+        order.Checkout;
       setCustomerInfo({
+        userId: userId || "",
         userName: userName.split(" ")[0] || "",
         familyName: userName.split(" ")[1] || "",
         email: User?.email || "",
@@ -134,9 +136,17 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
     (userId: string) => {
       const user = allUsers.find((u) => u.id === userId);
       setSelectedUser(user || null);
-      setCustomerInfo((prev: any) => ({ ...prev, userId }));
+      const updatedInfo = {
+        ...customerInfo,
+        userId: user?.id || "",
+        userName: user?.firstName || "",
+        familyName: user?.lastName || "",
+        email: user?.email || "",
+        // Update other fields as necessary
+      };
+      setCustomerInfo(updatedInfo);
     },
-    [allUsers, setCustomerInfo],
+    [allUsers, customerInfo, setCustomerInfo],
   );
 
   if (usersLoading || govLoading) {

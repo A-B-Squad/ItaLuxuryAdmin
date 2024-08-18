@@ -17,10 +17,13 @@ export const CategorySection = ({
     <div className="mb-12">
       <h2 className="text-2xl font-semibold mb-4">{categoryName}</h2>
       <SearchBar value={searchInput} onChange={onSearch} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+      <div className="flex flex-col gap-6 mt-6">
         {displayProducts.length > 0 ? (
           displayProducts.map(
-            (product: { id: any; categories: { name: any }[] }) => (
+            (product: {
+              id: any;
+              categories: { name: string; id: string }[];
+            }) => (
               <ProductCard
                 key={product.id}
                 product={product}

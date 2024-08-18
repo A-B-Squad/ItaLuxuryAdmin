@@ -1,7 +1,6 @@
 import React, { useState, ChangeEvent } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 
 import {
   Select,
@@ -14,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@apollo/client";
 import { DISCOUNT_PERCENTAGE_QUERY } from "@/app/graph/queries";
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/app/Helpers/_formatDate";
 
 const AddPrice = ({
   discountPercentage,
@@ -35,6 +36,48 @@ const AddPrice = ({
   );
   const [discountedPrice, setDiscountedPrice] = useState<string>("0.00");
   const { data, loading, error } = useQuery(DISCOUNT_PERCENTAGE_QUERY);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [date, setDate] = useState<DateRange | undefined>(() => {
+    const startDate = dateOfStartDiscount
+      ? new Date(dateOfStartDiscount)
+      : undefined;
+    const endDate = dateOfEndDiscount ? new Date(dateOfEndDiscount) : undefined;
+
+    return {
+      from: startDate,
+      to: endDate,
+    };
+  });
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    console.log(range, "###############################");
+
+    // Get the current date
+    const currentDate = new Date();
+
+    // Check if from date is not in the past
+    if (range?.from && range.from < currentDate) {
+      alert("La date de début ne peut pas être dans le passé.");
+      return; // Exit the function to prevent state update
+    }
+
+    // Check if to date is not in the past
+    if (range?.to && range.to < currentDate) {
+      alert("La date de fin ne peut pas être dans le passé.");
+      return; // Exit the function to prevent state update
+    }
+
+    setDate(range);
+    if (range?.from) {
+      setDateOfStartDiscount(formatDate(range.from.getTime().toString()));
+    }
+    if (range?.to) {
+      setDateOfEndDiscount(formatDate(range.to.getTime().toString()));
+    }
+  };
+
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar);
+  };
 
   const handleOriginalPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
     const price = parseFloat(e.target.value) || 0;
@@ -108,7 +151,7 @@ const AddPrice = ({
   const discountOptions = data?.DiscountsPercentage || [];
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto relative">
       <h1 className="text-lg font-bold mb-4">Tarification</h1>
 
       <div className="mb-4">
@@ -196,25 +239,36 @@ const AddPrice = ({
       </div>
 
       <div className="mb-4">
-        <label className="block text-gray-700">Date de début</label>
-        <DatePicker
-          selected={dateOfStartDiscount}
-          onChange={(date) => setDateOfStartDiscount(date)}
-          dateFormat="dd/MM/yyyy HH:mm:ss.SSS"
-          showTimeInput
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-gray-700">Date de fin</label>
-        <DatePicker
-          selected={dateOfEndDiscount}
-          onChange={(date) => setDateOfEndDiscount(date)}
-          dateFormat="dd/MM/yyyy HH:mm:ss.SSS"
-          showTimeInput
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-        />
+        <label className="block text-gray-700">Période de remise</label>
+        <div className="mt-2">
+          <Button onClick={toggleCalendar}>
+            {showCalendar ? "Masquer le calendrier" : "Afficher le calendrier"}
+          </Button>
+          {showCalendar && (
+            <div className="absolute z-10 bg-white p-4 border rounded shadow-lg">
+              <Calendar
+                mode="range"
+                selected={date}
+                onSelect={handleDateRangeChange}
+                numberOfMonths={2}
+              />
+            </div>
+          )}
+        </div>
+        <div className="mt-2">
+          <p>
+            Du:{" "}
+            {date?.from
+              ? formatDate(date.from.getTime().toString())
+              : "Non sélectionné"}
+          </p>
+          <p>
+            Au:{" "}
+            {date?.to
+              ? formatDate(date.to.getTime().toString())
+              : "Non sélectionné"}
+          </p>
+        </div>
       </div>
 
       <div>

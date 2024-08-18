@@ -121,6 +121,10 @@ export const GET_BRANDS = gql`
       id
       logo
       name
+      Category {
+        id
+        name
+      }
     }
   }
 `;
@@ -214,12 +218,19 @@ export const ORDERS_QUERY = gql`
             name
             reference
             images
+            solde
+            broken
+            purchasePrice
+            price
           }
         }
         total
       }
       status
       createdAt
+      delivredAt
+      inTransitAt
+      returnedAt
     }
   }
 `;
@@ -262,6 +273,7 @@ export const FETCH_ALL_BASKET = gql`
           subcategories {
             id
             name
+
             subcategories {
               id
               name
@@ -289,6 +301,7 @@ export const ALL_CONTACTS = gql`
 export const FETCH_ALL_USERS = gql`
   query FetchAllUsers {
     fetchAllUsers {
+      id
       fullName
       ContactUs {
         id

@@ -5,11 +5,11 @@ export const ProductCard = ({
   onRemoveFromBestSells,
 }: any) => {
   return (
-    <div className="border rounded-lg overflow-hidden shadow-lg">
+    <div className="border rounded-lg flex items-center overflow-hidden shadow-lg">
       <img
         src={product.images[0]}
         alt={product.name}
-        className="w-full h-48 object-cover"
+        className="w-24 h-24 object-contain"
       />
       <div className="p-4">
         <h3 className="text-lg font-semibold mb-2">{product.name}</h3>

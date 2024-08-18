@@ -86,6 +86,14 @@ const CreateCategory = () => {
 
         window.location.reload();
       },
+      onError(err) {
+        toast({
+          title: "Error",
+          className: "text-white bg-red-500 border-0",
+          description: err.message,
+          duration: 5000,
+        });
+      },
     });
   };
 

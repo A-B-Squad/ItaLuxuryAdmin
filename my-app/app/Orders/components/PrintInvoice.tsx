@@ -28,9 +28,9 @@ const PrintInvoice = ({ order }: { order: any }) => {
     // Page number
     doc.text("Page N° 1", 180, 10);
 
-    // FACTURE title
+    // BONNE title
     doc.setFontSize(18);
-    doc.text("FACTURE", 14, 60);
+    doc.text("BONNE", 14, 60);
 
     // Invoice details box
     doc.rect(14, 65, 90, 20);
@@ -116,7 +116,7 @@ const PrintInvoice = ({ order }: { order: any }) => {
     doc.text("Cachet & Signature", 122, finalY + 35);
 
     // Save the PDF
-    doc.save(`facture_${order.customId}.pdf`);
+    doc.save(`bonne_${order.customId}.pdf`);
   };
 
   return (
