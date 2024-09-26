@@ -10,23 +10,23 @@ if (
 }
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL_DOMAIN),
-  title: "Connexion - MaisonNg",
+  title: "Connexion - ita-luxury",
   description:
-    "Connectez-vous à votre compte MaisonNg pour accéder à votre profil et effectuer des achats en ligne.",
+    "Connectez-vous à votre compte ita-luxury pour accéder à votre profil et effectuer des achats en ligne.",
   keywords: keywords, // Use the imported keywords
 
   openGraph: {
     url: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/signin`,
     type: "website",
-    title: "Connexion - MaisonNg",
+    title: "Connexion - ita-luxury",
     description:
-      "Connectez-vous à votre compte MaisonNg pour accéder à votre profil et effectuer des achats en ligne.",
+      "Connectez-vous à votre compte ita-luxury pour accéder à votre profil et effectuer des achats en ligne.",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/images/logo.jpeg`,
+        url: "/my-app/public/images/LOGO.png",
         width: 800,
         height: 600,
-        alt: "Maison Ng",
+        alt: "Ita-Luxury",
       },
     ],
   },

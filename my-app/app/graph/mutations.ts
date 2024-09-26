@@ -5,6 +5,38 @@ export const CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS = gql`
     createCarouselAdvertisement(input: $input)
   }
 `;
+
+export const ADMIN_SIGNIN = gql`
+  mutation AdminSignIn($input: AdminSignInInput!) {
+    adminSignIn(input: $input)
+  }
+`;
+export const UPDATE_CATEGORY_MUTATION = gql`
+  mutation UpdateCategory(
+    $updateCategoryId: ID!
+    $input: UpdateCategoryInput!
+  ) {
+    updateCategory(id: $updateCategoryId, input: $input)
+  }
+`;
+export const CREATE_MODERATOR = gql`
+  mutation CreateModerator($adminId: ID!, $input: CreateModeratorInput!) {
+    createModerator(adminId: $adminId, input: $input)
+  }
+`;
+
+export const DELETE_API_CREDENTIALS = gql`
+  mutation DeleteApiCredentials($deleteApiCredentialsId: ID!) {
+    deleteApiCredentials(id: $deleteApiCredentialsId)
+  }
+`;
+
+export const ADD_API_CREDENTIALS = gql`
+  mutation AddApiCredentials($input: CreateApiCredentialsInput!) {
+    addApiCredentials(input: $input)
+  }
+`;
+
 export const CREATE_BANNER_ADVERTISEMENT_MUTATIONS = gql`
   mutation CreateBannerAdvertisement($input: [advertisementInput]) {
     createBannerAdvertisement(input: $input)
@@ -147,8 +179,8 @@ export const CREATE_CHECKOUT_MUTATION = gql`
   }
 `;
 export const UPDATE_CHECKOUT_MUTATIONS = gql`
-  mutation UpdateProductInCheckout($input: UpdateProductInCheckoutInput!) {
-    updateProductInCheckout(input: $input)
+  mutation UpdateCheckout($input: UpdateCheckoutInput!) {
+    updateCheckout(input: $input)
   }
 `;
 export const UPDATE_CUSTOMER_MUTATIONS = gql`

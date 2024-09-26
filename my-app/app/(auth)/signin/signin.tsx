@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
-import Link from "next/link";
 import Image from "next/image";
 import "../../globals.css";
 
 import { useToast } from "@/components/ui/use-toast";
-import { SIGNIN_MUTATION } from "@/graphql/mutations";
 import { useForm } from "react-hook-form";
-import { FaEnvelope, FaLock, FaGoogle, FaFacebook } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaUserShield } from "react-icons/fa";
+import { ADMIN_SIGNIN } from "@/app/graph/mutations";
+
 const Signin = () => {
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState("");
@@ -21,35 +21,37 @@ const Signin = () => {
     formState: { errors },
   } = useForm();
 
-  const [SignIn, { loading }] = useMutation(SIGNIN_MUTATION, {
-    onCompleted: () => {
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue sur MaisonNg",
-        className: "bg-green-500 text-white",
-      });
-      router.replace("/");
-    },
-    onError: (error) => {
-      setErrorMessage(
-        error.message === "Invalid email or password"
-          ? "Email ou mot de passe invalide"
-          : "Une erreur s'est produite. Veuillez réessayer.",
-      );
-    },
-  });
+  const [SignIn, { loading }] = useMutation(ADMIN_SIGNIN);
 
   const onSubmit = (data: any) => {
-    SignIn({ variables: { input: data } });
+    SignIn({
+      variables: { input: data },
+
+      onCompleted: () => {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue sur ita-luxury",
+          className: "bg-green-500 text-white",
+        });
+        router.replace("/Dashboard");
+      },
+      onError: (error) => {
+        setErrorMessage(
+          error.message === "Invalid Admin"
+            ? "Admin invalide"
+            : "Une erreur s'est produite. Veuillez réessayer.",
+        );
+      },
+    });
   };
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Image
-          className="mx-auto  "
-          src="https://res.cloudinary.com/dc1cdbirz/image/upload/v1715518497/hoyr6n9tf2n68kiklveg.jpg"
-          alt="MaisonNg"
+          className="mx-auto"
+          src="https://res.cloudinary.com/dc1cdbirz/image/upload/v1727269189/cz4cuthoiooetsaji7mp.png"
+          alt="ita-luxury"
           width={200}
           height={200}
         />
@@ -71,10 +73,10 @@ const Signin = () => {
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label
-                htmlFor="email"
+                htmlFor="fullName"
                 className="block text-sm font-medium text-gray-700"
               >
-                Adresse e-mail
+                Username
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -84,19 +86,50 @@ const Signin = () => {
                   />
                 </div>
                 <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
+                  id="fullName"
+                  type="text"
                   className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${
-                    errors.email ? "border-red-300" : ""
+                    errors.fullName ? "border-red-300" : ""
                   }`}
-                  placeholder="vous@exemple.com"
-                  {...register("email", { required: "L'email est requis" })}
+                  placeholder="Username"
+                  {...register("fullName", { required: "name est requis" })}
                 />
               </div>
-              {errors.email && (
+              {errors.fullName && (
                 <p className="mt-2 text-sm text-red-600">
-                  {errors.email.message as string}
+                  {errors.fullName.message as string}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Rôle
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUserShield
+                    className="h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
+                <select
+                  id="role"
+                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${
+                    errors.role ? "border-red-300" : ""
+                  }`}
+                  {...register("role", { required: "Le rôle est requis" })}
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="MODERATEUR">Modérateur</option>
+                </select>
+              </div>
+              {errors.role && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.role.message as string}
                 </p>
               )}
             </div>
@@ -145,61 +178,6 @@ const Signin = () => {
               </button>
             </div>
           </form>
-          {/* //Google
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Ou continuer avec
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div>
-                <Link
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <FaGoogle className="h-5 w-5" />
-                  <span className="sr-only">Sign in with Google</span>
-                </Link>
-              </div>
-
-              <div>
-                <Link
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <FaFacebook className="h-5 w-5" />
-                  <span className="sr-only">Sign in with Facebook</span>
-                </Link>
-              </div>
-            </div>
-          </div> */}
-
-          <div className="mt-6 flex flex-col space-y-2 text-center text-sm">
-            <p className="text-gray-600">
-              Vous n'avez pas de compte ?{" "}
-              <Link
-                href="/signup"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                S'inscrire
-              </Link>
-            </p>
-            <p className="text-gray-600">
-              <Link
-                href="/forgotPassword"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

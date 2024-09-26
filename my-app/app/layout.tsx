@@ -4,7 +4,7 @@ import { Open_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
 import { ApolloWrapper } from "@/lib/apollo-wrapper";
-import DashboardLayout from "./DashboardLayout";
+import { Metadata } from "next";
 
 if (process.env.NODE_ENV !== "production") {
   loadDevMessages();
@@ -14,6 +14,11 @@ if (process.env.NODE_ENV !== "production") {
 const openSans = Open_Sans({
   subsets: ["cyrillic"],
 });
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard | ita-luxury",
+  description: "Tableau de bord administratif pour la gestion de ita-luxury",
+};
 
 export default function RootLayout({
   children,
@@ -26,9 +31,7 @@ export default function RootLayout({
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
       </head>
       <body className={openSans.className}>
-        <ApolloWrapper>
-          <DashboardLayout>{children}</DashboardLayout>
-        </ApolloWrapper>
+        <ApolloWrapper>{children}</ApolloWrapper>
         <Toaster />
       </body>
     </html>
