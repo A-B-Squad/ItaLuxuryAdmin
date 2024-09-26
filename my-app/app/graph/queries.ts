@@ -14,6 +14,19 @@ export const GET_PACKAGES_QUERY = gql`
     }
   }
 `;
+export const GET_CATEGORY_BY_ID = gql`
+  query CategoryById($categoryId: String!) {
+    categoryById(categoryId: $categoryId) {
+      id
+      name
+      parentId
+      smallImage
+      bigImage
+      description
+    }
+  }
+`;
+
 export const GET_ALL_USERS_QUERY = gql`
   query FetchAllUsers {
     fetchAllUsers {
@@ -198,7 +211,7 @@ export const BEST_SELLS_QUERY = gql`
     }
   }
 `;
-export const ORDERS_QUERY = gql`
+export const PACKAGES_QUERY = gql`
   query GetAllPackages {
     getAllPackages {
       id
@@ -206,9 +219,13 @@ export const ORDERS_QUERY = gql`
       Checkout {
         userName
         userId
+        guestEmail
+        deliveryComment
         governorateId
         address
         phone
+        freeDelivery
+        manualDiscount
         productInCheckout {
           productQuantity
           price
@@ -242,6 +259,18 @@ export const GET_GOVERMENT_INFO = gql`
     }
   }
 `;
+
+export const GET_ALL_API_CREDENTIALS = gql`
+  query GetAllApiCredentials($integrationFor: String) {
+    getAllApiCredentials(integrationFor: $integrationFor) {
+      id
+      api_id
+      access_token
+      domainVerification
+    }
+  }
+`;
+
 export const GET_ALL_USERS = gql`
   query FetchAllUsers {
     fetchAllUsers {
@@ -349,11 +378,14 @@ export const PACKAGE_BY_ID_QUERY = gql`
           discount
         }
         userId
+        guestEmail
+        deliveryComment
         userName
         phone
         address
         governorateId
         manualDiscount
+        freeDelivery
         total
         productInCheckout {
           id

@@ -33,30 +33,30 @@ export interface ProductInCheckout {
     name: string;
     reference: string;
     images: string[];
-    productDiscounts?: any[]; // You might want to define a more specific type for productDiscounts
+    productDiscounts?: any[];
   };
 }
 
 export interface Checkout {
   id: string;
-  total: number;
-  Coupons: { discount: number };
-  userId: string;
-  userName: string;
+  User?: User;
+  freeDelivery: boolean;
+  userId?: string;
   phone: string[];
-  email: string;
+  userName: string;
   address: string;
+  productInCheckout: ProductInCheckout[];
+  total: number;
   governorateId: string;
   manualDiscount: number;
-  productInCheckout: ProductInCheckout[];
-  User?: User;
+  Coupons: { discount: number };
 }
 
 export interface Order {
   id: string;
   comments: string;
-  createdAt: string;
-  customId: string;
   status: string;
+  customId: string;
+  createdAt: string;
   Checkout: Checkout;
 }

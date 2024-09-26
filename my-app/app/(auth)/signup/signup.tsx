@@ -1,17 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { SIGNUP_MUTATION } from "@/graphql/mutations";
-import { FaUser, FaEnvelope, FaPhone, FaLock } from "react-icons/fa";
+import { CREATE_MODERATOR } from "@/app/graph/mutations";
+import { FaUser, FaLock } from "react-icons/fa";
+import Cookies from "js-cookie";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+interface DecodedToken extends JwtPayload {
+  userId: string;
+}
 
 const Signup = () => {
-  const [errorMessage, setErrorMessage] = useState("");
+  const [decodedToken, setDecodedToken] = useState<DecodedToken | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const router = useRouter();
+
+  useEffect(() => {
+    const token = Cookies.get("AdminToken");
+    if (token) {
+      const decoded = jwt.decode(token) as DecodedToken;
+      setDecodedToken(decoded);
+    }
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -19,16 +35,17 @@ const Signup = () => {
     watch,
   } = useForm();
 
-  const [signUp, { loading }] = useMutation(SIGNUP_MUTATION, {
+  const [signUp, { loading }] = useMutation(CREATE_MODERATOR, {
     onCompleted: () => {
-      router.replace("/");
+      router.replace("/Dashboard");
     },
     onError: (error) => {
-      if (error.message === "Email address is already in use") {
+      // Extract and set the error message
+      if (error.message.includes("User is not authorized")) {
+        setErrorMessage("You are not authorized to create a moderator.");
+      } else if (error.message.includes("Email address is already in use")) {
         setErrorMessage("L'adresse e-mail est déjà utilisée");
       } else {
-        console.log(error);
-
         setErrorMessage("Une erreur s'est produite. Veuillez réessayer.");
       }
     },
@@ -37,11 +54,11 @@ const Signup = () => {
   const onSubmit = (data: any) => {
     signUp({
       variables: {
+        adminId: decodedToken?.userId,
         input: {
           fullName: data.fullName,
-          email: data.email,
-          number: data.number,
           password: data.password,
+          role: "MODERATOR",
         },
       },
     });
@@ -51,11 +68,11 @@ const Signup = () => {
     <div className="bg-gray-100 min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Image
-          className="mx-auto h-12 w-auto"
-          src="https://res.cloudinary.com/dc1cdbirz/image/upload/v1715518497/hoyr6n9tf2n68kiklveg.jpg"
-          alt="MaisonNg"
-          width={48}
-          height={48}
+          className="mx-auto"
+          src="https://res.cloudinary.com/dc1cdbirz/image/upload/v1727269189/cz4cuthoiooetsaji7mp.png"
+          alt="ita-luxury"
+          width={200}
+          height={200}
         />
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Créez votre compte
@@ -90,8 +107,10 @@ const Signup = () => {
                 <input
                   id="fullName"
                   type="text"
-                  className={`block w-full pl-10 sm:text-sm py-2 border-gray-300 outline-none rounded-md ${errors.fullName ? "border-red-300" : ""}`}
-                  placeholder="nom"
+                  className={`block w-full pl-10 sm:text-sm py-2 border-gray-300 outline-none rounded-md ${
+                    errors.fullName ? "border-red-300" : ""
+                  }`}
+                  placeholder="Nom complet"
                   {...register("fullName", {
                     required: "Le nom complet est requis",
                   })}
@@ -100,67 +119,6 @@ const Signup = () => {
               {errors.fullName && (
                 <p className="mt-2 text-sm text-red-600">
                   {errors.fullName.message as string}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Adresse e-mail
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaEnvelope
-                    className="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 py-2 outline-none rounded-md ${errors.email ? "border-red-300" : ""}`}
-                  placeholder="vous@exemple.com"
-                  {...register("email", { required: "L'email est requis" })}
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-2 text-sm text-red-600">
-                  {errors.email.message as string}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="number"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Numéro de téléphone
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaPhone
-                    className="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <input
-                  id="number"
-                  type="tel"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 outline-none py-2 rounded-md ${errors.number ? "border-red-300" : ""}`}
-                  placeholder="+216 12 345 678"
-                  {...register("number", {
-                    required: "Le numéro de téléphone est requis",
-                  })}
-                />
-              </div>
-              {errors.number && (
-                <p className="mt-2 text-sm text-red-600">
-                  {errors.number.message as string}
                 </p>
               )}
             </div>
@@ -183,7 +141,9 @@ const Signup = () => {
                   id="password"
                   type="password"
                   placeholder="********"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 outline-none py-2 rounded-md ${errors.password ? "border-red-300" : ""}`}
+                  className={`block w-full pl-10 sm:text-sm border-gray-300 outline-none py-2 rounded-md ${
+                    errors.password ? "border-red-300" : ""
+                  }`}
                   {...register("password", {
                     required: "Le mot de passe est requis",
                     minLength: {
@@ -219,7 +179,9 @@ const Signup = () => {
                   id="confirmPassword"
                   type="password"
                   placeholder="********"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 py-2 outline-none rounded-md ${errors.confirmPassword ? "border-red-300" : ""}`}
+                  className={`block w-full pl-10 sm:text-sm border-gray-300 py-2 outline-none rounded-md ${
+                    errors.confirmPassword ? "border-red-300" : ""
+                  }`}
                   {...register("confirmPassword", {
                     required: "Veuillez confirmer votre mot de passe",
                     validate: (val: string) => {
@@ -247,30 +209,6 @@ const Signup = () => {
               </button>
             </div>
           </form>
-
-          <div className="mt-6">
-            <p className="mt-2 text-center text-sm text-gray-600">
-              En vous inscrivant, vous acceptez nos{" "}
-              <Link
-                href="/Terms-of-use"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Conditions d'Utilisation
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <p className="text-center text-sm text-gray-600">
-              Vous avez déjà un compte ?{" "}
-              <Link
-                href="/signin"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Se connecter
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

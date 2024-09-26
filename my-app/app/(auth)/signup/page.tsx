@@ -12,23 +12,23 @@ if (
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL_DOMAIN),
-  title: "Inscription - MaisonNg",
+  title: "Inscription - ita-luxury",
   description:
-    "Inscrivez-vous à MaisonNg pour créer un compte et commencer à faire des achats en ligne.",
+    "Inscrivez-vous à ita-luxury pour créer un compte et commencer à faire des achats en ligne.",
   keywords: keywords,
 
   openGraph: {
     url: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/signup`,
     type: "website",
-    title: "Inscription - MaisonNg",
+    title: "Inscription - ita-luxury",
     description:
-      "Inscrivez-vous à MaisonNg pour créer un compte et commencer à faire des achats en ligne.",
+      "Inscrivez-vous à ita-luxury pour créer un compte et commencer à faire des achats en ligne.",
     images: [
       {
-        url: "/my-app/app/public/images/logo.jpeg",
+        url: "/my-app/app/public/images/LOGO.png",
         width: 800,
         height: 600,
-        alt: "Maison Ng",
+        alt: "Ita-Luxury",
       },
     ],
   },
