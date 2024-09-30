@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { formatDate } from "../Helpers/_formatDate";
 import { generateInvoice } from "../Helpers/_generateInvoice";
+import ReloadButton from "../components/ReloadPage";
 
 const OrdersPage: React.FC = () => {
   const [searchCommande, setSearchCommande] = useState("");
@@ -300,7 +301,8 @@ const OrdersPage: React.FC = () => {
             <option>ANNULÉ</option>
             <option>EN TRAITEMENT </option>
             <option>TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON </option>
-            <option>PAYÉ</option>
+            <option>PAYÉ ET LIVRÉ</option>
+            <option>PAYÉ MAIS NON LIVRÉ</option>
             <option>REMBOURSER</option>
           </select>
 
@@ -339,6 +341,7 @@ const OrdersPage: React.FC = () => {
           >
             Effacer
           </button>
+          <ReloadButton />
         </div>
 
         {loading ? (

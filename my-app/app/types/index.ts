@@ -50,6 +50,7 @@ export interface Checkout {
   governorateId: string;
   manualDiscount: number;
   Coupons: { discount: number };
+  paymentMethod: string;
 }
 
 export interface Order {

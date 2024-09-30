@@ -41,7 +41,7 @@ const getStats = (packages: Package[]): Stats => {
   };
 
   packages.forEach((pkg) => {
-    if (pkg.status === "PAYED") {
+    if (pkg.status === "PAYED_AND_DELIVERED") {
       const packageDate = moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE);
 
       if (packageDate.isSame(moment(), "day")) {
@@ -102,12 +102,12 @@ const DashboardPage: React.FC = () => {
   }, [packageData]);
 
   const totalPayedPackagesCount = packageData.filter(
-    (pkg) => pkg.status === "PAYED",
+    (pkg) => pkg.status === "PAYED_AND_DELIVERED",
   ).length;
 
   const totalEarningsDelivered = packageData.reduce(
     (total, pkg) =>
-      pkg.status === "PAYED" ? total + pkg.Checkout.total : total,
+      pkg.status === "PAYED_AND_DELIVERED" ? total + pkg.Checkout.total : total,
     0,
   );
 

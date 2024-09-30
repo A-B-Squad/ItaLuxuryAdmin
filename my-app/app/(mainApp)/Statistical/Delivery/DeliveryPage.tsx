@@ -45,8 +45,8 @@ ChartJS.register(
 
 import AnimatedCounter from "../../Hook/AnimatedCounter";
 import { IoTrendingDown, IoTrendingUp } from "react-icons/io5";
-import { FiPieChart } from "react-icons/fi";
 import Loading from "../loading";
+import { translateStatus } from "../../Helpers/_translateStatus";
 
 type Status =
   | "RETOUR"
@@ -97,17 +97,6 @@ const DeliveryPage: React.FC = () => {
     to: new Date(),
   });
   const [selectedPreset, setSelectedPreset] = useState("last28");
-  const translateStatus = useCallback((status: string): Status => {
-    const statusTranslations: { [key: string]: Status } = {
-      BACK: "RETOUR",
-      EXCHANGE: "ÉCHANGE",
-      TRANSFER_TO_DELIVERY_COMPANY: "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON",
-      PROCESSING: "EN TRAITEMENT",
-      PAYED: "PAYÉ",
-      CANCELLED: "ANNULÉ",
-    };
-    return statusTranslations[status] || status;
-  }, []);
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {

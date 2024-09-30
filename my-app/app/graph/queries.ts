@@ -10,6 +10,7 @@ export const GET_PACKAGES_QUERY = gql`
       Checkout {
         id
         total
+        paymentMethod
       }
     }
   }
@@ -225,6 +226,7 @@ export const PACKAGES_QUERY = gql`
         address
         phone
         freeDelivery
+        paymentMethod
         manualDiscount
         productInCheckout {
           productQuantity
@@ -260,12 +262,11 @@ export const GET_GOVERMENT_INFO = gql`
   }
 `;
 
-export const GET_ALL_API_CREDENTIALS = gql`
-  query GetAllApiCredentials($integrationFor: String) {
-    getAllApiCredentials(integrationFor: $integrationFor) {
-      id
-      api_id
+export const GET_API_CREDENTIALS = gql`
+  query getApiCredentials($integrationFor: String) {
+    getApiCredentials(integrationFor: $integrationFor) {
       access_token
+      api_id
       domainVerification
     }
   }
@@ -369,6 +370,7 @@ export const PACKAGE_BY_ID_QUERY = gql`
       status
       Checkout {
         id
+        paymentMethod
         User {
           fullName
           email

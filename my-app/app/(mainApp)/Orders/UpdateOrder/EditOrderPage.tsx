@@ -23,7 +23,7 @@ import { CiSaveDown2 } from "react-icons/ci";
 import { useToast } from "@/components/ui/use-toast";
 
 const EditOrderPage = ({ searchParams }: any) => {
-  const { toast, dismiss } = useToast();
+  const { toast } = useToast();
   const orderId = searchParams ? searchParams.orderId : "";
   const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
 
@@ -103,13 +103,19 @@ const EditOrderPage = ({ searchParams }: any) => {
     setShowRefundModal(true);
   };
 
-  const handleCancelSubmit = async () => {
+  const handleCancelPackage = async () => {
     const brokenProducts = Object.entries(productStatuses).flatMap(
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
       },
     );
+
+    console.log({
+      packageId: orderId,
+      cause: brokenProducts.length > 0 ? "BROKEN" : "CANCEL",
+      brokenProducts,
+    });
 
     try {
       await cancelPackage({
@@ -204,7 +210,7 @@ const EditOrderPage = ({ searchParams }: any) => {
   const handlePayedPackageOrder = async () => {
     try {
       await payedOrToDeliveryPackage({
-        variables: { packageId: orderId, status: "PAYED" },
+        variables: { packageId: orderId, status: "PAYED_AND_DELIVERED" },
       });
       await refetch();
       toast({
@@ -274,7 +280,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           productStatuses={productStatuses}
           setProductStatuses={setProductStatuses}
           handleStatusChange={handleStatusChange}
-          handleCancelSubmit={handleCancelSubmit}
+          handleCancelPackage={handleCancelPackage}
           setShowCancelModal={setShowCancelModal}
         />
       )}
