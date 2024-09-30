@@ -25,6 +25,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
           <th className="py-3 px-4 text-center">Date de création</th>
           <th className="py-3 px-4 text-center">Client id</th>
           <th className="py-3 px-4 text-center">Statut</th>
+          <th className="py-3 px-4 text-center"> Payment Methode</th>
           <th className="py-3 px-4 text-center">Livraison</th>
           <th className="py-3 px-4 text-center">Total</th>
           <th className="py-3 px-4 text-center">Actions</th>

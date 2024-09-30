@@ -35,7 +35,7 @@ const SideBar = () => {
   const { data } = useQuery(PACKAGES_QUERY);
 
   const hasProcessingOrders = data?.getAllPackages.some(
-    (order: { status: string }) => order.status === "PROCESSING",
+    (order: { status: string }) => order.status === "PROCESSING" 	|| order.status === "PAYED_NOT_DELIVERED",
   );
 
   const toggleSidebar = () => {

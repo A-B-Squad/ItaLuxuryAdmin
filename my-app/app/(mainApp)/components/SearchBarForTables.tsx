@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ReloadButton from "./ReloadPage";
 
 interface SearchBarProps {
   page:
@@ -41,24 +42,24 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       }
       router.push(`/${page}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, page],
+    [router, searchParams, page]
   );
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       updateSearchParams(
         e.target.value,
-        searchParams.get("order") || "default",
+        searchParams.get("order") || "default"
       );
     },
-    [updateSearchParams, searchParams],
+    [updateSearchParams, searchParams]
   );
 
   const handleFilterChange = useCallback(
     (value: string) => {
       updateSearchParams(searchParams.get("q") || "", value);
     },
-    [updateSearchParams, searchParams],
+    [updateSearchParams, searchParams]
   );
 
   const placeholder = useMemo(() => {
@@ -98,7 +99,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       page !== "Products/Categories" &&
       page !== "Products/Inventory" &&
       page !== "TopDeals",
-    [page],
+    [page]
   );
 
   return (
@@ -106,20 +107,23 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       className="flex w-full gap-3 px-3 mb-4"
       onSubmit={(e) => e.preventDefault()}
     >
-      <div className="relative flex w-[80%]">
-        <input
-          onChange={handleInputChange}
-          type="text"
-          placeholder={placeholder}
-          className="px-10 w-full h-10 rounded-l border-2"
-          defaultValue={searchParams.get("q") || ""}
-        />
-        <button
-          type="submit"
-          className="absolute left-1 bottom-2 text-gray-700 cursor-pointer"
-        >
-          <IoSearch size={24} />
-        </button>
+      <div className="relative gap-2 flex w-[80%]">
+        <div className="search w-full">
+          <input
+            onChange={handleInputChange}
+            type="text"
+            placeholder={placeholder}
+            className="px-10 w-full h-10 rounded-l relative border rounded-md outline-none"
+            defaultValue={searchParams.get("q") || ""}
+          />
+          <button
+            type="submit"
+            className="absolute left-1 bottom-2 text-gray-700 cursor-pointer"
+          >
+            <IoSearch size={24} />
+          </button>
+        </div>
+        <ReloadButton />
       </div>
       {showFilter && filterOptions && (
         <Select

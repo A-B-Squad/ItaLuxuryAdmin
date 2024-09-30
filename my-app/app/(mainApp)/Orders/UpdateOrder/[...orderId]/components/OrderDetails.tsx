@@ -79,12 +79,15 @@ const OrderDetails = ({
               COMMANDE REMBOURSÉE
             </p>
           )}
-          {order?.status === "PAYED" && (
+
+          {order?.status === "PAYED_AND_DELIVERED" && (
             <p className="py-1 px-2 bg-blue-200 text-blue-600">
-              COMMANDE PAYÉE
+              COMMANDE PAYÉE ET LIVRÉ
             </p>
           )}
-          {order?.status === "PROCESSING" && (
+
+          {(order?.status === "PROCESSING" ||
+            order?.status === "PAYED_NOT_DELIVERED") && (
             <>
               <ActionButton
                 onClick={() =>
@@ -96,7 +99,7 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "transférer à la société de livraison",
-                    handleTransferToDeliveryOrder,
+                    handleTransferToDeliveryOrder
                   )
                 }
                 label="Transférer à la société de livraison"
@@ -115,16 +118,16 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "marquer comme payée",
-                    handlePayedPackageOrder,
+                    handlePayedPackageOrder
                   )
                 }
                 label={`Marquer comme payée (${order?.Checkout?.total.toFixed(
-                  3,
+                  3
                 )} DT)`}
               />
             </>
           )}
-          {order?.status === "PAYED" && (
+          {order?.status === "PAYED_AND_DELIVERED" && (
             <ActionButton
               onClick={() =>
                 showConfirmation("rembourser la commande", handleRefundOrder)
@@ -154,9 +157,9 @@ const OrderDetails = ({
             <TableCell>
               <span
                 className={`bg-${
-                  order?.status === "PAYED" ? "green" : "yellow"
+                  order?.status === "PAYED_AND_DELIVERED" ? "green" : "yellow"
                 }-200 text-${
-                  order?.status === "PAYED" ? "green" : "yellow"
+                  order?.status === "PAYED_AND_DELIVERED" ? "green" : "yellow"
                 }-800 px-2 py-1 rounded`}
               >
                 {translateStatus(order?.status)}
@@ -175,7 +178,7 @@ const OrderDetails = ({
                 }-800 px-2 py-1 rounded`}
               >
                 {order?.status === "TRANSFER_TO_DELIVERY_COMPANY" ||
-                order?.status === "PAYED"
+                order?.status === "PAYED_AND_DELIVERED"
                   ? "Rempli"
                   : "Non Rempli"}
               </span>

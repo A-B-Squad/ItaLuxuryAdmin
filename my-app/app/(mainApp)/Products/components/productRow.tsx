@@ -19,9 +19,9 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
   console.log(product);
 
   return (
-    <tr className="text-gray-700">
+    <tr className="text-gray-700 text-xs  font-semibold">
       <td className="Image px-4 py-3 border">
-        <div className="flex items-center text-sm">
+        <div className="flex items-center ">
           <div className="relative w-12 h-12 mr-3 rounded-full md:block">
             <Image
               className=" w-full h-full rounded-full"
@@ -40,29 +40,29 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
             ></div>
           </div>
           <div>
-            <p className="font-semibold text-sm w-full line-clamp-1 text-black">
+            <p className="font-semibold  w-full line-clamp-1 text-black">
               {product.name}
             </p>
           </div>
         </div>
       </td>
-      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+      <td className="Price text-center py-3  font-semibold border">
         {product.purchasePrice.toFixed(3)} DT
       </td>
-      <td className="Price text-center px-4 py-3 text-sm font-semibold border">
+      <td className="Price text-center  py-3   font-semibold border">
         {product.price.toFixed(3)} DT
       </td>
-      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
+      <td className="Discount  text-center py-3  font-semibold border">
         {product.productDiscounts.length > 0
           ? product.productDiscounts[0].newPrice.toFixed(3) + "TND"
           : "_________"}
       </td>
-      <td className="Discount px-4 text-center py-3 text-sm font-semibold border">
+      <td className="Discount  text-center py-3  font-semibold border">
         {product.productDiscounts.length > 0
           ? formatDate(product.productDiscounts[0].dateOfEnd)
           : "_________"}
       </td>
-      <td className="visibility text-center  py-3 text-sm border">
+      <td className="visibility text-center  py-3  border">
         <span
           className={`px-2 py-1 w-full font-semibold leading-tight ${
             product.isVisible
@@ -73,13 +73,13 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           {product.isVisible ? "Visible" : "Non visible"}
         </span>
       </td>
-      <td className="createdAt text-center px-4 py-3 text-sm border">
+      <td className="createdAt text-center px-4 py-3  border">
         {formatDate(product.createdAt)}
       </td>
-      <td className="Inventory text-center px-4 py-3 text-sm border">
+      <td className="Inventory text-center px-4 py-3  border">
         {product.solde}
       </td>
-      <td className="Edits px-4 py-3 text-sm border">
+      <td className="Edits px-4 py-3  border">
         <div className="flex justify-center items-center gap-2">
           <Link
             target="_blank"

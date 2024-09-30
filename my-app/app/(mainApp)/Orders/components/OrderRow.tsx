@@ -3,6 +3,7 @@ import Link from "next/link";
 import React from "react";
 import { AiOutlinePrinter } from "react-icons/ai";
 import { FiEdit2 } from "react-icons/fi";
+import { translatePaymentMethodStatus } from "../../Helpers/_translateStatus";
 
 interface OrderRowProps {
   order: Order;
@@ -21,7 +22,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
 }) => (
   <tr
     key={order.id}
-    className={`border-b h-10 text-center ${
+    className={`border-b h-10 text-sm text-center ${
       order.status === "CANCELLED" ? "cancelled-order" : ""
     }`}
     style={
@@ -41,18 +42,21 @@ const OrderRow: React.FC<OrderRowProps> = ({
     <td>
       <span
         className={`px-2 py-1 rounded ${
-          order.status === "PAYED"
-            ? "bg-green-100 text-green-800"
+          order.status === "PAYED_AND_DELIVERED"
+            ? "bg-green-100 text-green-600"
+            : order.status === "PAYED_NOT_DELIVERED"
+            ? "bg-yellow-100 text-green-400"
             : order.status === "PROCESSING"
-              ? "bg-yellow-100 text-yellow-800"
-              : order.status === "CANCELLED"
-                ? "bg-red-100 text-red-800"
-                : "bg-blue-100 text-blue-800"
+            ? "bg-yellow-100 text-yellow-800"
+            : order.status === "CANCELLED"
+            ? "bg-red-100 text-red-800"
+            : "bg-blue-100 text-blue-800"
         }`}
       >
         {translateStatus(order.status)}
       </span>
     </td>
+    <td>{translatePaymentMethodStatus(order.Checkout.paymentMethod)} </td>
     <td>{order.Checkout.freeDelivery ? 0 : deliveryPrice.toFixed(3)} DT</td>
     <td>{order.Checkout.total.toFixed(3)} DT</td>
 

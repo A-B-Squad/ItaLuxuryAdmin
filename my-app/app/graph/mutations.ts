@@ -25,11 +25,7 @@ export const CREATE_MODERATOR = gql`
   }
 `;
 
-export const DELETE_API_CREDENTIALS = gql`
-  mutation DeleteApiCredentials($deleteApiCredentialsId: ID!) {
-    deleteApiCredentials(id: $deleteApiCredentialsId)
-  }
-`;
+
 
 export const ADD_API_CREDENTIALS = gql`
   mutation AddApiCredentials($input: CreateApiCredentialsInput!) {

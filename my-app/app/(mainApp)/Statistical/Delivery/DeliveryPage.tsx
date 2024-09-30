@@ -40,13 +40,13 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 );
 
 import AnimatedCounter from "../../Hook/AnimatedCounter";
 import { IoTrendingDown, IoTrendingUp } from "react-icons/io5";
-import { FiPieChart } from "react-icons/fi";
 import Loading from "../loading";
+import { translateStatus } from "../../Helpers/_translateStatus";
 
 type Status =
   | "RETOUR"
@@ -97,17 +97,6 @@ const DeliveryPage: React.FC = () => {
     to: new Date(),
   });
   const [selectedPreset, setSelectedPreset] = useState("last28");
-  const translateStatus = useCallback((status: string): Status => {
-    const statusTranslations: { [key: string]: Status } = {
-      BACK: "RETOUR",
-      EXCHANGE: "ÉCHANGE",
-      TRANSFER_TO_DELIVERY_COMPANY: "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON",
-      PROCESSING: "EN TRAITEMENT",
-      PAYED: "PAYÉ",
-      CANCELLED: "ANNULÉ",
-    };
-    return statusTranslations[status] || status;
-  }, []);
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {
@@ -163,7 +152,7 @@ const DeliveryPage: React.FC = () => {
 
         if (createdAtDate.isValid() && deliveredAtDate.isValid()) {
           const deliveryDuration = moment.duration(
-            deliveredAtDate.diff(createdAtDate),
+            deliveredAtDate.diff(createdAtDate)
           );
           totalDeliveryTime += deliveryDuration.asMilliseconds();
 
@@ -272,7 +261,7 @@ const DeliveryPage: React.FC = () => {
     setStatusCards(newStatusCards);
 
     setAverageDeliveryTime(
-      totalDelivered ? totalDeliveryTime / totalDelivered : 0,
+      totalDelivered ? totalDeliveryTime / totalDelivered : 0
     );
 
     const labels = Object.keys(dateData).sort();
@@ -354,12 +343,12 @@ const DeliveryPage: React.FC = () => {
   if (error) return <p>Error: {error.message}</p>;
 
   const averageTimeInHours = (averageDeliveryTime / (1000 * 60 * 60)).toFixed(
-    2,
+    2
   );
   const maxDeliveryTime = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
   const deliveryTimePercentage = Math.min(
     (averageDeliveryTime / maxDeliveryTime) * 100,
-    100,
+    100
   );
   const getColorForPercentage = (percentage: number): string => {
     if (percentage <= 33) return "#4CAF50";
