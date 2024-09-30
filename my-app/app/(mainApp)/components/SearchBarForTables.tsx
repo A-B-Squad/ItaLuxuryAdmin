@@ -42,24 +42,24 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       }
       router.push(`/${page}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, page]
+    [router, searchParams, page],
   );
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       updateSearchParams(
         e.target.value,
-        searchParams.get("order") || "default"
+        searchParams.get("order") || "default",
       );
     },
-    [updateSearchParams, searchParams]
+    [updateSearchParams, searchParams],
   );
 
   const handleFilterChange = useCallback(
     (value: string) => {
       updateSearchParams(searchParams.get("q") || "", value);
     },
-    [updateSearchParams, searchParams]
+    [updateSearchParams, searchParams],
   );
 
   const placeholder = useMemo(() => {
@@ -99,7 +99,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       page !== "Products/Categories" &&
       page !== "Products/Inventory" &&
       page !== "TopDeals",
-    [page]
+    [page],
   );
 
   return (

@@ -11,7 +11,6 @@ export const GET_PACKAGES_QUERY = gql`
         id
         total
         paymentMethod
-
       }
     }
   }
@@ -264,13 +263,13 @@ export const GET_GOVERMENT_INFO = gql`
 `;
 
 export const GET_API_CREDENTIALS = gql`
-query getApiCredentials($integrationFor: String) {
-  getApiCredentials(integrationFor: $integrationFor) {
-    access_token
-    api_id
-    domainVerification
+  query getApiCredentials($integrationFor: String) {
+    getApiCredentials(integrationFor: $integrationFor) {
+      access_token
+      api_id
+      domainVerification
+    }
   }
-}
 `;
 
 export const GET_ALL_USERS = gql`

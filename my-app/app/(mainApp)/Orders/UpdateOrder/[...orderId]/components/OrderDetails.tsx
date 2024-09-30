@@ -99,7 +99,7 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "transférer à la société de livraison",
-                    handleTransferToDeliveryOrder
+                    handleTransferToDeliveryOrder,
                   )
                 }
                 label="Transférer à la société de livraison"
@@ -118,11 +118,11 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "marquer comme payée",
-                    handlePayedPackageOrder
+                    handlePayedPackageOrder,
                   )
                 }
                 label={`Marquer comme payée (${order?.Checkout?.total.toFixed(
-                  3
+                  3,
                 )} DT)`}
               />
             </>

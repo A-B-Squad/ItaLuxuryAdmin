@@ -3,9 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BiSave } from "react-icons/bi";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import {
-  ADD_API_CREDENTIALS,
-} from "@/app/graph/mutations";
+import { ADD_API_CREDENTIALS } from "@/app/graph/mutations";
 import { GET_API_CREDENTIALS } from "@/app/graph/queries";
 import { useRouter } from "next/navigation";
 

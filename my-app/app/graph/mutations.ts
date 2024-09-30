@@ -25,8 +25,6 @@ export const CREATE_MODERATOR = gql`
   }
 `;
 
-
-
 export const ADD_API_CREDENTIALS = gql`
   mutation AddApiCredentials($input: CreateApiCredentialsInput!) {
     addApiCredentials(input: $input)

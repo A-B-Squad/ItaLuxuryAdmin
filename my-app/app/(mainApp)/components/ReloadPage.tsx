@@ -6,8 +6,8 @@ const ReloadButton = () => {
     <button
       className="reloadPage border rounded-sm p-2"
       onClick={() => window.location.reload()}
-   title="Reload"
-   >
+      title="Reload"
+    >
       <TfiReload size={18} />
     </button>
   );
