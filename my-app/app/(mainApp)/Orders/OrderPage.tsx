@@ -9,7 +9,10 @@ import * as XLSX from "xlsx-js-style";
 import OrderTable from "./components/OrderTable";
 import Pagination from "../components/Paginations";
 import SmallSpinner from "../components/SmallSpinner";
-import { translateStatus } from "../Helpers/_translateStatus";
+import {
+  translatePaymentMethodStatus,
+  translateStatus,
+} from "../Helpers/_translateStatus";
 import Link from "next/link";
 import Loading from "./loading";
 import { Calendar } from "@/components/ui/calendar";
@@ -61,7 +64,7 @@ const OrdersPage: React.FC = () => {
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = filteredOrders.slice(
     indexOfFirstOrder,
-    indexOfLastOrder,
+    indexOfLastOrder
   );
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
@@ -93,7 +96,7 @@ const OrdersPage: React.FC = () => {
     let dateRangeText = "Toutes les dates";
     if (dateRange && dateRange.from && dateRange.to) {
       dateRangeText = `Du ${formatDate(
-        dateRange.from.getTime().toString(),
+        dateRange.from.getTime().toString()
       )} au ${formatDate(dateRange.to.getTime().toString())}`;
     }
     doc.text(`Période: ${dateRangeText}`, 14, 38);
@@ -102,7 +105,7 @@ const OrdersPage: React.FC = () => {
     const totalAmount = filteredOrders.reduce(
       (sum: any, order: { Checkout: { total: any } }) =>
         sum + order.Checkout.total,
-      0,
+      0
     );
 
     // Add the table with custom styles
@@ -118,6 +121,7 @@ const OrdersPage: React.FC = () => {
           "Statut",
           "Livraison",
           "Total",
+          "Méthode de paiement",
         ],
       ],
       body: [
@@ -132,8 +136,9 @@ const OrdersPage: React.FC = () => {
           translateStatus(order.status),
           order.Checkout.freeDelivery ? 0.0 : deliveryPrice.toFixed(3),
           order.Checkout.total.toFixed(3),
+          translatePaymentMethodStatus(order.Checkout.paymentMethod),
         ]),
-        ["Total", "", "", "", "", "", "", totalAmount.toFixed(3)],
+        ["Total", "", "", "", "", "", "", totalAmount.toFixed(3), ""],
       ],
       styles: {
         fontSize: 10,
@@ -169,6 +174,9 @@ const OrdersPage: React.FC = () => {
       Statut: translateStatus(order.status),
       Livraison: order.Checkout.freeDelivery ? 0.0 : deliveryPrice.toFixed(3),
       Total: order.Checkout.total.toFixed(3),
+      "Méthode de paiement": translatePaymentMethodStatus(
+        order.Checkout.paymentMethod
+      ),
     }));
 
     // Create worksheet
@@ -177,7 +185,7 @@ const OrdersPage: React.FC = () => {
     // Add totals
     const total = filteredOrders.reduce(
       (sum: number, order: any) => sum + order.Checkout.total,
-      0,
+      0
     );
     const lastRow = filteredOrders.length + 2;
     XLSX.utils.sheet_add_aoa(
@@ -194,7 +202,7 @@ const OrdersPage: React.FC = () => {
           `Total: ${total.toFixed(3)}`,
         ],
       ],
-      { origin: -1 },
+      { origin: -1 }
     );
 
     // Style the header row
@@ -222,7 +230,7 @@ const OrdersPage: React.FC = () => {
       let dateRangeText = "All dates";
       if (dateRange && dateRange.from && dateRange.to) {
         dateRangeText = `From ${formatDate(
-          dateRange.from.getTime().toString(),
+          dateRange.from.getTime().toString()
         )} to ${formatDate(dateRange.to.getTime().toString())}`;
       }
       XLSX.utils.sheet_add_aoa(ws, [["Date Range:", dateRangeText]], {
@@ -242,7 +250,7 @@ const OrdersPage: React.FC = () => {
           });
           return widths;
         },
-        {},
+        {}
       );
 
       ws["!cols"] = Object.keys(colWidths).map((i) => ({ wch: colWidths[i] }));
@@ -274,7 +282,7 @@ const OrdersPage: React.FC = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Commandes");
     XLSX.writeFile(
       wb,
-      `commandes_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      `commandes_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 

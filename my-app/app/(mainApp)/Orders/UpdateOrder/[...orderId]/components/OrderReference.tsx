@@ -64,7 +64,8 @@ const OrderReference = ({ order, OrderStatus }: any) => {
         </Table>
         {OrderStatus !== "CANCELLED" &&
           OrderStatus !== "BACK" &&
-          OrderStatus !== "TRANSFER_TO_DELIVERY_COMPANY" && (
+          OrderStatus !== "TRANSFER_TO_DELIVERY_COMPANY" &&
+          OrderStatus !== "PAYMENT_REFUSED" && (
             <div className="w-full flex justify-end">
               <Link
                 href={{

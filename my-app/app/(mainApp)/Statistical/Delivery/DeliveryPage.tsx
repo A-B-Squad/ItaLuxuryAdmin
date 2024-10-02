@@ -20,6 +20,7 @@ import {
   FaBoxOpen,
   FaBox,
   FaRegMoneyBillAlt,
+  FaMoneyBillWave,
 } from "react-icons/fa";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -40,7 +41,7 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 );
 
 import AnimatedCounter from "../../Hook/AnimatedCounter";
@@ -53,8 +54,9 @@ type Status =
   | "ÉCHANGE"
   | "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON"
   | "EN TRAITEMENT"
-  | "PAYÉ"
   | "ANNULÉ"
+  | "PAYÉ ET LIVRÉ"
+  | "PAYÉ MAIS NON LIVRÉ"
   | string;
 
 interface Package {
@@ -127,6 +129,7 @@ const DeliveryPage: React.FC = () => {
     let totalRevenueDelivered = 0;
     let totalRevenueDeposit = 0;
     let totalRevenueTransit = 0;
+    let totalRevenuePaidNotDelivered = 0;
     let totalProfit = 0;
     let totalLoss = 0;
 
@@ -145,32 +148,30 @@ const DeliveryPage: React.FC = () => {
       statusCounts[translatedStatus] =
         (statusCounts[translatedStatus] || 0) + 1;
 
-      if (translatedStatus === "PAYÉ" && pkg.createdAt && pkg.delivredAt) {
+      if (
+        translatedStatus === "PAYÉ ET LIVRÉ" &&
+        pkg.createdAt &&
+        pkg.delivredAt
+      ) {
         totalDelivered++;
         const createdAtDate = moment(parseInt(pkg.createdAt));
         const deliveredAtDate = moment(parseInt(pkg.delivredAt));
 
         if (createdAtDate.isValid() && deliveredAtDate.isValid()) {
           const deliveryDuration = moment.duration(
-            deliveredAtDate.diff(createdAtDate),
+            deliveredAtDate.diff(createdAtDate)
           );
           totalDeliveryTime += deliveryDuration.asMilliseconds();
 
           // Calculate profit
-          const deliveryCost = deliveryPrice; // Delivery price
-          const packagingCost = 1; // Packaging cost
-          const sponsorCost = 5; // Sponsor cost
+          const deliveryCost = deliveryPrice;
+          const packagingCost = 1;
+          const sponsorCost = 5;
           const totalCosts = deliveryCost + packagingCost + sponsorCost;
 
           totalRevenueDelivered += pkg.Checkout.total;
-          totalProfit += pkg.Checkout.total * 0.2; // Assuming 20% profit margin
-          totalProfit -= totalCosts; // Subtract delivery, packaging, and sponsor costs
-        }
-      } else if (translatedStatus === "EN TRAITEMENT" && pkg.createdAt) {
-        const createdAtDate = moment(parseInt(pkg.createdAt));
-
-        if (createdAtDate.isValid()) {
-          totalRevenueDeposit += pkg.Checkout.total;
+          totalProfit += pkg.Checkout.total * 0.2;
+          totalProfit -= totalCosts;
         }
       } else if (translatedStatus === "EN TRAITEMENT" && pkg.createdAt) {
         const createdAtDate = moment(parseInt(pkg.createdAt));
@@ -189,6 +190,12 @@ const DeliveryPage: React.FC = () => {
         if (createdAtDate.isValid() && inTransitAtDate.isValid()) {
           totalRevenueTransit += pkg.Checkout.total;
         }
+      } else if (translatedStatus === "PAYÉ MAIS NON LIVRÉ" && pkg.createdAt) {
+        const createdAtDate = moment(parseInt(pkg.createdAt));
+
+        if (createdAtDate.isValid()) {
+          totalRevenuePaidNotDelivered += pkg.Checkout.total;
+        }
       }
 
       if (
@@ -196,10 +203,10 @@ const DeliveryPage: React.FC = () => {
         translatedStatus === "ÉCHANGE" ||
         translatedStatus === "ANNULÉ"
       ) {
-        totalLoss += pkg.Checkout.total * 0.1; // Assuming 10% loss on returns/cancellations
-        totalLoss += deliveryPrice; // Delivery price
-        totalLoss += 1; // Packaging cost
-        totalLoss += 5; // Facebook sponsor expense (assuming it's 5 DT)
+        totalLoss += pkg.Checkout.total * 0.1;
+        totalLoss += deliveryPrice;
+        totalLoss += 1;
+        totalLoss += 5;
       }
 
       const date = moment(parseInt(pkg.createdAt)).format("YYYY-MM-DD");
@@ -209,6 +216,7 @@ const DeliveryPage: React.FC = () => {
           transit: 0,
           delivered: 0,
           returned: 0,
+          paidNotDelivered: 0,
         };
 
         totalPriceData[date] = {
@@ -216,6 +224,7 @@ const DeliveryPage: React.FC = () => {
           transit: 0,
           delivered: 0,
           returned: 0,
+          paidNotDelivered: 0,
         };
       }
       dateData[date][getChartCategory(translatedStatus)]++;
@@ -225,29 +234,36 @@ const DeliveryPage: React.FC = () => {
 
     const newStatusCards: StatusCardData[] = [
       {
-        title: "Orders in Deposit",
+        title: "Commandes en dépôt",
         count: statusCounts["EN TRAITEMENT"] || 0,
         icon: <FaWarehouse />,
         color: "bg-yellow-700",
         payment: totalRevenueDeposit,
       },
       {
-        title: "In Transit",
+        title: "En transit",
         count: statusCounts["TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON"] || 0,
         icon: <FaTruck />,
         color: "bg-green-700",
         payment: totalRevenueTransit,
       },
       {
-        title: "Delivered Orders",
-        count: statusCounts["PAYÉ"] || 0,
+        title: "Commandes payées non livrées",
+        count: statusCounts["PAYÉ MAIS NON LIVRÉ"] || 0,
+        icon: <FaMoneyBillWave />,
+        color: "bg-purple-600",
+        payment: totalRevenuePaidNotDelivered,
+      },
+      {
+        title: "Commandes payées et livrées",
+        count: statusCounts["PAYÉ ET LIVRÉ"] || 0,
         icon: <FaBoxOpen />,
         color: "bg-purple-800",
         payment: totalRevenueDelivered,
         profit: totalProfit,
       },
       {
-        title: "Returned Orders",
+        title: "Commandes retournées",
         count:
           (statusCounts["RETOUR"] || 0) +
           (statusCounts["ÉCHANGE"] || 0) +
@@ -257,11 +273,10 @@ const DeliveryPage: React.FC = () => {
         loss: totalLoss,
       },
     ];
-
     setStatusCards(newStatusCards);
 
     setAverageDeliveryTime(
-      totalDelivered ? totalDeliveryTime / totalDelivered : 0,
+      totalDelivered ? totalDeliveryTime / totalDelivered : 0
     );
 
     const labels = Object.keys(dateData).sort();
@@ -280,7 +295,15 @@ const DeliveryPage: React.FC = () => {
         total: labels.map((date) => totalPriceData[date]?.transit || 0),
       },
       {
-        label: "PAYÉ",
+        label: "PAYÉ MAIS NON LIVRÉ",
+        data: labels.map((date) => dateData[date].paidNotDelivered),
+        backgroundColor: "rgba(153, 102, 255, 0.5)",
+        total: labels.map(
+          (date) => totalPriceData[date]?.paidNotDelivered || 0
+        ),
+      },
+      {
+        label: "PAYÉ ET LIVRÉ",
         data: labels.map((date) => dateData[date].delivered),
         backgroundColor: "rgba(255, 205, 86, 0.5)",
         total: labels.map((date) => totalPriceData[date]?.delivered || 0),
@@ -296,17 +319,19 @@ const DeliveryPage: React.FC = () => {
     setChartData({ labels, datasets });
   };
 
-  const getChartCategory = (status: Status): string => {
+  const getChartCategory = (status: Status) => {
     switch (status) {
       case "EN TRAITEMENT":
         return "processing";
       case "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON":
         return "transit";
-      case "PAYÉ":
+      case "PAYÉ ET LIVRÉ":
+      case "PAYÉ MAIS NON LIVRÉ":
         return "delivered";
       case "RETOUR":
       case "ÉCHANGE":
       case "ANNULÉ":
+      case "REMBOURSER":
         return "returned";
       default:
         return "processing";
@@ -343,12 +368,12 @@ const DeliveryPage: React.FC = () => {
   if (error) return <p>Error: {error.message}</p>;
 
   const averageTimeInHours = (averageDeliveryTime / (1000 * 60 * 60)).toFixed(
-    2,
+    2
   );
   const maxDeliveryTime = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
   const deliveryTimePercentage = Math.min(
     (averageDeliveryTime / maxDeliveryTime) * 100,
-    100,
+    100
   );
   const getColorForPercentage = (percentage: number): string => {
     if (percentage <= 33) return "#4CAF50";

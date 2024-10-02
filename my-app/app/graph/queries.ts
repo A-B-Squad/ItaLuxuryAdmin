@@ -8,6 +8,10 @@ export const GET_PACKAGES_QUERY = gql`
       status
       createdAt
       Checkout {
+        Governorate {
+          id
+          name
+        }
         id
         total
         paymentMethod
