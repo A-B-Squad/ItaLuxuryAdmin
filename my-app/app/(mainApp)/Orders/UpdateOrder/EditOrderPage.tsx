@@ -32,16 +32,23 @@ const EditOrderPage = ({ searchParams }: any) => {
   const [productStatuses, setProductStatuses] = useState<{
     [key: string]: { broken: boolean; quantity: number };
   }>({});
-  const [getPackage, { data, loading, error, refetch }] =
-    useLazyQuery(PACKAGE_BY_ID_QUERY);
+  const [getPackage, { data, loading, error, refetch }] = useLazyQuery(
+    PACKAGE_BY_ID_QUERY,
+    {
+      onCompleted: (data) => {
+        console.log(data?.packageById.Checkout.paymentMethod);
+      },
+    }
+  );
   const [payedOrToDeliveryPackage] = useMutation(
-    PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
+    PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS
   );
   const [cancelPackage] = useMutation(CANCEL_PACKAGE_MUTATIONS);
   const [refundPackage] = useMutation(REFUND_PACKAGE_MUTATIONS);
   const [governmentInfo, setGovernmentInfo] = useState<{
     [key: string]: string;
   }>({});
+  const order = data?.packageById;
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {
@@ -88,7 +95,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           };
           return acc;
         },
-        {},
+        {}
       );
     setProductStatuses(initialStatuses);
   };
@@ -108,14 +115,8 @@ const EditOrderPage = ({ searchParams }: any) => {
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
-      },
+      }
     );
-
-    console.log({
-      packageId: orderId,
-      cause: brokenProducts.length > 0 ? "BROKEN" : "CANCEL",
-      brokenProducts,
-    });
 
     try {
       await cancelPackage({
@@ -150,7 +151,7 @@ const EditOrderPage = ({ searchParams }: any) => {
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
         return brokenCount > 0 ? [{ productId, quantity: brokenCount }] : [];
-      },
+      }
     );
 
     try {
@@ -186,6 +187,7 @@ const EditOrderPage = ({ searchParams }: any) => {
       await payedOrToDeliveryPackage({
         variables: {
           packageId: orderId,
+          paymentMethod: order?.Checkout.paymentMethod,
           status: "TRANSFER_TO_DELIVERY_COMPANY",
         },
       });
@@ -210,7 +212,11 @@ const EditOrderPage = ({ searchParams }: any) => {
   const handlePayedPackageOrder = async () => {
     try {
       await payedOrToDeliveryPackage({
-        variables: { packageId: orderId, status: "PAYED_AND_DELIVERED" },
+        variables: {
+          packageId: orderId,
+          paymentMethod: order?.Checkout.paymentMethod,
+          status: "PAYED_AND_DELIVERED",
+        },
       });
       await refetch();
       toast({
@@ -231,8 +237,6 @@ const EditOrderPage = ({ searchParams }: any) => {
 
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur: {error.message}</p>;
-
-  const order = data?.packageById;
 
   return (
     <div className="order w-full py-10">

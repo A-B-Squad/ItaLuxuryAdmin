@@ -8,7 +8,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ActionButton from "./ActionButton";
-import { translateStatus } from "@/app/(mainApp)/Helpers/_translateStatus";
+import {
+  translatePaymentMethodStatus,
+  translateStatus,
+} from "@/app/(mainApp)/Helpers/_translateStatus";
 import { useToast } from "@/components/ui/use-toast";
 
 const OrderDetails = ({
@@ -74,6 +77,16 @@ const OrderDetails = ({
               COMMANDE FERMÉE
             </p>
           )}
+          {order?.status === "PAYMENT_REFUSED" && (
+            <div className="flex items-center gap-2">
+              <p className="py-1 px-2 bg-red-300 text-white uppercase ">
+                LE PAIEMENT A ÉTÉ REJETÉ
+              </p>
+              <p className="py-1 px-2 bg-blue-200 text-blue-600">
+                COMMANDE FERMÉE
+              </p>
+            </div>
+          )}
           {order?.status === "REFUNDED" && (
             <p className="py-1 px-2 bg-blue-200 text-blue-600">
               COMMANDE REMBOURSÉE
@@ -99,7 +112,7 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "transférer à la société de livraison",
-                    handleTransferToDeliveryOrder,
+                    handleTransferToDeliveryOrder
                   )
                 }
                 label="Transférer à la société de livraison"
@@ -118,11 +131,11 @@ const OrderDetails = ({
                 onClick={() =>
                   showConfirmation(
                     "marquer comme payée",
-                    handlePayedPackageOrder,
+                    handlePayedPackageOrder
                   )
                 }
                 label={`Marquer comme payée (${order?.Checkout?.total.toFixed(
-                  3,
+                  3
                 )} DT)`}
               />
             </>
@@ -143,6 +156,7 @@ const OrderDetails = ({
             <TableHead>Affichage de la commande</TableHead>
             <TableHead>Commandé à</TableHead>
             <TableHead>Statut de paiement</TableHead>
+            <TableHead>Methode de paiement</TableHead>
             <TableHead>Statut d'envoi</TableHead>
           </TableRow>
         </TableHeader>
@@ -164,6 +178,10 @@ const OrderDetails = ({
               >
                 {translateStatus(order?.status)}
               </span>
+            </TableCell>
+
+            <TableCell>
+              {translatePaymentMethodStatus(order?.Checkout.paymentMethod)}
             </TableCell>
             <TableCell>
               <span

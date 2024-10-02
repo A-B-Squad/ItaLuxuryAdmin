@@ -134,8 +134,16 @@ export const DELETE_COUPONS_MUTATIONS = gql`
   }
 `;
 export const PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS = gql`
-  mutation PayedOrToDeliveryPackage($packageId: ID!, $status: String!) {
-    payedOrToDeliveryPackage(packageId: $packageId, status: $status)
+  mutation PayedOrToDeliveryPackage(
+    $packageId: ID!
+    $status: String!
+    $paymentMethod: PaymentMethod!
+  ) {
+    payedOrToDeliveryPackage(
+      packageId: $packageId
+      status: $status
+      paymentMethod: $paymentMethod
+    )
   }
 `;
 export const CREATE_COUPONS_MUTATIONS = gql`

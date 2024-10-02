@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useQuery } from "@apollo/client";
-import { FETCH_ALL_USERS } from "@/app/graph/queries";
+import { GET_PACKAGES_QUERY } from "@/app/graph/queries";
 import Loading from "../loading";
 
 // Define types for the GraphQL response
@@ -11,14 +11,20 @@ interface Governorate {
 
 interface Checkout {
   Governorate: Governorate;
+  total: number;
+  paymentMethod: string;
 }
 
-interface User {
-  checkout: Checkout[];
+interface Package {
+  id: string;
+  checkoutId: string;
+  status: string;
+  createdAt: string;
+  Checkout: Checkout;
 }
 
-interface FetchAllUsersData {
-  fetchAllUsers: User[];
+interface GetAllPackagesData {
+  getAllPackages: Package[];
 }
 
 interface GovernorateStats {
@@ -28,25 +34,25 @@ interface GovernorateStats {
 }
 
 const GovernorateStats: React.FC = () => {
-  const { data, loading, error } = useQuery<FetchAllUsersData>(FETCH_ALL_USERS);
+  const { data, loading, error } = useQuery<GetAllPackagesData>(GET_PACKAGES_QUERY);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [hovredGovernorate, setHovredGovernorate] = useState<any>(null);
+  const [hoveredGovernorate, setHoveredGovernorate] = useState<GovernorateStats | null>(null);
 
   if (loading) return <Loading />;
   if (error) return <p>Error: {error.message}</p>;
 
   // Calculate percentages
-  const totalClients = data?.fetchAllUsers.length ?? 0;
+  const totalClients = data?.getAllPackages.length ?? 0;
   const governorateCounts =
-    data?.fetchAllUsers.reduce((acc: { [x: string]: number }, user: User) => {
-      const governorateName = user.checkout[0]?.Governorate?.name;
+    data?.getAllPackages.reduce((acc: { [key: string]: number }, packageData: Package) => {
+      const governorateName = packageData.Checkout.Governorate.name.toLowerCase();
       if (governorateName) {
         acc[governorateName] = (acc[governorateName] || 0) + 1;
       }
       return acc;
     }, {}) ?? {};
 
-  const handleMouseMove = (event: { clientX: any; clientY: any }) => {
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     setMousePosition({
       x: event.clientX,
       y: event.clientY,
@@ -54,51 +60,36 @@ const GovernorateStats: React.FC = () => {
   };
 
   const handleMouseEnter = (govName: string) => {
-    const foundGov = Object.keys(governorateCounts).find(
-      (name) => name.toLowerCase() === govName.toLowerCase(),
-    );
+    const orderCount = governorateCounts[govName.toLocaleLowerCase()] || 0;
+    const percentage = totalClients ? (orderCount / totalClients) * 100 : 0;
 
-    if (foundGov) {
-      const result: GovernorateStats = {
-        name: foundGov,
-        orderNumber: governorateCounts[foundGov],
-        percentage: (governorateCounts[foundGov] / totalClients) * 100,
-      };
-      setHovredGovernorate({
-        name: govName,
-        orderNumber: governorateCounts[foundGov],
-        percentage: (governorateCounts[foundGov] / totalClients) * 100,
-      });
-    } else {
-      setHovredGovernorate({
-        name: govName,
-        count: 0,
-        percentage: 0,
-      });
-    }
+    setHoveredGovernorate({
+      name: govName,
+      orderNumber: orderCount,
+      percentage,
+    });
   };
 
   return (
     <div className="map relative">
       <h1 className="text-center text-2xl font-bold my-4">
-        Cette carte affiche les clients et les commandes par gouvernorat en
-        Tunisie
-      </h1>{" "}
+        Cette carte affiche les clients et les commandes par gouvernorat en Tunisie
+      </h1>
       <div
-        className=" container flex justify-center customerPlace relative bg-gray-200 h-full overflow-hidden w-full"
+        className="container flex justify-center customerPlace relative bg-gray-200 h-full overflow-hidden w-full"
         onMouseMove={handleMouseMove}
       >
-        {hovredGovernorate && (
+        {hoveredGovernorate && (
           <div
             style={{
               top: `${mousePosition.y - 200}px`,
               left: `${mousePosition.x - 200}px`,
             }}
-            className=" bg-gray-100  before:border-2 border-t-red before:absolute before:-bottom-6  before:left-2/4 before:-translate-x-2/4 before:w-6 absolute p-2 border border-gray-300 rounded shadow-lg "
+            className="bg-gray-100 before:border-2 border-t-red before:absolute before:-bottom-6 before:left-2/4 before:-translate-x-2/4 before:w-6 absolute p-2 border border-gray-300 rounded shadow-lg"
           >
-            <div>{hovredGovernorate.name}</div>
-            <div>Order: {hovredGovernorate.count}</div>
-            <div>Percentage: {hovredGovernorate.percentage.toFixed(2)}%</div>
+            <div>{hoveredGovernorate.name}</div>
+            <div>Order: {hoveredGovernorate.orderNumber}</div>
+            <div>Percentage: {hoveredGovernorate.percentage.toFixed(2)}%</div>
           </div>
         )}
 

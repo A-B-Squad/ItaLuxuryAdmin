@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import JsBarcode from "jsbarcode";
 import { Order, ProductInCheckout } from "../../types/index";
+import { translatePaymentMethodStatus } from "./_translateStatus";
 
 const formatDate = (dateString: string): string => {
   const date = new Date(parseInt(dateString));
@@ -45,9 +46,10 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   const nameText = "Nom: " + order.Checkout.userName;
   const phoneText = "Tel: " + order.Checkout.phone[0];
   const addressText = "Adresse: " + order.Checkout.address;
+  const paymentMethodText = "Méthode de paiement: " + translatePaymentMethodStatus(order.Checkout.paymentMethod);
 
   const addressLines = doc.splitTextToSize(addressText, maxWidth - 10);
-  const totalHeight = 8 + (addressLines.length + 4) * lineHeight;
+  const totalHeight = 8 + (addressLines.length + 5) * lineHeight; 
 
   doc.setDrawColor(32, 41, 57);
   doc.roundedRect(10, 65, maxWidth, totalHeight, 3, 3, "S");
@@ -60,6 +62,7 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text(nameText, 15, 73 + 2 * lineHeight);
   doc.text(phoneText, 15, 73 + 3 * lineHeight);
   doc.text(addressLines, 15, 73 + 4 * lineHeight);
+  doc.text(paymentMethodText, 15, 73 + (4 + addressLines.length) * lineHeight); 
 
   // Barcode
   const barcodeCanvas = document.createElement("canvas");
