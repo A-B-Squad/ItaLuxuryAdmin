@@ -1,0 +1,223 @@
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import ActionButton from "./ActionButton";
+import {
+  translatePaymentMethodStatus,
+  translateStatus,
+} from "@/app/(mainApp)/Helpers/_translateStatus";
+import { useToast } from "@/components/ui/use-toast";
+
+const OrderDetails = ({
+  order,
+  handleCancelOrder,
+  handleTransferToDeliveryOrder,
+  handlePayedPackageOrder,
+  handleRefundOrder,
+  deliveryPrice,
+}: any) => {
+  const { toast, dismiss } = useToast();
+  const calculateReimbursementAmount = () => {
+    if (!order || !order.Checkout) return 0;
+
+    let total = order.Checkout.total;
+
+    // // Subtract delivery fee if total is less than 499
+
+    if (!order.Checkout.freeDelivery) {
+      total -= deliveryPrice;
+    }
+    return total.toFixed(2);
+  };
+
+  const showConfirmation = (action: string, callback: () => void) => {
+    toast({
+      title: "Confirmation",
+      className: "text-white bg-mainColorAdminDash border-0",
+
+      description: (
+        <div>
+          <p>Êtes-vous sûr de vouloir {action} ?</p>
+          <div className="mt-2">
+            <button
+              onClick={() => {
+                callback();
+                dismiss();
+              }}
+              className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
+            >
+              Confirmer
+            </button>
+            <button
+              onClick={() => {
+                dismiss();
+              }}
+              className="bg-gray-500 text-white px-2 py-1 rounded"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      ),
+    });
+  };
+  return (
+    <div className="orderDetails bg-white shadow-md border rounded-lg p-6 mb-6">
+      <div className="w-full flex justify-between items-center mb-4 pb-2 border-b">
+        <h2 className="text-base font-medium w-36">Détails de la commande</h2>
+        <div className="space-x-2 flex items-center">
+          {order?.status === "CANCELLED" && (
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE FERMÉE
+            </p>
+          )}
+          {order?.status === "PAYMENT_REFUSED" && (
+            <div className="flex items-center gap-2">
+              <p className="py-1 px-2 bg-red-300 text-white uppercase ">
+                LE PAIEMENT A ÉTÉ REJETÉ
+              </p>
+              <p className="py-1 px-2 bg-blue-200 text-blue-600">
+                COMMANDE FERMÉE
+              </p>
+            </div>
+          )}
+          {order?.status === "REFUNDED" && (
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE REMBOURSÉE
+            </p>
+          )}
+
+          {order?.status === "PAYED_AND_DELIVERED" && (
+            <p className="py-1 px-2 bg-blue-200 text-blue-600">
+              COMMANDE PAYÉE ET LIVRÉ
+            </p>
+          )}
+
+          {(order?.status === "PROCESSING" ||
+            order?.status === "PAYED_NOT_DELIVERED") && (
+            <>
+              <ActionButton
+                onClick={() =>
+                  showConfirmation("annuler la commande", handleCancelOrder)
+                }
+                label="Annuler la commande"
+              />
+              <ActionButton
+                onClick={() =>
+                  showConfirmation(
+                    "transférer à la société de livraison",
+                    handleTransferToDeliveryOrder,
+                  )
+                }
+                label="Transférer à la société de livraison"
+              />
+            </>
+          )}
+          {order?.status === "TRANSFER_TO_DELIVERY_COMPANY" && (
+            <>
+              <ActionButton
+                onClick={() =>
+                  showConfirmation("annuler la commande", handleCancelOrder)
+                }
+                label="Annuler la commande"
+              />
+              <ActionButton
+                onClick={() =>
+                  showConfirmation(
+                    "marquer comme payée",
+                    handlePayedPackageOrder,
+                  )
+                }
+                label={`Marquer comme payée (${order?.Checkout?.total.toFixed(
+                  3,
+                )} DT)`}
+              />
+            </>
+          )}
+          {order?.status === "PAYED_AND_DELIVERED" && (
+            <ActionButton
+              onClick={() =>
+                showConfirmation("rembourser la commande", handleRefundOrder)
+              }
+              label={`Rembourser la commande (${calculateReimbursementAmount()} DT)`}
+            />
+          )}
+        </div>
+      </div>
+      <Table className="border">
+        <TableHeader className="bg-gray-50 p-1">
+          <TableRow>
+            <TableHead>Affichage de la commande</TableHead>
+            <TableHead>Commandé à</TableHead>
+            <TableHead>Statut de paiement</TableHead>
+            <TableHead>Methode de paiement</TableHead>
+            <TableHead>Statut d'envoi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell className="text-blue-600 font-semibold">
+              {order?.customId}
+            </TableCell>
+            <TableCell>
+              {new Date(parseInt(order?.createdAt)).toLocaleString()}
+            </TableCell>
+            <TableCell>
+              <span
+                className={`bg-${
+                  order?.status === "PAYED_AND_DELIVERED" ? "green" : "yellow"
+                }-200 text-${
+                  order?.status === "PAYED_AND_DELIVERED" ? "green" : "yellow"
+                }-800 px-2 py-1 rounded`}
+              >
+                {translateStatus(order?.status)}
+              </span>
+            </TableCell>
+
+            <TableCell>
+              {translatePaymentMethodStatus(order?.Checkout.paymentMethod)}
+            </TableCell>
+            <TableCell>
+              <span
+                className={`bg-${
+                  order?.status === "TRANSFER_TO_DELIVERY_COMPANY"
+                    ? "green"
+                    : "yellow"
+                }-200 text-${
+                  order?.status === "TRANSFER_TO_DELIVERY_COMPANY"
+                    ? "green"
+                    : "yellow"
+                }-800 px-2 py-1 rounded`}
+              >
+                {order?.status === "TRANSFER_TO_DELIVERY_COMPANY" ||
+                order?.status === "PAYED_AND_DELIVERED"
+                  ? "Rempli"
+                  : "Non Rempli"}
+              </span>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <div className="deliveryComment mt-4">
+        <h3 className="font-medium mb-2">Message de livraison</h3>
+        {order?.Checkout?.deliveryComment ? (
+          <p className="bg-gray-100 p-3 rounded">
+            {order?.Checkout?.deliveryComment}
+          </p>
+        ) : (
+          <p className="text-gray-500 italic">
+            Aucun message de livraison fourni
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default OrderDetails;

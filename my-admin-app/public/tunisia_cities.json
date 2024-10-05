@@ -1,0 +1,55 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Tunis"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [10.1815, 36.8065]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Sfax"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [10.7600, 34.7400]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Sousse"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [10.6400, 35.8300]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Kairouan"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [10.1000, 35.6800]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Bizerte"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [9.8739, 37.2744]
+        }
+      }
+    ]
+  }
