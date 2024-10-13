@@ -24,7 +24,9 @@ const Signin = () => {
   const [SignIn, { loading }] = useMutation(ADMIN_SIGNIN);
 
   const onSubmit = (data: any) => {
+    console.log(data)
     SignIn({
+      
       variables: { input: data },
 
       onCompleted: () => {

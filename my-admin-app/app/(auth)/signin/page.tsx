@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Connexion - ita-luxury",
   description:
     "Connectez-vous à votre compte ita-luxury pour accéder à votre profil et effectuer des achats en ligne.",
-  keywords: keywords, // Use the imported keywords
+  keywords: keywords, 
 
   openGraph: {
     url: `${process.env.NEXT_PUBLIC_ADMIN_URL}/signin`,
