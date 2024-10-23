@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const ALLOWED_ORIGINS = [
-  "http://localhost:3001/",
-  "http://localhost:3000/",
+  "http://localhost:4001/",
+  "http://localhost:4000/",
   "https://www.ita-luxury.com",
   "https://admin.ita-luxury.com",
   `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}`,

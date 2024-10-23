@@ -21,7 +21,6 @@ interface Attribute {
 
 const CreateProductPage = () => {
   const { toast } = useToast();
-  const router = useRouter();
 
   const [attributes, setAttributes] = useState<Attribute[]>([
     { name: "", value: "" },

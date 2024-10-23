@@ -40,6 +40,7 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
   const [deleteProductMutation] = useMutation(DELETE_PRODUCT_MUTATIONS);
 
   const handleDeleteProduct = async () => {
+    
     if (!productToDelete) return;
     try {
       await deleteProductMutation({

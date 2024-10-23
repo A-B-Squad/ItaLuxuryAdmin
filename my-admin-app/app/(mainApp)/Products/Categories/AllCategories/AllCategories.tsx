@@ -187,7 +187,7 @@ const AllCategories = ({ searchParams }: any) => {
             <div className="flex justify-center items-center gap-2">
               {/* Edit button */}
               <Link
-                href={`/Products/All/UpdateCategory?categoryId=${category.id}`}
+                href={`/Products/UpdateCategory?categoryId=${category.id}`}
                 className="p-2 w-10 h-10 hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
               >
                 <FiEdit2 size={20} />
