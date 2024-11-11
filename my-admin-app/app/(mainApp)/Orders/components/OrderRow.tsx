@@ -22,15 +22,14 @@ const OrderRow: React.FC<OrderRowProps> = ({
 }) => (
   <tr
     key={order.id}
-    className={`border-b h-10 text-sm text-center ${
-      order.status === "CANCELLED" ? "cancelled-order" : ""
-    }`}
+    className={`border-b h-10 text-sm text-center ${order.status === "CANCELLED" ? "cancelled-order" : ""
+      }`}
     style={
       order.status === "CANCELLED"
         ? {
-            background:
-              "repeating-linear-gradient(45deg,#fff,#fff 10px,#f6f6f6 0,#f6f6f6 20px)",
-          }
+          background:
+            "repeating-linear-gradient(45deg,#fff,#fff 10px,#f6f6f6 0,#f6f6f6 20px)",
+        }
         : {}
     }
   >
@@ -41,17 +40,16 @@ const OrderRow: React.FC<OrderRowProps> = ({
     </td>
     <td>
       <span
-        className={`px-2 py-1 rounded ${
-          order.status === "PAYED_AND_DELIVERED"
+        className={`px-2 py-1 rounded ${order.status === "PAYED_AND_DELIVERED"
             ? "bg-green-100 text-green-600"
             : order.status === "PROCESSING" ||
-                order.status === "PAYED_NOT_DELIVERED"
+              order.status === "PAYED_NOT_DELIVERED"
               ? "bg-yellow-100 text-yellow-800"
               : order.status === "CANCELLED" ||
-                  order.status === "PAYMENT_REFUSED"
+                order.status === "PAYMENT_REFUSED"
                 ? "bg-red-100 text-red-800"
                 : "bg-blue-100 text-blue-800"
-        }`}
+          }`}
       >
         {translateStatus(order.status)}
       </span>

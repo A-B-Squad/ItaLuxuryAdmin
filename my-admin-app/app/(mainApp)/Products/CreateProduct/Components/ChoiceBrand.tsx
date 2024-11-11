@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Load from "./Load";
+import { IoMdClose } from "react-icons/io";
 
 const ChoiceBrand = ({ brand, setBrand }: any) => {
   const { loading, error, data: AllBrands } = useQuery(GET_BRANDS);
@@ -19,6 +20,12 @@ const ChoiceBrand = ({ brand, setBrand }: any) => {
   const handleBrandChange = (value: string) => {
     setBrand(value);
   };
+
+  const handleRemoveBrand = (e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    setBrand(null); 
+  };
+
 
   if (loading)
     return (
@@ -30,12 +37,25 @@ const ChoiceBrand = ({ brand, setBrand }: any) => {
 
   return (
     <div className="brand bg-white rounded-md shadow-md p-3">
-      <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
-        Marque
-      </label>
+      <div className="label flex items-center">
+
+        <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
+          Marque
+        </label>
+        {brand && (
+          <button
+            onClick={handleRemoveBrand}
+            className=" bg-red-500   p-1 hover:bg-gray-100 rounded-full"
+            type="button"
+          >
+            <IoMdClose className="h-4 w-4 text-white" />
+          </button>
+        )}
+      </div>
       <Select value={brand || ""} onValueChange={handleBrandChange}>
         <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
           <SelectValue placeholder="Sélectionner une marque" />
+
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>

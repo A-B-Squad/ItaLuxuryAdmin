@@ -11,14 +11,12 @@ const NextToCarouselAds1 = ({ setInputField, inputField }: any) => {
     useQuery(ADVERTISSMENT_QUERY, {
       variables: { position: "NextToCarouselAds" },
     });
-
   useEffect(() => {
     if (NextToCarouselAds?.advertismentByPosition) {
       const ad = NextToCarouselAds.advertismentByPosition[0];
       if (ad) {
         setInputField({
           images: ad.images[0] ? [ad.images[0]] : [],
-
           link: ad.link || "",
           position: "NextToCarouselAds",
         });

@@ -83,16 +83,17 @@ const BigAdvertisingPage = () => {
 
   const handleSuccessUpload = (result: any) => {
     setShowBackUp(true);
-    const file = result.info;
-    if (file) {
-      setImage({ urlImage: file.url, linkImage: image.linkImage });
-
-      setLoadingImages((prev) => ({
-        ...prev,
-        [file.url]: true, // Set true to show the loader until the image is fully loaded
-      }));
+    const optimizedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto,w_700,h_450/"
+    );
+    if (optimizedUrl) {
+      // Apply transformations to optimize the image (resize, quality)
+      setImage({ urlImage: optimizedUrl, linkImage: image.linkImage });
+      setLoadingImages((prev) => ({ ...prev, [optimizedUrl]: true }));
     }
   };
+
 
   const handleInputChange = (field: keyof ImageData, value: string) => {
     setShowBackUp(true);
@@ -170,9 +171,8 @@ const BigAdvertisingPage = () => {
                     src={image.urlImage}
                     alt="image téléchargée"
                     layout="fill"
-                    className={`${
-                      !loadingImages[image.urlImage] ? "visible" : "invisible"
-                    }`}
+                    className={`${!loadingImages[image.urlImage] ? "visible" : "invisible"
+                      }`}
                     objectFit="contain"
                     onLoadingComplete={() =>
                       setLoadingImages((prev) => ({

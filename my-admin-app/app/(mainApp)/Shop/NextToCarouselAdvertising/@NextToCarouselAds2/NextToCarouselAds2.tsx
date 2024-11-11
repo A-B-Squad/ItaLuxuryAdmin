@@ -12,20 +12,22 @@ const NextToCarouselAds2 = ({ setInputField, inputField }: any) => {
       variables: { position: "NextToCarouselAds" },
     });
 
+
+
+
   useEffect(() => {
     if (NextToCarouselAds?.advertismentByPosition) {
-      const ad = NextToCarouselAds.advertismentByPosition[0];
+      const ad = NextToCarouselAds.advertismentByPosition[1];
       if (ad) {
         setInputField({
-          images: [ad.images[1]] || "",
+          images: ad.images[0] ? [ad.images[0]] : [],
           link: ad.link || "",
           position: "NextToCarouselAds",
         });
-        setLocalLargeImage(ad.images[1] || "");
+        setLocalLargeImage(ad.images[0] || "");
       }
     }
   }, [NextToCarouselAds]);
-
   return (
     <div className="NextToCarouselAds">
       <UploadSideAds

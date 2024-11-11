@@ -118,18 +118,17 @@ const UpdateProduct = ({ searchParams }: any) => {
       });
 
       if (product.categories.length > 0) {
-        const category = product.categories[0];
+        const category = product.categories;
         setSelectedIds((prev) => {
           const newSelectedIds = {
-            categoryId: category.id,
+            categoryId: category[0].id,
             subcategoryId:
-              category.subcategories.length > 0
-                ? category.subcategories[0].id
+              Object.keys(category[1]).length > 0
+                ? category[1].id
                 : "",
             subSubcategoryId:
-              category.subcategories.length > 0 &&
-              category.subcategories[0].subcategories.length > 0
-                ? category.subcategories[0].subcategories[0].id
+              Object.keys(category[2]).length > 0
+                ? category[2].id
                 : "",
           };
           return JSON.stringify(prev) !== JSON.stringify(newSelectedIds)
@@ -152,7 +151,24 @@ const UpdateProduct = ({ searchParams }: any) => {
     }
   }, [productDataById, loading, error]);
 
+
+
+  const removeDuplicateAttributes = (attributes: Attribute[]) => {
+    const seen = new Set();
+    return attributes
+      .filter(attr => attr.name.trim() && attr.value.trim())
+      .filter(attr => {
+        const key = attr.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  };
+
+
   const handleUpdateProduct = () => {
+    const cleanedAttributes = removeDuplicateAttributes(attributes);
+
     if (
       !title ||
       !description ||
@@ -214,9 +230,7 @@ const UpdateProduct = ({ searchParams }: any) => {
     const productData = {
       productId: productId,
       input: {
-        attributeInputs: attributes.filter(
-          (attr) => attr.name.trim() !== "" && attr.value.trim() !== "",
-        ),
+        attributeInputs: cleanedAttributes,
         brandId: brandId !== "empty" ? brandId : null,
         categories: [
           selectedIds.categoryId,
@@ -234,25 +248,25 @@ const UpdateProduct = ({ searchParams }: any) => {
         reference,
         ...(hasDiscount &&
           discountType === "manual" && {
-            discount: [
-              {
-                newPrice: finalDiscountPrice,
-                dateOfStart: dateOfStartDiscount,
-                dateOfEnd: dateOfEndDiscount,
-              },
-            ],
-          }),
+          discount: [
+            {
+              newPrice: finalDiscountPrice,
+              dateOfStart: dateOfStartDiscount,
+              dateOfEnd: dateOfEndDiscount,
+            },
+          ],
+        }),
         ...(hasDiscount &&
           discountType === "percentage" && {
-            discount: [
-              {
-                discountId: selectedDiscountId,
-                dateOfStart: dateOfStartDiscount,
-                dateOfEnd: dateOfEndDiscount,
-                newPrice: finalDiscountPrice,
-              },
-            ],
-          }),
+          discount: [
+            {
+              discountId: selectedDiscountId,
+              dateOfStart: dateOfStartDiscount,
+              dateOfEnd: dateOfEndDiscount,
+              newPrice: finalDiscountPrice,
+            },
+          ],
+        }),
       },
     };
 
@@ -263,30 +277,6 @@ const UpdateProduct = ({ searchParams }: any) => {
     updateProductMutation({
       variables: productData,
       onCompleted() {
-        //   // Reset all inputs
-        //   setAttributes([{ name: "", value: "" }]);
-        //   setUploadedImages([]);
-        //   setTitle("");
-        //   setDescription("");
-        //   setStock(0);
-        //   setReference("");
-        //   setDiscountPercentage(0);
-        //   setManualDiscountPrice(0);
-        //   setOriginalPrice(0);
-        //   setPurchasePrice(0);
-        //   setFinalDiscountPrice(0);
-        //   setDateOfStartDiscount(null);
-        //   setDateOfEndDiscount(null);
-        //   setSelectedDicountId(null);
-        //   setSelectedColor(null);
-        //   setVisibility(true);
-        //   setSelectedIds({
-        //     categoryId: "",
-        //     subcategoryId: "",
-        //     subSubcategoryId: "",
-        //   });
-        //   setBrand("");
-        //   // window.close();
         toast({
           title: "Produit mis à jour",
           className: "text-white bg-mainColorAdminDash border-0",
@@ -294,6 +284,17 @@ const UpdateProduct = ({ searchParams }: any) => {
           duration: 5000,
         });
       },
+
+      onError(err) {
+
+        toast({
+          title: "Erreur de mise à jour",
+          variant: "destructive",
+          description: `${err.message}`,
+          duration: 5000,
+        });
+        return
+      }
     });
   };
 
@@ -374,7 +375,6 @@ const UpdateProduct = ({ searchParams }: any) => {
                   checked={visibility}
                   onChange={(e) => {
                     setVisibility(e.target.checked);
-                    console.log(e.target.checked);
                   }}
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-mainColorAdminDash rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-mainColorAdminDash"></div>
@@ -386,13 +386,13 @@ const UpdateProduct = ({ searchParams }: any) => {
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
           />
-          <UpdateBrand setBrand={setBrand} selectedBrandId={brandId} />
           <UpdateInventory stock={stock} setStock={setStock} />
+          <UpdateReference reference={reference} setReference={setReference} />
           <UpdateColors
             selectedColor={selectedColor}
             setSelectedColor={setSelectedColor}
           />
-          <UpdateReference reference={reference} setReference={setReference} />
+          <UpdateBrand setBrand={setBrand} selectedBrandId={brandId} />
         </div>
       </div>
       <div className="w-full my-5 py-2">

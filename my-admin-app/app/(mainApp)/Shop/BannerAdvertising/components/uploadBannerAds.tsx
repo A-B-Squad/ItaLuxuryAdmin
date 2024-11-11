@@ -27,19 +27,25 @@ const UploadBannerAds = ({
   };
 
   const handleSuccess = (result: any) => {
-    const file = result.info;
+    const file = result.info.secure_url;
     if (file) {
-      setLocalLargeImage(file.url);
-      setLocalInputField((prevField: any) => {
-        return {
-          ...prevField,
-          images: [file.url],
-        };
-      });
+      // Apply Cloudinary optimizations for format and quality
+      const optimizedUrl = `${file.url.replace(
+        "/upload/",
+        "/upload/f_auto,q_auto/"
+      )}`;
+
+      // Set the optimized URL for large image and input field
+      setLocalLargeImage(optimizedUrl);
+      setLocalInputField((prevField: any) => ({
+        ...prevField,
+        images: [optimizedUrl],
+      }));
 
       setLocalLoadingImages(true);
     }
   };
+
 
   return (
     <div className="upload-banner-ads">

@@ -26,15 +26,20 @@ const UploadِClientService = ({
     }));
   };
 
+
+
+
   const handleSuccess = (result: any, { widget }: any) => {
-    const file = result.info;
-    if (file) {
-      setLocalLargeImage(file.url);
+    const optimizedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto/"
+    );
+    if (optimizedUrl) {
+      setLocalLargeImage(optimizedUrl);
       setLocalInputField((prevField: any) => {
-        console.log(prevField);
         return {
           ...prevField,
-          images: [file.url],
+          images: [optimizedUrl],
         };
       });
       widget.close();
@@ -78,8 +83,9 @@ const UploadِClientService = ({
           <div className="flex items-center justify-between gap-2">
             <CldUploadWidget
               uploadPreset="ita-luxury"
-              onSuccess={handleSuccess}
-            >
+              onSuccess={(result, { widget }) => {
+                handleSuccess(result, widget);
+              }}            >
               {({ open }) => (
                 <button
                   type="button"

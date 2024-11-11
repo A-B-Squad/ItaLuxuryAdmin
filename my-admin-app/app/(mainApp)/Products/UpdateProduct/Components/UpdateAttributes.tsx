@@ -6,15 +6,23 @@ interface Attribute {
 }
 
 const UpdateAttribute = ({ attributes, setAttributes }: any) => {
+
   const handleAttributeChange = (
     index: number,
     field: string,
-    value: string,
+    value: string
   ) => {
-    const newAttributes = [...attributes];
-    newAttributes[index][field as keyof Attribute] = value;
+    const newAttributes = attributes.map((attribute: any, i: number) => {
+      if (i === index) {
+        return { ...attribute, [field]: value };
+      }
+      return attribute;
+    });
     setAttributes(newAttributes);
   };
+
+
+
 
   const handleAddAttribute = () => {
     setAttributes([...attributes, { name: "", value: "" }]);

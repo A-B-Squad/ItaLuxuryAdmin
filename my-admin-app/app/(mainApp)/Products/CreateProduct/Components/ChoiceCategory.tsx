@@ -98,19 +98,6 @@ const ChoiceCategory = ({ selectedIds, setSelectedIds }: any) => {
       : [];
   }, [getSubcategories, selectedIds.subcategoryId]);
 
-  const getSelectedIdsArray = (): string[] => {
-    const selectedIdsArray = [];
-    if (selectedIds.categoryId) selectedIdsArray.push(selectedIds.categoryId);
-    if (selectedIds.subcategoryId)
-      selectedIdsArray.push(selectedIds.subcategoryId);
-    if (selectedIds.subSubcategoryId)
-      selectedIdsArray.push(selectedIds.subSubcategoryId);
-    return selectedIdsArray;
-  };
-
-  useEffect(() => {
-    console.log("Selected IDs:", getSelectedIdsArray());
-  }, [selectedIds]);
 
   if (loading)
     return (
