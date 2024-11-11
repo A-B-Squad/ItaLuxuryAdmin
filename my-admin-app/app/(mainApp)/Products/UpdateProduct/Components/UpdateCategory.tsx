@@ -35,11 +35,12 @@ const ChoiceCategory = ({ selectedIds, setSelectedIds }: any) => {
   const { loading, error, data: AllCategory } = useQuery(CATEGORY_QUERY);
 
   useEffect(() => {
-    if (AllCategory) {
+    if (AllCategory && AllCategory.categories) {
       const transformedCategories = transformCategories(AllCategory.categories);
       setCategories(transformedCategories);
     }
   }, [AllCategory]);
+  
 
   const transformCategories = (categoriesData: any) => {
     return (

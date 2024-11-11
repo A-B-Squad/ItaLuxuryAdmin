@@ -8,12 +8,19 @@ import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import { FaTrashAlt } from "react-icons/fa";
 
 const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
-  const handleSuccessUpload = (result: any) => {
-    setUploadedImages((prevImages: any) => [
-      ...prevImages,
-      result.info.secure_url,
-    ]);
-  };
+
+const handleSuccessUpload = (result: any) => {
+  const optimizedUrl = result.info.secure_url.replace(
+    "/upload/",
+    "/upload/f_auto,q_auto/"
+  );
+
+  setUploadedImages((prevImages: any) => [
+    ...prevImages,
+    optimizedUrl,
+  ]);
+};
+
 
   const handleDeleteImage = (index: number) => {
     setUploadedImages((prevImages: any) =>
@@ -28,7 +35,6 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
         uploadPreset="ita-luxury"
         onSuccess={(result, { widget }) => {
           handleSuccessUpload(result);
-          widget.close();
         }}
       >
         {({ open }) => (

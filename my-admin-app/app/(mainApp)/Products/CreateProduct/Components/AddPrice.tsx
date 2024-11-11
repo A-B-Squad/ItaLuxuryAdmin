@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, ChangeEvent, useEffect, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import {
@@ -15,6 +15,7 @@ import { DISCOUNT_PERCENTAGE_QUERY } from "@/app/graph/queries";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/app/(mainApp)/Helpers/_formatDate";
 import Load from "./Load";
+import { toast, useToast } from "@/components/ui/use-toast";
 
 // Define interfaces for props and discount options
 interface AddPriceProps {
@@ -65,6 +66,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
   isDiscountEnabled,
   setIsDiscountEnabled,
 }) => {
+  const { toast } = useToast()
   // GraphQL query for discount percentages
   const { data, loading, error } = useQuery(DISCOUNT_PERCENTAGE_QUERY);
   // State variables
@@ -77,25 +79,21 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
   const discountOptions: DiscountOption[] = data?.DiscountsPercentage || [];
 
-  // Helper function to parse and format dates
-  const parseAndFormatDate = (
-    dateString: string | Date | null,
-  ): Date | null => {
-    if (!dateString) return null;
-    if (typeof dateString === "string") {
-      const [datePart, timePart] = dateString.split(" ");
-      const [day, month, year] = datePart.split("/");
-      const [hours, minutes] = timePart.split(":");
-      return new Date(
-        parseInt(year),
-        parseInt(month) - 1,
-        parseInt(day),
-        parseInt(hours),
-        parseInt(minutes),
-      );
+  const updateDiscountedPrice = useCallback((price: number) => {
+    if (discountType === "percentage") {
+      const discount = (price * discountPercentage) / 100;
+      const finalPrice = price - discount;
+      setDiscountedPrice(finalPrice.toFixed(2));
+      setFinalDiscountPrice(finalPrice);
+    } else if (discountType === "manual") {
+      const finalPrice = Math.max(0, price - manualDiscountPrice);
+      setDiscountedPrice(finalPrice.toFixed(2));
+      setFinalDiscountPrice(finalPrice);
     }
-    return dateString;
-  };
+  }, [discountType, discountPercentage, manualDiscountPrice, setFinalDiscountPrice]);
+
+
+
 
   // Handle date range changes
   const handleDateRangeChange = (range: DateRange | undefined) => {
@@ -127,34 +125,87 @@ const AddPrice: React.FC<AddPriceProps> = ({
     }
   };
 
+
+
+
   // Handle original price changes
   const handleOriginalPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!purchasePrice) {
+      toast({
+        title: "Erreur",
+        variant: "destructive",
+        description: "Veuillez d'abord ajouter le prix d'achat.",
+        duration: 5000,
+      });
+      return;
+    }
     const price = parseFloat(e.target.value) || 0;
     setOriginalPrice(price);
     updateDiscountedPrice(price);
   };
-
   // Handle discount percentage changes
   const handleDiscountPercentageChange = (value: string) => {
     const percentage = parseInt(value) || 0;
     setDiscountPercentage(percentage);
-    updateSelectedDiscount(percentage);
-    calculateDiscountedPrice(originalPrice, percentage);
+    const selectedOption = discountOptions.find(
+      (option: DiscountOption) => option.percentage === percentage
+    );
+    setSelectedDicountId(selectedOption ? selectedOption.id : null);
+    updateDiscountedPrice(originalPrice);
   };
 
   // Handle manual discount price changes
-  const handleManualDiscountPriceChange = (
-    e: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const discountPrice = Number(e.target.value) || 0;
-    setManualDiscountPrice(discountPrice);
-    setSelectedDicountId("");
-    calculateManualDiscountedPrice(originalPrice, discountPrice);
+  const handleManualDiscountPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    if (!originalPrice || !purchasePrice) {
+      toast({
+        title: "Erreur de mise à jour",
+        variant: "destructive",
+        description: "Veuillez fournir un prix ou une remise.",
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (inputValue === '') {
+      setManualDiscountPrice(0);
+      setSelectedDicountId(null);
+      updateDiscountedPrice(originalPrice);
+      return;
+    }
+
+    const discountPrice = parseFloat(inputValue);
+
+    if (isNaN(discountPrice)) {
+      toast({
+        title: "Erreur de mise à jour",
+        variant: "destructive",
+        description: "Invalid discount price input",
+        duration: 5000,
+      });
+      return;
+    }
+
+    const validDiscountPrice = Math.max(0, Math.min(discountPrice, originalPrice));
+    setManualDiscountPrice(validDiscountPrice);
+    setSelectedDicountId(null);
+    updateDiscountedPrice(originalPrice);
   };
 
   // Handle discount type changes
   const handleDiscountTypeChange = (value: string) => {
     const type = value as "percentage" | "manual";
+
+    if (!purchasePrice || !originalPrice) {
+      toast({
+        title: "Erreur",
+        variant: "destructive",
+        description: "Veuillez d'abord ajouter le prix d'achat.",
+        duration: 5000,
+      });
+      return;
+    }
     setDiscountType(type);
     updateDiscountedPrice(originalPrice);
   };
@@ -168,7 +219,19 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
   // Handle purchase price changes
   const handlePurchasePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
+
     const price = parseFloat(e.target.value) || 0;
+    // Check if the input is a valid number
+    if (isNaN(price) || price < 0) {
+      toast({
+        title: "Erreur",
+        variant: "destructive",
+        description: "Veuillez entrer un prix d'achat valide.",
+        duration: 5000,
+      });
+      return;
+    }
+
     setPurchasePrice(price);
   };
 
@@ -193,14 +256,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
     }
   };
 
-  // Helper function to update discounted price
-  const updateDiscountedPrice = (price: number) => {
-    if (discountType === "percentage") {
-      calculateDiscountedPrice(price, discountPercentage);
-    } else {
-      calculateManualDiscountedPrice(price, manualDiscountPrice);
-    }
-  };
+
 
   // Helper function to update selected discount
   const updateSelectedDiscount = (percentage: number) => {
@@ -231,40 +287,16 @@ const AddPrice: React.FC<AddPriceProps> = ({
     setDiscountType("empty");
   };
 
-  // Effect to handle initial setup and changes
+ 
   useEffect(() => {
-    if (discountType !== "empty") {
-      if (selectedDiscountId) {
-        const selectedOption = discountOptions.find(
-          (option: DiscountOption) => option.id === selectedDiscountId,
-        );
-        if (selectedOption) {
-          setDiscountPercentage(selectedOption.percentage);
-          calculateDiscountedPrice(originalPrice, selectedOption.percentage);
-        }
-      } else {
-        updateDiscountedPrice(originalPrice);
-      }
-
-      setIsDiscountEnabled(true);
-      setDate({
-        from: parseAndFormatDate(dateOfStartDiscount) || undefined,
-        to: parseAndFormatDate(dateOfEndDiscount) || undefined,
-      });
+    if (discountType !== "empty" && isDiscountEnabled) {
+      updateDiscountedPrice(originalPrice);
     } else {
-      setIsDiscountEnabled(false);
       setDiscountedPrice(originalPrice.toFixed(2));
     }
-  }, [
-    discountType,
-    selectedDiscountId,
-    discountOptions,
-    originalPrice,
-    dateOfStartDiscount,
-    dateOfEndDiscount,
-    discountPercentage,
-    manualDiscountPrice,
-  ]);
+  }, [discountType, isDiscountEnabled, originalPrice, updateDiscountedPrice]);
+
+
 
   if (loading) return <Load />;
   if (error) return <p>Error loading discount percentages</p>;

@@ -47,7 +47,10 @@ export interface Checkout {
   address: string;
   productInCheckout: ProductInCheckout[];
   total: number;
-  governorateId: string;
+  Governorate: {
+    id: string;
+    name: string
+  };
   manualDiscount: number;
   Coupons: { discount: number };
   paymentMethod: string;

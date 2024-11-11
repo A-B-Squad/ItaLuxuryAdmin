@@ -27,24 +27,31 @@ const UploadNextToCarouselAds = ({
   };
 
   const handleSuccess = (result: any) => {
-    const file = result.info;
-    if (file) {
-      setLocalLargeImage(file.url);
+    const optimizedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto/"
+    );
+  
+    if (optimizedUrl) {
+      setLocalLargeImage(optimizedUrl);
       setLocalInputField((prevField: any) => {
         return {
           ...prevField,
-          images: [file.url],
+          images: [optimizedUrl],
         };
       });
       setLocalLoadingImages(true);
     }
   };
+  
+
 
   return (
     <div className="upload-NextToCarouselAds">
       <h1 className="text-3xl font-semibold mb-4">
         Publicités a coter de carousel
       </h1>
+
       <div className="flex items-center  mb-4 gap-2">
         <h4 className="text-lg font-medium text-gray-600  list-item">
           {title}
@@ -78,7 +85,10 @@ const UploadNextToCarouselAds = ({
           <div className="flex items-center justify-between gap-2">
             <CldUploadWidget
               uploadPreset="ita-luxury"
-              onSuccess={handleSuccess}
+
+              onSuccess={(result, { widget }) => {
+                handleSuccess(result);
+              }}
             >
               {({ open }) => (
                 <button

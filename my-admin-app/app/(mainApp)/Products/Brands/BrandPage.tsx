@@ -48,11 +48,10 @@ const BrandPage = () => {
 
   const [newBrandName, setNewBrandName] = useState("");
   const [newBrandLogo, setNewBrandLogo] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const handleAddBrand = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBrandName || !newBrandLogo || !selectedCategory) {
+    if (!newBrandName || !newBrandLogo) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs",
@@ -80,7 +79,6 @@ const BrandPage = () => {
         variables: {
           name: newBrandName,
           logo: newBrandLogo,
-          categoryId: selectedCategory,
         },
         refetchQueries: [{ query: GET_BRANDS }],
       });
@@ -91,7 +89,6 @@ const BrandPage = () => {
       });
       setNewBrandName("");
       setNewBrandLogo("");
-      setSelectedCategory("");
     } catch (err) {
       console.error(err);
       toast({
@@ -203,28 +200,7 @@ const BrandPage = () => {
                     </div>
                   )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Catégorie
-                  </label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={(value) => setSelectedCategory(value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sélectionnez une catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryData?.categories
-                        .filter((category: any) => !category.parentId)
-                        .map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
                 <button
                   type="submit"
                   className="w-full bg-mainColorAdminDash text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors duration-300 ease-in-out text-lg font-semibold"

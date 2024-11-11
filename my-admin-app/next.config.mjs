@@ -9,9 +9,13 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "www.ita-luxury.com",
+        pathname: "**",
+      },
+      {
+        protocol: "https",
         hostname: "app.jax-delivery.com",
         pathname: "**",
-        
       },
       {
         protocol: "https",
@@ -33,10 +37,8 @@ const nextConfig = {
         hostname: "png.pngtree.com",
         pathname: "**",
       },
-
     ],
   },
-  };
-  
-  export default nextConfig;
-  
+};
+
+export default nextConfig;

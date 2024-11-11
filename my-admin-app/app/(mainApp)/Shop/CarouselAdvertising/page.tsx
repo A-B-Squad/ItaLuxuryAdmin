@@ -104,18 +104,23 @@ const CarouselAdvertisingPage = () => {
   }, [centerCarouselAds]);
 
   const handleSuccessUpload = (result: any, index: number) => {
+    const optimizedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto/"
+    );
+
     setShowBackUp(true);
-    const file = result.info;
-    if (file) {
+
+    if (optimizedUrl) {
       setInputFields((prevFields) => {
         const newFields = [...prevFields];
-        newFields[index].urlImage = file.url;
+        newFields[index].urlImage = optimizedUrl;
         return newFields;
       });
 
       setLoadingImages((prev) => ({
         ...prev,
-        [file.url]: true, // Set true to show the loader until the image is fully loaded
+        [optimizedUrl]: true,
       }));
     }
   };
@@ -232,6 +237,7 @@ const CarouselAdvertisingPage = () => {
                   onSuccess={(result, { widget }) => {
                     handleSuccessUpload(result, index);
                     widget.close();
+
                   }}
                 >
                   {({ open }) => (
@@ -265,9 +271,8 @@ const CarouselAdvertisingPage = () => {
                       src={field.urlImage}
                       alt={`image téléchargée ${index}`}
                       layout="fill"
-                      className={`${
-                        !loadingImages[field.urlImage] ? "visible" : "invisible"
-                      }`}
+                      className={`${!loadingImages[field.urlImage] ? "visible" : "invisible"
+                        }`}
                       objectFit="contain"
                       onLoadingComplete={() =>
                         setLoadingImages((prev) => ({

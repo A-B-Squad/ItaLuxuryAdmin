@@ -1,25 +1,23 @@
 "use client";
-import React, { useState } from "react";
 import { useQuery } from "@apollo/client";
+import React, { useState } from "react";
 import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "../../graph/queries";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx-js-style";
-import OrderTable from "./components/OrderTable";
-import Pagination from "../components/Paginations";
-import SmallSpinner from "../components/SmallSpinner";
-import {
-  translatePaymentMethodStatus,
-  translateStatus,
-} from "../Helpers/_translateStatus";
-import Link from "next/link";
-import Loading from "./loading";
+
 import { Calendar } from "@/components/ui/calendar";
+import Link from "next/link";
 import { DateRange } from "react-day-picker";
+import Pagination from "../components/Paginations";
+import ReloadButton from "../components/ReloadPage";
+import SmallSpinner from "../components/SmallSpinner";
+import { exportToEXCELAllPackage } from "../Helpers/_exportToEXCELAllPackage";
+import { exportToPDFAllPackageList } from "../Helpers/_exportToPDFAllPackageList";
 import { formatDate } from "../Helpers/_formatDate";
 import { generateInvoice } from "../Helpers/_generateInvoice";
-import ReloadButton from "../components/ReloadPage";
+import {
+  translateStatus
+} from "../Helpers/_translateStatus";
+import OrderTable from "./components/OrderTable";
+import Loading from "./loading";
 
 const OrdersPage: React.FC = () => {
   const [searchCommande, setSearchCommande] = useState("");
@@ -28,7 +26,7 @@ const OrdersPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showCalendar, setShowCalendar] = useState(false);
   const [deliveryPrice, setDeliveryPrice] = useState(0);
-  const ordersPerPage = 5;
+  const ordersPerPage = 15;
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {
@@ -44,19 +42,25 @@ const OrdersPage: React.FC = () => {
 
   // Filtrage des commandes
   const filteredOrders = data.getAllPackages.filter((order: any) => {
+    const userId = order.Checkout?.userId || "";
+    const userName = order.Checkout?.userName || "";
     const orderDate = new Date(parseInt(order.createdAt));
+
+    const searchLower = (searchCommande || "").toLowerCase();
+
     const matchesSearch =
-      order.customId.toLowerCase().includes(searchCommande.toLowerCase()) ||
-      order.Checkout?.userId
-        .toLowerCase()
-        .includes(searchCommande.toLowerCase());
+      order.customId.toLowerCase().includes(searchLower) ||
+      userId.toLowerCase().includes(searchLower) ||
+      userName.toLowerCase().includes(searchLower)
     const matchesFilter =
       filter === "Toute" || translateStatus(order.status) === filter;
+
     const matchesDateRange =
       !dateRange ||
       !dateRange.from ||
       !dateRange.to ||
       (orderDate >= dateRange.from && orderDate <= dateRange.to);
+
     return matchesSearch && matchesFilter && matchesDateRange;
   });
 
@@ -68,223 +72,19 @@ const OrdersPage: React.FC = () => {
   );
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
-  const exportToPDFPackageList = () => {
-    const doc = new jsPDF({ orientation: "landscape" });
-    const mainColor: [number, number, number] = [32, 41, 57];
-    doc.setFontSize(18);
-    doc.setTextColor(...mainColor);
-    doc.text("Liste des Commandes", 14, 22);
-    doc.setLineWidth(0.5);
-    doc.line(14, 25, 282, 25);
 
-    const currentDate = new Date();
-    const formattedDate = `${currentDate
-      .getDate()
-      .toString()
-      .padStart(2, "0")}/${(currentDate.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}/${currentDate.getFullYear()}`;
-    const formattedTime = currentDate.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
 
-    doc.setFontSize(12);
-    doc.text(`Généré le: ${formattedDate} à ${formattedTime}`, 14, 32);
-
-    let dateRangeText = "Toutes les dates";
-    if (dateRange && dateRange.from && dateRange.to) {
-      dateRangeText = `Du ${formatDate(
-        dateRange.from.getTime().toString(),
-      )} au ${formatDate(dateRange.to.getTime().toString())}`;
-    }
-    doc.text(`Période: ${dateRangeText}`, 14, 38);
-
-    // Calculate totals
-    const totalAmount = filteredOrders.reduce(
-      (sum: any, order: { Checkout: { total: any } }) =>
-        sum + order.Checkout.total,
-      0,
-    );
-
-    // Add the table with custom styles
-    autoTable(doc, {
-      startY: 46,
-      head: [
-        [
-          "Réf",
-          "Date de création",
-          "Client Id",
-          "Client",
-          "Phone",
-          "Statut",
-          "Livraison",
-          "Total",
-          "Méthode de paiement",
-        ],
-      ],
-      body: [
-        ...filteredOrders.map((order: any) => [
-          order.customId,
-          formatDate(order.createdAt),
-          order.Checkout.userId,
-          order.Checkout.userName,
-          `${order.Checkout.phone[0]}${
-            order.Checkout.phone[1] ? ` / ${order.Checkout.phone[1]}` : ""
-          }`,
-          translateStatus(order.status),
-          order.Checkout.freeDelivery ? 0.0 : deliveryPrice.toFixed(3),
-          order.Checkout.total.toFixed(3),
-          translatePaymentMethodStatus(order.Checkout.paymentMethod),
-        ]),
-        ["Total", "", "", "", "", "", "", totalAmount.toFixed(3), ""],
-      ],
-      styles: {
-        fontSize: 10,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: mainColor,
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
-      },
-      margin: { top: 40 },
-      tableLineWidth: 0.1,
-      tableLineColor: [0, 0, 0], // Border color
-    });
-
-    const fileName = `commandes_${formattedDate.replace(/\//g, "-")}.pdf`;
-    doc.save(fileName);
+  const handleExportPDF = () => {
+    exportToPDFAllPackageList(filteredOrders, dateRange, deliveryPrice);
   };
 
-  const exportToExcel = () => {
-    // Prepare data
-    const data = filteredOrders.map((order: any) => ({
-      Réf: order.customId,
-      "Date de création": formatDate(order.createdAt),
-      ClientId: order.Checkout.userId,
-      Client: order.Checkout.userName,
-      Phone: `${order.Checkout.phone[0]}${
-        order.Checkout.phone[1] ? ` / ${order.Checkout.phone[1]}` : ""
-      }`,
-      Statut: translateStatus(order.status),
-      Livraison: order.Checkout.freeDelivery ? 0.0 : deliveryPrice.toFixed(3),
-      Total: order.Checkout.total.toFixed(3),
-      "Méthode de paiement": translatePaymentMethodStatus(
-        order.Checkout.paymentMethod,
-      ),
-    }));
 
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(data);
-
-    // Add totals
-    const total = filteredOrders.reduce(
-      (sum: number, order: any) => sum + order.Checkout.total,
-      0,
-    );
-    const lastRow = filteredOrders.length + 2;
-    XLSX.utils.sheet_add_aoa(
-      ws,
-      [
-        [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          `Total: ${total.toFixed(3)}`,
-        ],
-      ],
-      { origin: -1 },
-    );
-
-    // Style the header row
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" } },
-      fill: { fgColor: { rgb: "203764" } }, // Dark blue
-      alignment: { horizontal: "center", vertical: "center" },
-      border: {
-        top: { style: "thin", color: { rgb: "000000" } },
-        bottom: { style: "thin", color: { rgb: "000000" } },
-        left: { style: "thin", color: { rgb: "000000" } },
-        right: { style: "thin", color: { rgb: "000000" } },
-      },
-    };
-
-    if (ws["!ref"]) {
-      const range = XLSX.utils.decode_range(ws["!ref"]);
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const address = XLSX.utils.encode_col(C) + "1";
-        if (!ws[address]) continue;
-        ws[address].s = headerStyle;
-      }
-
-      // Add date range information
-      let dateRangeText = "All dates";
-      if (dateRange && dateRange.from && dateRange.to) {
-        dateRangeText = `From ${formatDate(
-          dateRange.from.getTime().toString(),
-        )} to ${formatDate(dateRange.to.getTime().toString())}`;
-      }
-      XLSX.utils.sheet_add_aoa(ws, [["Date Range:", dateRangeText]], {
-        origin: "A1",
-      });
-
-      // Style date range cells
-      ws.A1.s = { font: { bold: true } };
-      ws.B1.s = { font: { italic: true } };
-
-      // Auto-size columns
-      const colWidths = filteredOrders.reduce(
-        (widths: any[], row: { [x: string]: { toString: () => any } }) => {
-          Object.keys(row).forEach((key, i) => {
-            const value = row[key] ? row[key].toString() : "";
-            widths[i] = Math.max(widths[i] || 0, value.length);
-          });
-          return widths;
-        },
-        {},
-      );
-
-      ws["!cols"] = Object.keys(colWidths).map((i) => ({ wch: colWidths[i] }));
-
-      // Add border to all cells
-      const borderStyle = {
-        border: {
-          top: { style: "thin", color: { rgb: "000000" } },
-          bottom: { style: "thin", color: { rgb: "000000" } },
-          left: { style: "thin", color: { rgb: "000000" } },
-          right: { style: "thin", color: { rgb: "000000" } },
-        },
-      };
-
-      for (let R = range.s.r; R <= lastRow; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const address = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!ws[address]) continue;
-          ws[address].s = { ...ws[address].s, ...borderStyle };
-        }
-      }
-    } else {
-      // Handle the case where ws["!ref"] is undefined
-      console.error("The worksheet reference is undefined.");
-    }
-
-    // Create workbook and write file
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Commandes");
-    XLSX.writeFile(
-      wb,
-      `commandes_${new Date().toISOString().slice(0, 10)}.xlsx`,
-    );
+  const handleExportEXCEL = () => {
+    exportToEXCELAllPackage(filteredOrders, dateRange, deliveryPrice);
   };
+
+
+
 
   return (
     <div className="p-6 w-full h-full relative pb-20">
@@ -379,23 +179,21 @@ const OrdersPage: React.FC = () => {
 
       <div className="mt-4 flex space-x-4 absolute">
         <button
-          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${
-            filteredOrders.length === 0
-              ? "cursor-not-allowed"
-              : "cursor-pointer"
-          }`}
-          onClick={exportToPDFPackageList}
+          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${filteredOrders.length === 0
+            ? "cursor-not-allowed"
+            : "cursor-pointer"
+            }`}
+          onClick={handleExportPDF}
           disabled={filteredOrders.length === 0}
         >
           Exporter en PDF
         </button>
         <button
-          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${
-            filteredOrders.length === 0
-              ? "cursor-not-allowed"
-              : "cursor-pointer"
-          }`}
-          onClick={exportToExcel}
+          className={`bg-mainColorAdminDash text-white px-4 py-2 rounded ${filteredOrders.length === 0
+            ? "cursor-not-allowed"
+            : "cursor-pointer"
+            }`}
+          onClick={handleExportEXCEL}
           disabled={filteredOrders.length === 0}
         >
           Exporter en Excel

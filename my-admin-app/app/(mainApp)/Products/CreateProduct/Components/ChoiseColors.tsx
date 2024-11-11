@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Load from "./Load";
+import { IoMdClose } from "react-icons/io";
 
 interface Color {
   id: string;
@@ -26,6 +27,10 @@ const ChoiseColors = ({ selectedColor, setSelectedColor }: any) => {
     setSelectedColor(value);
   };
 
+  const handleRemoveColor = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedColor(null);
+  };
   if (loading)
     return (
       <div className=" h-52 relative border bg-[#ffffffc2] rounded-md flex items-center justify-center w-full">
@@ -36,11 +41,24 @@ const ChoiseColors = ({ selectedColor, setSelectedColor }: any) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto">
-      <h1 className="text-lg font-bold mb-4">Sélectionner une couleur</h1>
       <div className="mb-4 relative">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          Choisissez une couleur
-        </label>
+        <div className="label flex items-center justify-between">
+
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Choisissez une couleur
+          </label>
+          {selectedColor && (
+            <button
+              onClick={handleRemoveColor}
+              className=" bg-red-500  p-1  hover:bg-gray-100 rounded-full"
+              type="button"
+            >
+              <IoMdClose className=" text-white" />
+            </button>
+          )}
+
+        </div>
+
         <Select value={selectedColor || ""} onValueChange={handleColorChange}>
           <SelectTrigger className="w-full p-2 border border-gray-300 rounded-md appearance-none focus:outline-none">
             <SelectValue placeholder="Sélectionner une couleur" />

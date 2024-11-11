@@ -2,25 +2,27 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const ALLOWED_ORIGINS = [
-  "http://localhost:3001/",
-  "http://localhost:3000/",
+  "http://localhost:4001/",
+  "http://localhost:4000/",
   "https://www.ita-luxury.com",
   "https://admin.ita-luxury.com",
   `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}`,
   `${process.env.NEXT_PUBLIC_ADMIN_URL}`,
 ];
 
-const publicRoutes = ["/signin", "/signup"]; 
+const publicRoutes = ["/signin", "/signup"];
 
 export async function middleware(req: any) {
   const res = NextResponse.next();
   const url = req.nextUrl.pathname;
   const token = req.cookies.get("AdminToken")?.value;
 
+  // CORS handling
   const origin = req.headers.get("origin");
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.headers.set("Access-Control-Allow-Origin", origin);
   }
+
   // Allow access to public routes without a token
   if (publicRoutes.includes(url)) {
     if (token && url === "/signin") {
@@ -31,22 +33,29 @@ export async function middleware(req: any) {
 
   // Check for token on all other routes
   if (!token) {
+    console.log("No token found, redirecting to signin");
     return NextResponse.redirect(new URL("/signin", req.url));
   }
 
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    if (!secret) {
+      throw new Error("JWT_SECRET is not set");
+    }
+    
     const { payload } = await jwtVerify(token, secret);
-    console.log(payload.role);
+    console.log("Token verified, user role:", payload.role);
 
     if (payload.role !== "ADMIN") {
-      // If the user is not an admin, redirect to an unauthorized page or the home page
+      console.log("User is not an admin, redirecting to unauthorized page");
       return NextResponse.redirect(
         new URL("/Dashboard?unauthorized=true", req.url)
       );
     }
   } catch (error) {
     console.error("Token verification failed:", error);
+    // Clear the invalid token
+    res.cookies.delete("AdminToken");
     return NextResponse.redirect(new URL("/signin", req.url));
   }
 

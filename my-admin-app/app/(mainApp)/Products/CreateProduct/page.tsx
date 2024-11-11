@@ -1,18 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import ChoiceCategory from "./Components/ChoiceCategory";
-import ChoiceBrand from "./Components/ChoiceBrand";
-import AddStock from "./Components/AddStock";
+import { useToast } from "@/components/ui/use-toast";
+import { useMutation } from "@apollo/client";
+import { useState } from "react";
+import { CREATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
+import AddAttribute from "./Components/AddAttributes";
 import AddDescription from "./Components/AddDescription";
 import AddPrice from "./Components/AddPrice";
-import AddAttribute from "./Components/AddAttributes";
-import UploadImage from "./Components/UploadImages";
-import { useMutation } from "@apollo/client";
-import { CREATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
 import AddReference from "./Components/AddRef";
+import AddStock from "./Components/AddStock";
+import ChoiceBrand from "./Components/ChoiceBrand";
+import ChoiceCategory from "./Components/ChoiceCategory";
 import ChoiseColors from "./Components/ChoiseColors";
-import { useToast } from "@/components/ui/use-toast";
-import { useRouter } from "next/navigation";
+import UploadImage from "./Components/UploadImages";
 
 interface Attribute {
   name: string;
@@ -21,7 +20,6 @@ interface Attribute {
 
 const CreateProductPage = () => {
   const { toast } = useToast();
-  const router = useRouter();
 
   const [attributes, setAttributes] = useState<Attribute[]>([
     { name: "", value: "" },
@@ -178,14 +176,23 @@ const CreateProductPage = () => {
           subSubcategoryId: "",
         });
         setBrand("");
-
+        window.location.reload()
         toast({
           title: "Produit créé",
           className: "text-white bg-mainColorAdminDash border-0",
           description: "Le produit a été créé avec succès.",
           duration: 5000,
         });
-      },
+      }, onError(err) {
+
+        toast({
+          title: "Erreur de mise à jour",
+          variant: "destructive",
+          description: `${err.message}`,
+          duration: 5000,
+        });
+        return
+      }
     });
   };
 

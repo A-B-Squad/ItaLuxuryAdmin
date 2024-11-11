@@ -226,7 +226,10 @@ export const PACKAGES_QUERY = gql`
         userId
         guestEmail
         deliveryComment
-        governorateId
+        Governorate {
+          id
+          name
+        }
         address
         phone
         freeDelivery

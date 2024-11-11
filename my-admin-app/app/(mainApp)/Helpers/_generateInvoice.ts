@@ -36,22 +36,23 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text("Transporteur: JAX Delivery", 14, 55);
   doc.text("Date Livraison : " + formatDate(order.createdAt), 14, 60);
 
-  // Customer information with improved responsiveness
+  // Customer information with improved layout for city and address
   doc.setFontSize(10);
-  const maxWidth = pageWidth - 20; // Use almost full page width
+  const maxWidth = pageWidth - 20;
   const lineHeight = 5;
 
   const clientText = "CLIENT :";
   const idClientText = "Id: " + order.Checkout.userId;
   const nameText = "Nom: " + order.Checkout.userName;
   const phoneText = "Tel: " + order.Checkout.phone[0];
+  const cityText = "Ville: " + order.Checkout.Governorate.name; // Label city separately
   const addressText = "Adresse: " + order.Checkout.address;
   const paymentMethodText =
     "Méthode de paiement: " +
     translatePaymentMethodStatus(order.Checkout.paymentMethod);
 
   const addressLines = doc.splitTextToSize(addressText, maxWidth - 10);
-  const totalHeight = 8 + (addressLines.length + 5) * lineHeight;
+  const totalHeight = 8 + (addressLines.length + 6) * lineHeight;
 
   doc.setDrawColor(32, 41, 57);
   doc.roundedRect(10, 65, maxWidth, totalHeight, 3, 3, "S");
@@ -63,8 +64,9 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text(idClientText, 15, 73 + lineHeight);
   doc.text(nameText, 15, 73 + 2 * lineHeight);
   doc.text(phoneText, 15, 73 + 3 * lineHeight);
-  doc.text(addressLines, 15, 73 + 4 * lineHeight);
-  doc.text(paymentMethodText, 15, 73 + (4 + addressLines.length) * lineHeight);
+  doc.text(cityText, 15, 73 + 4 * lineHeight); // Add city line
+  doc.text(addressLines, 15, 73 + 5 * lineHeight); // Address now follows city
+  doc.text(paymentMethodText, 15, 73 + (5 + addressLines.length) * lineHeight);
 
   // Barcode
   const barcodeCanvas = document.createElement("canvas");
@@ -116,10 +118,10 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
     headStyles: { fillColor: [32, 41, 57], textColor: 255, fontStyle: "bold" },
     styles: { fontSize: 9, cellPadding: 5 },
     columnStyles: {
-      0: { cellWidth: 20 },
+      0: { cellWidth: 30 },
       1: { cellWidth: "auto" },
       2: { cellWidth: 25, halign: "center" },
-      3: { cellWidth: 25, halign: "center" },
+      3: { cellWidth: 20, halign: "center" },
       4: { cellWidth: 25, halign: "right" },
       5: { cellWidth: 25, halign: "right" },
     },
