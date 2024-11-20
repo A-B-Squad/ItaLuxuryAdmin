@@ -15,12 +15,12 @@ import ReloadButton from "./ReloadPage";
 
 interface SearchBarProps {
   page:
-    | "Products/Categories"
-    | "Products/Inventory"
-    | "Products/Reviews"
-    | "Products"
-    | "Coupons"
-    | "TopDeals";
+  | "Products/Categories"
+  | "Products/Inventory"
+  | "Products/Reviews"
+  | "Products"
+  | "Coupons"
+  | "TopDeals";
 }
 
 const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
@@ -104,16 +104,16 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
 
   return (
     <form
-      className="flex w-full gap-3 px-3 mb-4"
+      className="flex flex-col md:flex-row w-full gap-3 px-3 mb-4"
       onSubmit={(e) => e.preventDefault()}
     >
-      <div className="relative gap-2 flex w-[80%]">
-        <div className="search w-full">
+      <div className="relative flex flex-col sm:flex-row gap-2 w-full md:w-[80%]">
+        <div className="search w-full relative">
           <input
             onChange={handleInputChange}
             type="text"
             placeholder={placeholder}
-            className="px-10 w-full h-10 rounded-l relative border rounded-md outline-none"
+            className="px-10 w-full h-10  relative border rounded-md outline-none"
             defaultValue={searchParams.get("q") || ""}
           />
           <button
@@ -123,14 +123,16 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
             <IoSearch size={24} />
           </button>
         </div>
-        <ReloadButton />
+        <div className="sm:w-auto">
+          <ReloadButton />
+        </div>
       </div>
       {showFilter && filterOptions && (
         <Select
           onValueChange={handleFilterChange}
           defaultValue={searchParams.get("order") || "default"}
         >
-          <SelectTrigger className="w-[20%]">
+          <SelectTrigger className="w-full md:w-[20%]">
             <SelectValue placeholder="Filtres de recherche" />
           </SelectTrigger>
           <SelectContent>

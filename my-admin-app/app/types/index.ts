@@ -1,4 +1,3 @@
-// File: src/types/index.ts
 
 export interface User {
   id: string;
@@ -14,7 +13,7 @@ export interface GovernmentInfo {
 }
 
 export interface CustomerInfo {
-  userId?: string;
+  userId: string | null;
   userName: string;
   familyName: string;
   email: string;
@@ -40,6 +39,7 @@ export interface ProductInCheckout {
 export interface Checkout {
   id: string;
   User?: User;
+  email?: string;
   freeDelivery: boolean;
   userId?: string;
   phone: string[];

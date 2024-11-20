@@ -1,39 +1,39 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@apollo/client";
-import { Bar } from "react-chartjs-2";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Bar } from "react-chartjs-2";
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import {
-  FaCalendarAlt,
-  FaWarehouse,
-  FaTruck,
-  FaBoxOpen,
-  FaBox,
-  FaRegMoneyBillAlt,
-  FaMoneyBillWave,
-} from "react-icons/fa";
+import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "@/app/graph/queries";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
-  SelectTrigger,
   SelectContent,
-  SelectValue,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { subDays, startOfDay } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "@/app/graph/queries";
+import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Title,
+  Tooltip,
+} from "chart.js";
+import { startOfDay, subDays } from "date-fns";
 import moment from "moment";
+import { DateRange } from "react-day-picker";
+import {
+  FaBox,
+  FaBoxOpen,
+  FaCalendarAlt,
+  FaMoneyBillWave,
+  FaRegMoneyBillAlt,
+  FaTruck,
+  FaWarehouse,
+} from "react-icons/fa";
 
 ChartJS.register(
   CategoryScale,
@@ -44,10 +44,10 @@ ChartJS.register(
   Legend,
 );
 
-import AnimatedCounter from "../../Hook/AnimatedCounter";
 import { IoTrendingDown, IoTrendingUp } from "react-icons/io5";
-import Loading from "../loading";
 import { translateStatus } from "../../Helpers/_translateStatus";
+import AnimatedCounter from "../../Hook/AnimatedCounter";
+import Loading from "../loading";
 
 type Status =
   | "RETOUR"
@@ -381,21 +381,23 @@ const DeliveryPage: React.FC = () => {
     return "#F44336";
   };
 
+
   return (
-    <div className="DeliveryPage">
-      <div className=" container text-mainColorAdminDash p-5 w-full">
+    <div className="DeliveryPage px-2 sm:px-4 md:px-6">
+      <div className="container text-mainColorAdminDash p-2 sm:p-5 w-full">
+        {/* Calendar and Date Range Selection */}
         <div className="relative flex flex-col items-end z-50 mb-5">
           <button
             onClick={() => setShowCalendar(!showCalendar)}
-            className="flex items-center border p-2 rounded bg-white text-mainColorAdminDash hover:bg-[#374151] transition duration-300"
+            className="flex items-center border p-2 rounded bg-white text-mainColorAdminDash hover:bg-[#374151] transition duration-300 w-full sm:w-auto"
           >
             <FaCalendarAlt className="mr-2" />
             {showCalendar ? "Hide Calendar" : "Show Calendar"}
           </button>
           {showCalendar && (
-            <div className="top-24 absolute bg-white p-2 rounded-md text-mainColorAdminDash">
+            <div className="absolute top-full right-0 bg-white p-2 rounded-md text-mainColorAdminDash w-full sm:w-auto">
               <Select onValueChange={handlePresetChange} value={selectedPreset}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Select a period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -407,15 +409,18 @@ const DeliveryPage: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(range) => setDateRange(range)}
-                numberOfMonths={2}
-              />
+              <div className="overflow-x-auto">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={(range) => setDateRange(range)}
+                  numberOfMonths={1}
+                  className="w-full"
+                />
+              </div>
             </div>
           )}
-          <div className="mb-5">
+          <div className="mb-5 w-full text-center sm:text-left">
             <p className="text-lg font-bold mb-2">Selected Date Range:</p>
             <p className="text-md">
               {formattedDateRange || "No date range selected"}
@@ -423,54 +428,55 @@ const DeliveryPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          {statusCards.map((card, index) => {
-            return (
-              <div
-                key={index}
-                className={`${card.color} text-white shadow-md p-4 rounded-lg flex flex-col items-start justify-between`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <h3 className="text-lg font-bold">{card.title}</h3>
-                  {card.icon}
-                </div>
-                <div className="mt-2 relative w-full">
-                  <div className="flex items-center justify-between w-full relative">
-                    <p className="text-2xl font-bold">
-                      <AnimatedCounter from={0} to={card.count} /> Unit
-                    </p>
+        {/* Status Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-5">
+          {statusCards.map((card, index) => (
+            <div
+              key={index}
+              className={`${card.color} text-white shadow-md p-4 rounded-lg flex flex-col items-start justify-between`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <h3 className="text-sm sm:text-lg font-bold truncate">{card.title}</h3>
+                {card.icon}
+              </div>
+              <div className="mt-2 relative w-full">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full relative">
+                  <p className="text-xl sm:text-2xl font-bold">
+                    <AnimatedCounter from={0} to={card.count} /> Unit
+                  </p>
 
-                    {card.payment !== undefined && (
-                      <p className="text-sm flex items-center gap-1 font-semibold">
-                        <FaRegMoneyBillAlt />
-                        <AnimatedCounter from={0} to={card.payment} />
-                        DT
-                      </p>
-                    )}
-                  </div>
+                  {card.payment !== undefined && (
+                    <p className="text-sm flex items-center gap-1 font-semibold">
+                      <FaRegMoneyBillAlt />
+                      <AnimatedCounter from={0} to={card.payment} />
+                      DT
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between">
                   {card.profit !== undefined && (
-                    <p className="text-sm float-right flex items-center">
+                    <p className="text-sm flex items-center">
                       <IoTrendingUp />
                       <AnimatedCounter from={0} to={card.profit} /> DT
                     </p>
                   )}
                   {card.loss !== undefined && (
-                    <p className="text-sm flex items-center float-right">
-                      {" "}
+                    <p className="text-sm flex items-center">
                       <IoTrendingDown />
                       <AnimatedCounter from={0} to={card.loss} /> DT
                     </p>
                   )}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-3 h-[500px] gap-3">
-          <div className="bg-white shadow-md text-mainColorAdminDash grid-cols-1 flex items-center justify-center w-full h-full rounded-lg border">
-            <div className="flex flex-col items-center justify-center">
-              <h3 className="text-lg font-bold mb-1">
+        {/* Charts and Delivery Time */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="bg-white shadow-md text-mainColorAdminDash flex items-center justify-center w-full h-full lg:h-[500px] rounded-lg border">
+            <div className="flex flex-col items-center justify-center mt-5 ">
+              <h3 className="text-lg font-bold mb-1 ">
                 Délai de livraison (moyen)
               </h3>
               <svg width="300" height="300" viewBox="0 0 300 300">
@@ -527,22 +533,25 @@ const DeliveryPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="  bg-gray-50 p-2  shadow-md text-mainColorAdminDash flex items-center justify-center col-span-2 rounded-lg h-full w-full border">
+          <div className="bg-gray-50 p-2 shadow-md text-mainColorAdminDash flex items-center justify-center lg:col-span-2 rounded-lg h-[300px] sm:h-[400px] lg:h-[500px] w-full border">
             <Bar
               data={chartData}
               options={{
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                   x: {
-                    grid: {
-                      display: false,
-                    },
+                    grid: { display: false },
+                    ticks: {
+                      font: { size: 10 },
+                      maxRotation: 45,
+                      minRotation: 45
+                    }
                   },
                   y: {
                     beginAtZero: true,
-                    grid: {
-                      color: "rgba(0, 0, 0, 0.1)",
-                    },
+                    grid: { color: "rgba(0, 0, 0, 0.1)" },
+                    ticks: { font: { size: 10 } }
                   },
                 },
                 plugins: {
@@ -550,22 +559,22 @@ const DeliveryPage: React.FC = () => {
                     callbacks: {
                       afterBody: (tooltipItems) => {
                         if (tooltipItems.length === 0) return "";
-
                         const datasetIndex = tooltipItems[0].datasetIndex;
                         const dataIndex = tooltipItems[0].dataIndex;
                         const dataset = chartData.datasets[datasetIndex];
                         const totalPrice = dataset.total[dataIndex];
-
                         return `Total Price: ${totalPrice.toFixed(2)} DT`;
                       },
                     },
                   },
                   legend: {
                     position: "top" as const,
+                    labels: { font: { size: 10 } }
                   },
                   title: {
                     display: true,
                     text: "Statut de la commande au fil du temps",
+                    font: { size: 14 }
                   },
                 },
               }}

@@ -1,26 +1,46 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const ALLOWED_ORIGINS = [
-  "http://localhost:4001/",
-  "http://localhost:4000/",
+  "http://localhost:4001",
+  "http://localhost:4000",
   "https://www.ita-luxury.com",
   "https://admin.ita-luxury.com",
-  `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}`,
-  `${process.env.NEXT_PUBLIC_ADMIN_URL}`,
-];
+  process.env.NEXT_PUBLIC_BASE_URL_DOMAIN,
+  process.env.NEXT_PUBLIC_ADMIN_URL,
+].filter(Boolean);
 
 const publicRoutes = ["/signin", "/signup"];
 
-export async function middleware(req: any) {
+export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const url = req.nextUrl.pathname;
   const token = req.cookies.get("AdminToken")?.value;
 
-  // CORS handling
+  // CORS Preflight Handling
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.get("origin");
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'true',
+        }
+      });
+    }
+  }
+
+  // CORS handling for all requests
   const origin = req.headers.get("origin");
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.headers.set("Access-Control-Allow-Origin", origin);
+    res.headers.set("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    res.headers.set("Access-Control-Allow-Credentials", "true");
   }
 
   // Allow access to public routes without a token
@@ -54,8 +74,6 @@ export async function middleware(req: any) {
     }
   } catch (error) {
     console.error("Token verification failed:", error);
-    // Clear the invalid token
-    res.cookies.delete("AdminToken");
     return NextResponse.redirect(new URL("/signin", req.url));
   }
 

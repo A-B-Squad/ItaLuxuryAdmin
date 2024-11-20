@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useMutation } from "@apollo/client";
-import { useForm } from "react-hook-form";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { CREATE_MODERATOR } from "@/app/graph/mutations";
-import { FaUser, FaLock } from "react-icons/fa";
+import { useMutation } from "@apollo/client";
 import Cookies from "js-cookie";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { FaLock, FaUser } from "react-icons/fa";
 
 interface DecodedToken extends JwtPayload {
   userId: string;
@@ -69,7 +68,7 @@ const Signup = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Image
           className="mx-auto"
-          src="https://www.ita-luxury.com/_next/image?url=https%3A%2F%2Fwww.ita-luxury.com%2F_next%2Fimage%3Furl%3Dhttp%253A%252F%252Fres.cloudinary.com%252Fdc1cdbirz%252Fimage%252Fupload%252Fv1727269305%252Fita-luxury%252FLOGO_hhpyix.png%26w%3D1920%26q%3D75&w=1080&q=75"
+          src="/LOGO.png"
           alt="ita-luxury"
           width={200}
           height={200}
@@ -107,9 +106,8 @@ const Signup = () => {
                 <input
                   id="fullName"
                   type="text"
-                  className={`block w-full pl-10 sm:text-sm py-2 border-gray-300 outline-none rounded-md ${
-                    errors.fullName ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm py-2 border-gray-300 outline-none rounded-md ${errors.fullName ? "border-red-300" : ""
+                    }`}
                   placeholder="Nom complet"
                   {...register("fullName", {
                     required: "Le nom complet est requis",
@@ -141,9 +139,8 @@ const Signup = () => {
                   id="password"
                   type="password"
                   placeholder="********"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 outline-none py-2 rounded-md ${
-                    errors.password ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm border-gray-300 outline-none py-2 rounded-md ${errors.password ? "border-red-300" : ""
+                    }`}
                   {...register("password", {
                     required: "Le mot de passe est requis",
                     minLength: {
@@ -179,9 +176,8 @@ const Signup = () => {
                   id="confirmPassword"
                   type="password"
                   placeholder="********"
-                  className={`block w-full pl-10 sm:text-sm border-gray-300 py-2 outline-none rounded-md ${
-                    errors.confirmPassword ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm border-gray-300 py-2 outline-none rounded-md ${errors.confirmPassword ? "border-red-300" : ""
+                    }`}
                   {...register("confirmPassword", {
                     required: "Veuillez confirmer votre mot de passe",
                     validate: (val: string) => {

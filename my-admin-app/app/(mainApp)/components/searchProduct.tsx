@@ -28,6 +28,7 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
       });
     },
   });
+
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     setSearchQuery(inputValue);
@@ -49,10 +50,10 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
   });
 
   return (
-    <div className="relative w-full" ref={clickOutside}>
+    <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8" ref={clickOutside}>
       <input
         ref={inputRef}
-        className="w-full my-3 px-4 py-2 border rounded-md text-sm outline-none focus:border-blue-500"
+        className="w-full my-3 px-4 py-2 border rounded-md text-sm outline-none focus:border-blue-500 transition-colors"
         type="text"
         placeholder="Rechercher un produit"
         value={searchQuery}
@@ -62,12 +63,11 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
 
       {data && showSearchProduct && (
         <div
-          className={`search-results bg-white absolute border w-full ${
-            showSearchProduct ? "visible" : "invisible"
-          } left-0 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg z-10`}
+          className={`search-results bg-white absolute border w-full ${showSearchProduct ? "visible" : "invisible"
+            } left-0 mt-1 max-h-[60vh] overflow-y-auto rounded-md shadow-lg z-10`}
         >
           <div className="py-4">
-            <h3 className="font-bold mb-2 px-4 text-gray-700">
+            <h3 className="font-bold mb-2 px-4 text-gray-700 text-sm sm:text-base">
               Résultat de la recherche: (
               {data.searchProducts.results.products.length})
             </h3>
@@ -75,22 +75,23 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
               {data.searchProducts.results.products.map((product: any) => (
                 <div
                   key={product.id}
-                  className="product-item flex items-center border-b last:border-none hover:bg-gray-50 px-4 py-2 transition-colors cursor-pointer"
+                  className="product-item flex items-center border-b last:border-none hover:bg-gray-50 px-2 sm:px-4 py-2 transition-colors cursor-pointer"
                   onClick={() => {
                     onProductSelect(product);
                     setShowSearchProduct(false);
                     setSearchQuery("");
                   }}
                 >
-                  <div className="relative w-10 h-10 mr-4">
+                  <div className="relative w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-4 flex-shrink-0">
                     <Image
-                      layout="fill"
+                      fill
                       src={product.images[0]}
-                      objectFit="contain"
+                      className="object-contain"
                       alt={product.name}
+                      sizes="(max-width: 640px) 2rem, 2.5rem"
                     />
                   </div>
-                  <p className="text-base font-medium text-gray-800">
+                  <p className="text-sm sm:text-base font-medium text-gray-800 line-clamp-2">
                     {product.name}
                   </p>
                 </div>

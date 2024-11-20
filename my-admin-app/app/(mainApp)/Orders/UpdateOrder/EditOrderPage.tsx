@@ -1,26 +1,26 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import {
-  COMPANY_INFO_QUERY,
-  GET_GOVERMENT_INFO,
-  PACKAGE_BY_ID_QUERY,
-} from "@/app/graph/queries";
+import { generateInvoice } from "@/app/(mainApp)/Helpers/_generateInvoice";
 import {
   CANCEL_PACKAGE_MUTATIONS,
   PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
   REFUND_PACKAGE_MUTATIONS,
 } from "@/app/graph/mutations";
+import {
+  COMPANY_INFO_QUERY,
+  GET_GOVERMENT_INFO,
+  PACKAGE_BY_ID_QUERY,
+} from "@/app/graph/queries";
+import { useToast } from "@/components/ui/use-toast";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
+import { useEffect, useState } from "react";
+import { CiSaveDown2 } from "react-icons/ci";
+import CancelModal from "./[...orderId]/components/CancelModal";
+import Comments from "./[...orderId]/components/Comments";
+import CustomerInfo from "./[...orderId]/components/CustomerInfo";
 import OrderDetails from "./[...orderId]/components/OrderDetails";
 import OrderReference from "./[...orderId]/components/OrderReference";
 import OrderTotalPrice from "./[...orderId]/components/OrderTotalPrice";
-import Comments from "./[...orderId]/components/Comments";
-import CustomerInfo from "./[...orderId]/components/CustomerInfo";
-import CancelModal from "./[...orderId]/components/CancelModal";
 import RefundModal from "./[...orderId]/components/RefundModal";
-import { generateInvoice } from "@/app/(mainApp)/Helpers/_generateInvoice";
-import { CiSaveDown2 } from "react-icons/ci";
-import { useToast } from "@/components/ui/use-toast";
 
 const EditOrderPage = ({ searchParams }: any) => {
   const { toast } = useToast();
@@ -239,13 +239,17 @@ const EditOrderPage = ({ searchParams }: any) => {
   if (error) return <p>Erreur: {error.message}</p>;
 
   return (
-    <div className="order w-full py-10">
-      <div className="container w-full">
-        <h1 className="text-2xl font-bold mb-4">
+    <div className="order w-full py-4 sm:py-6 md:py-10">
+      <div className="container w-full px-4">
+        {/* Header */}
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 md:mb-6">
           Modifier la commande #{order?.customId}
         </h1>
-        <div className="flex">
-          <div className="main w-full">
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-6">
             <OrderDetails
               deliveryPrice={deliveryPrice}
               order={order}
@@ -254,30 +258,47 @@ const EditOrderPage = ({ searchParams }: any) => {
               handlePayedPackageOrder={handlePayedPackageOrder}
               handleRefundOrder={handleRefundOrder}
             />
-            <OrderReference order={order} OrderStatus={order?.status} />
+
+            <OrderReference
+              order={order}
+              OrderStatus={order?.status}
+            />
+
             <OrderTotalPrice
               order={order}
               deliveryPrice={deliveryPrice}
               freeDelivery={order?.Checkout.freeDelivery}
             />
+
             <Comments
               comments={order?.comments}
               packageId={orderId}
               refetch={refetch}
             />
           </div>
-          <CustomerInfo governmentInfo={governmentInfo} order={order} />
+
+          {/* Customer Info Sidebar */}
+          <div className="lg:col-span-4">
+            <CustomerInfo
+              governmentInfo={governmentInfo}
+              order={order}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Fixed Bottom Bar */}
       <div className="bg-white shadow-md fixed left-0 bottom-0 w-full py-4 flex items-center gap-2 px-2 border justify-end">
         <button
           onClick={() => generateInvoice(order, deliveryPrice)}
-          className="text-white flex items-center gap-1 bg-mainColorAdminDash hover:opacity-85 transition-all px-3 py-2 rounded-md tracking-wider"
+          className="w-full sm:w-auto text-white flex items-center justify-center gap-2 bg-mainColorAdminDash hover:opacity-85 transition-all px-4 py-2.5 rounded-md tracking-wider"
         >
-          Imprimer la commande
-          <CiSaveDown2 size={25} />
+          <span className="text-sm sm:text-base">Imprimer la commande</span>
+          <CiSaveDown2 className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
+
+      {/* Modals */}
       {showCancelModal && (
         <CancelModal
           order={order}
@@ -288,6 +309,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           setShowCancelModal={setShowCancelModal}
         />
       )}
+
       {showRefundModal && (
         <RefundModal
           order={order}

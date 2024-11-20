@@ -39,16 +39,19 @@ const OrderRow: React.FC<OrderRowProps> = ({
       {order.Checkout.userId ? order.Checkout.userId : "Client(e) Invite"}
     </td>
     <td>
+      {order.Checkout.userName}
+    </td>
+    <td>
       <span
         className={`px-2 py-1 rounded ${order.status === "PAYED_AND_DELIVERED"
-            ? "bg-green-100 text-green-600"
-            : order.status === "PROCESSING" ||
-              order.status === "PAYED_NOT_DELIVERED"
-              ? "bg-yellow-100 text-yellow-800"
-              : order.status === "CANCELLED" ||
-                order.status === "PAYMENT_REFUSED"
-                ? "bg-red-100 text-red-800"
-                : "bg-blue-100 text-blue-800"
+          ? "bg-green-100 text-green-600"
+          : order.status === "PROCESSING" ||
+            order.status === "PAYED_NOT_DELIVERED"
+            ? "bg-yellow-100 text-yellow-800"
+            : order.status === "CANCELLED" ||
+              order.status === "PAYMENT_REFUSED"
+              ? "bg-red-100 text-red-800"
+              : "bg-blue-100 text-blue-800"
           }`}
       >
         {translateStatus(order.status)}
