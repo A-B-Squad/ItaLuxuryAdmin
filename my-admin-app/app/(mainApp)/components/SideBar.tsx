@@ -1,19 +1,17 @@
 "use client";
-import React, { useState } from "react";
-import { Sidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
-import { IoMenu } from "react-icons/io5";
-import { CiMenuFries, CiSettings } from "react-icons/ci";
-import { LuPackage2, LuUsers2 } from "react-icons/lu";
-import { TbBrandGoogleHome, TbPackages } from "react-icons/tb";
-import { TiMessages } from "react-icons/ti";
-import { RiCoupon3Line } from "react-icons/ri";
-import { FaHeadSideCough, FaRegChartBar } from "react-icons/fa";
-import { FcAdvertising } from "react-icons/fc";
+import { useQuery } from "@apollo/client";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CiSettings } from "react-icons/ci";
+import { FaHeadSideCough, FaRegChartBar } from "react-icons/fa";
+import { FcAdvertising } from "react-icons/fc";
+import { LuPackage2, LuUsers2 } from "react-icons/lu";
+import { RiCoupon3Line } from "react-icons/ri";
+import { TbBrandGoogleHome, TbPackages } from "react-icons/tb";
+import { TiMessages } from "react-icons/ti";
+import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import { PACKAGES_QUERY } from "../../graph/queries";
-import { useQuery } from "@apollo/client";
-import { IoIosMenu } from "react-icons/io";
 
 const DecorativeShapes = () => (
   <div className="relative bottom-0 left-0 right-0 pointer-events-none ">
@@ -30,7 +28,6 @@ const DecorativeShapes = () => (
 );
 
 const SideBar = () => {
-  const [isExpanded, setIsExpanded] = useState(true);
   const pathname = usePathname();
   const { data } = useQuery(PACKAGES_QUERY);
 
@@ -39,9 +36,6 @@ const SideBar = () => {
       order.status === "PROCESSING" || order.status === "PAYED_NOT_DELIVERED",
   );
 
-  const toggleSidebar = () => {
-    setIsExpanded(!isExpanded);
-  };
 
   // Sidebar items with submenus
   const sidebarItems = [
@@ -156,7 +150,6 @@ const SideBar = () => {
 
   return (
     <Sidebar
-      collapsed={!isExpanded}
       backgroundColor="#202939"
       style={{
         zIndex: "100",
@@ -181,15 +174,18 @@ const SideBar = () => {
             },
           }}
         >
-          <MenuItem
-            icon={<IoIosMenu size={30} />}
-            onClick={toggleSidebar}
-            style={{ color: "#fff" }}
-          >
-            {isExpanded && (
-              <span className="text-lg tracking-wider">Ita - Luxury</span>
-            )}
-          </MenuItem>
+
+          <div className="flex justify-center items-center py-4">
+            <Image
+              src="/LOGO.png"
+              alt="Logo"
+              className="rounded-md"
+              height={60}
+              width={120}
+              objectFit="contain"
+              priority
+            />
+          </div>
 
           {sidebarItems.map((item, index) =>
             item.subItems.length > 0 ? (
@@ -197,7 +193,7 @@ const SideBar = () => {
                 key={index}
                 icon={item.icon}
                 label={
-                  isExpanded ? <span className="text-sm">{item.text}</span> : ""
+                  <span className="text-sm">{item.text}</span>
                 }
               >
                 {item.subItems.map((subItem, subIndex) => (
@@ -218,7 +214,7 @@ const SideBar = () => {
                 component={<Link href={item.href} />}
                 active={pathname === item.href}
               >
-                {isExpanded && <span className="text-base">{item.text}</span>}
+                <span className="text-base">{item.text}</span>
               </MenuItem>
             ),
           )}

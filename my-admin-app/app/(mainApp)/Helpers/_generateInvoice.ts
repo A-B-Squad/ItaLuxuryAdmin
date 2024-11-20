@@ -16,7 +16,6 @@ const formatDate = (dateString: string): string => {
 export const generateInvoice = (order: Order, deliveryPrice: number) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
 
   // Header
   doc.setFillColor(32, 41, 57);
@@ -36,7 +35,7 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text("Transporteur: JAX Delivery", 14, 55);
   doc.text("Date Livraison : " + formatDate(order.createdAt), 14, 60);
 
-  // Customer information with improved layout for city and address
+  // Customer information with phone number and email
   doc.setFontSize(10);
   const maxWidth = pageWidth - 20;
   const lineHeight = 5;
@@ -44,15 +43,17 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   const clientText = "CLIENT :";
   const idClientText = "Id: " + order.Checkout.userId;
   const nameText = "Nom: " + order.Checkout.userName;
-  const phoneText = "Tel: " + order.Checkout.phone[0];
-  const cityText = "Ville: " + order.Checkout.Governorate.name; // Label city separately
+  const phoneText = `Tel: ${order.Checkout.phone[0] || "N/A"}${order.Checkout.phone[1] ? ` / ${order.Checkout.phone[1]}` : ""}`;
+  const emailText = order.Checkout.email ? "Email: " + order.Checkout.email : "Email: N/A";
+
+  const cityText = "Ville: " + order.Checkout.Governorate.name;
   const addressText = "Adresse: " + order.Checkout.address;
   const paymentMethodText =
     "Méthode de paiement: " +
     translatePaymentMethodStatus(order.Checkout.paymentMethod);
 
   const addressLines = doc.splitTextToSize(addressText, maxWidth - 10);
-  const totalHeight = 8 + (addressLines.length + 6) * lineHeight;
+  const totalHeight = 8 + (addressLines.length + 7) * lineHeight;
 
   doc.setDrawColor(32, 41, 57);
   doc.roundedRect(10, 65, maxWidth, totalHeight, 3, 3, "S");
@@ -64,9 +65,10 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text(idClientText, 15, 73 + lineHeight);
   doc.text(nameText, 15, 73 + 2 * lineHeight);
   doc.text(phoneText, 15, 73 + 3 * lineHeight);
-  doc.text(cityText, 15, 73 + 4 * lineHeight); // Add city line
-  doc.text(addressLines, 15, 73 + 5 * lineHeight); // Address now follows city
-  doc.text(paymentMethodText, 15, 73 + (5 + addressLines.length) * lineHeight);
+  doc.text(emailText, 15, 73 + 4 * lineHeight); 
+  doc.text(cityText, 15, 73 + 5 * lineHeight); 
+  doc.text(addressLines, 15, 73 + 6 * lineHeight); 
+  doc.text(paymentMethodText, 15, 73 + (6 + addressLines.length) * lineHeight);
 
   // Barcode
   const barcodeCanvas = document.createElement("canvas");

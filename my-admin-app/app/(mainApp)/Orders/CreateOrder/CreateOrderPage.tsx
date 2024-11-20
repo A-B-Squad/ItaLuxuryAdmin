@@ -1,18 +1,18 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
-import CustomerSearch from "./[...orderId]/CustomerSearch";
-import ProductTable from "./[...orderId]/productTable";
-import OrderSummary from "./[...orderId]/OrderSummary";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import { COMPANY_INFO_QUERY, PACKAGE_BY_ID_QUERY } from "@/app/graph/queries";
+import BackUp from "@/app/(mainApp)/components/BackUp";
 import DeleteModal from "@/app/(mainApp)/components/DeleteModal";
 import {
   CREATE_CHECKOUT_FROM_ADMIN_MUTATIONS,
   UPDATE_CHECKOUT_MUTATIONS,
 } from "@/app/graph/mutations";
-import BackUp from "@/app/(mainApp)/components/BackUp";
+import { COMPANY_INFO_QUERY, PACKAGE_BY_ID_QUERY } from "@/app/graph/queries";
 import { useToast } from "@/components/ui/use-toast";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import CustomerSearch from "./[...orderId]/CustomerSearch";
+import OrderSummary from "./[...orderId]/OrderSummary";
+import ProductTable from "./[...orderId]/productTable";
 
 interface Package {
   id: string;
@@ -41,10 +41,10 @@ interface Checkout {
   id: string;
   total: number;
   Coupons: { discount: number };
-  userId: string;
+  userId: string | null;
   userName: string;
   phone: string;
-  email: string;
+  guestEmail: string | null;
   address: string;
   governorateId: string;
   manualDiscount: number;
@@ -56,7 +56,7 @@ interface User {
   email: string;
 }
 interface CustomerInfo {
-  userId: string;
+  userId: string | null;
   userName: string;
   familyName: string;
   phone1: string;
@@ -82,25 +82,25 @@ const CreateOrderPage = ({ searchParams }: any) => {
     packageId
       ? null
       : {
+        id: "",
+        comments: "",
+        createdAt: new Date().toISOString(),
+        customId: "",
+        status: "PROCESSING",
+        Checkout: {
           id: "",
-          comments: "",
-          createdAt: new Date().toISOString(),
-          customId: "",
-          status: "PROCESSING",
-          Checkout: {
-            id: "",
-            total: 0,
-            Coupons: { discount: 0 },
-            userId: "",
-            email: "",
-            userName: "",
-            phone: "",
-            address: "",
-            governorateId: "",
-            manualDiscount: 0,
-            productInCheckout: [],
-          },
+          total: 0,
+          Coupons: { discount: 0 },
+          userId: "",
+          guestEmail: "",
+          userName: "",
+          phone: "",
+          address: "",
+          governorateId: "",
+          manualDiscount: 0,
+          productInCheckout: [],
         },
+      },
   );
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     userId: "",
@@ -264,7 +264,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
     };
 
     const input = {
-      userId: userId,
+      userId: userId || null,
       userName: fullName,
       governorateId: governorate,
       address: address,
@@ -282,7 +282,6 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
     try {
       const { data } = await createCheckoutFromAdmin({ variables: { input } });
-      console.log(input);
 
       toast({
         title: "Commande créée",
@@ -335,7 +334,6 @@ const CreateOrderPage = ({ searchParams }: any) => {
       setShowBackUp(true);
       setPackageData((prevPackage: any) => {
         if (!prevPackage) {
-          // If there's no existing package, create a new one
           return {
             id: "",
             comments: "",
@@ -346,8 +344,8 @@ const CreateOrderPage = ({ searchParams }: any) => {
               id: "",
               total: 0,
               Coupons: { discount: 0 },
-              userId: customerInfo.userId,
-              email: customerInfo.email,
+              userId: customerInfo?.userId || null,
+              guestEmail: customerInfo.email || null,
               userName: `${customerInfo.userName} ${customerInfo.familyName}`,
               phone: [customerInfo.phone1, customerInfo.phone2].filter(Boolean),
               address: customerInfo.address,
@@ -400,8 +398,8 @@ const CreateOrderPage = ({ searchParams }: any) => {
           ...prevPackage,
           Checkout: {
             ...prevPackage.Checkout,
-            userId: customerInfo.userId || prevPackage.Checkout.userId,
-            email: customerInfo.email || prevPackage.Checkout.email,
+            userId: customerInfo.userId || prevPackage.Checkout.userId || null,
+            guestEmail: customerInfo.email || prevPackage.Checkout.guestEmail || null,
             userName:
               customerInfo.userName && customerInfo.familyName
                 ? `${customerInfo.userName} ${customerInfo.familyName}`
@@ -424,133 +422,143 @@ const CreateOrderPage = ({ searchParams }: any) => {
   );
   if (error) return <p>Error: {error.message}</p>;
 
+
   return (
-    <div className="w-full pt-10 pb-20">
-      <div className="container  w-full flex pr-4">
-        <div className="w-full h-full">
-          <h1 className="text-2xl font-bold mb-4">Créer un Commandes</h1>
-          <div className="bg-white w-full border rounded-md py-6 px-3 shadow-md">
-            <ProductTable
-              onDeleteClick={setProductToDelete}
-              packageData={packageData}
-              packageId={packageId}
-              handleQuantityChange={handleQuantityChange}
-              handleProductSelect={handleProductSelect}
-            />
-            {productToDelete && (
-              <DeleteModal
-                sectionName="Product"
-                productName={productToDelete.name}
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
+    <div className="w-full pt-4 sm:pt-6 md:pt-10 pb-20">
+      <div className="container px-4 w-full">
+        {/* Main content wrapper with responsive grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main content area */}
+          <div className="lg:col-span-8">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4">Créer un Commandes</h1>
+            <div className="bg-white w-full border rounded-md py-4 sm:py-6 px-3 shadow-md">
+              <ProductTable
+                onDeleteClick={setProductToDelete}
+                packageData={packageData}
+                packageId={packageId}
+                handleQuantityChange={handleQuantityChange}
+                handleProductSelect={handleProductSelect}
               />
-            )}
-            <div className="DeliveryPrice mt-4">
-              <h3 className="mb-2">Frais de livraison</h3>
-              <div className="flex items-center">
-                <label className="inline-flex items-center cursor-pointer mr-4">
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={isFreeDelivery}
-                    onChange={() => {
-                      setIsFreeDelivery(true);
-                      setShowBackUp(true);
-                    }}
-                  />
-                  <div
-                    className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${
-                      isFreeDelivery
-                        ? "bg-mainColorAdminDash border-mainColorAdminDash"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {isFreeDelivery && (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                    )}
-                  </div>
-                  <span>Livraison gratuite</span>
-                </label>
 
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={!isFreeDelivery}
-                    onChange={() => {
-                      setIsFreeDelivery(false);
-                      setShowBackUp(true);
-                    }}
-                  />
-                  <div
-                    className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${
-                      !isFreeDelivery
-                        ? "bg-mainColorAdminDash border-mainColorAdminDash"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {!isFreeDelivery && (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                    )}
-                  </div>
-                  <span>Livraison payée {deliveryPrice.toFixed(3)} DT</span>
-                </label>
+              {productToDelete && (
+                <DeleteModal
+                  sectionName="Product"
+                  productName={productToDelete.name}
+                  onConfirm={handleConfirmDelete}
+                  onCancel={handleCancelDelete}
+                />
+              )}
+
+              {/* Delivery Price Section */}
+              <div className="DeliveryPrice mt-4 space-y-2">
+                <h3 className="text-lg font-medium mb-2">Frais de livraison</h3>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={isFreeDelivery}
+                      onChange={() => {
+                        setIsFreeDelivery(true);
+                        setShowBackUp(true);
+                      }}
+                    />
+                    <div
+                      className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${isFreeDelivery
+                          ? "bg-mainColorAdminDash border-mainColorAdminDash"
+                          : "border-gray-300"
+                        }`}
+                    >
+                      {isFreeDelivery && (
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span>Livraison gratuite</span>
+                  </label>
+
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={!isFreeDelivery}
+                      onChange={() => {
+                        setIsFreeDelivery(false);
+                        setShowBackUp(true);
+                      }}
+                    />
+                    <div
+                      className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${!isFreeDelivery
+                          ? "bg-mainColorAdminDash border-mainColorAdminDash"
+                          : "border-gray-300"
+                        }`}
+                    >
+                      {!isFreeDelivery && (
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span>Livraison payée {deliveryPrice.toFixed(3)} DT</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div className="Discount mt-4">
-              <h3 className="mb-2">Remise</h3>
-              <input
-                min={0}
-                type="number"
-                className="py-2 px-3 w-4/5 border outline-none rounded-md"
-                value={inputManualDiscount}
-                onChange={(e) => {
-                  setInputManualDiscount(Number(e.target.value));
-                  setShowBackUp(true);
-                }}
+              {/* Discount Section */}
+              <div className="Discount mt-6">
+                <h3 className="text-lg font-medium mb-2">Remise</h3>
+                <input
+                  min={0}
+                  type="number"
+                  className="py-2 px-3 w-full sm:w-4/5 border outline-none rounded-md"
+                  value={inputManualDiscount}
+                  onChange={(e) => {
+                    setInputManualDiscount(Number(e.target.value));
+                    setShowBackUp(true);
+                  }}
+                />
+              </div>
+
+              {/* Order Summary */}
+              <OrderSummary
+                packageData={packageData}
+                inputManualDiscount={inputManualDiscount}
+                deliveryPrice={deliveryPrice}
+                isFreeDelivery={isFreeDelivery}
               />
             </div>
-            <OrderSummary
-              packageData={packageData}
-              inputManualDiscount={inputManualDiscount}
-              deliveryPrice={deliveryPrice}
-              isFreeDelivery={isFreeDelivery}
+          </div>
+
+          {/* Customer Search Sidebar */}
+          <div className="lg:col-span-4 w-full">
+            <CustomerSearch
+              customerInfo={customerInfo}
+              setCustomerInfo={setCustomerInfo}
+              order={packageData}
             />
           </div>
         </div>
-
-        <CustomerSearch
-          customerInfo={customerInfo}
-          setCustomerInfo={setCustomerInfo}
-          order={packageData}
-        />
       </div>
 
       <BackUp

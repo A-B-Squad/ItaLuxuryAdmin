@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import "../../globals.css";
 
+import { ADMIN_SIGNIN } from "@/app/graph/mutations";
 import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { FaEnvelope, FaLock, FaUserShield } from "react-icons/fa";
-import { ADMIN_SIGNIN } from "@/app/graph/mutations";
 
 const Signin = () => {
   const { toast } = useToast();
@@ -26,7 +26,7 @@ const Signin = () => {
   const onSubmit = (data: any) => {
     console.log(data)
     SignIn({
-      
+
       variables: { input: data },
 
       onCompleted: () => {
@@ -52,7 +52,7 @@ const Signin = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Image
           className="mx-auto"
-          src="https://www.ita-luxury.com/_next/image?url=https%3A%2F%2Fwww.ita-luxury.com%2F_next%2Fimage%3Furl%3Dhttp%253A%252F%252Fres.cloudinary.com%252Fdc1cdbirz%252Fimage%252Fupload%252Fv1727269305%252Fita-luxury%252FLOGO_hhpyix.png%26w%3D1920%26q%3D75&w=1080&q=75"
+          src="/LOGO.png"
           alt="ita-luxury"
           width={200}
           height={200}
@@ -90,9 +90,8 @@ const Signin = () => {
                 <input
                   id="fullName"
                   type="text"
-                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${
-                    errors.fullName ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${errors.fullName ? "border-red-300" : ""
+                    }`}
                   placeholder="Username"
                   {...register("fullName", { required: "name est requis" })}
                 />
@@ -120,9 +119,8 @@ const Signin = () => {
                 </div>
                 <select
                   id="role"
-                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${
-                    errors.role ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${errors.role ? "border-red-300" : ""
+                    }`}
                   {...register("role", { required: "Le rôle est requis" })}
                 >
                   <option value="ADMIN">Admin</option>
@@ -155,9 +153,8 @@ const Signin = () => {
                   type="password"
                   placeholder="********"
                   autoComplete="current-password"
-                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${
-                    errors.password ? "border-red-300" : ""
-                  }`}
+                  className={`block w-full pl-10 sm:text-sm outline-none py-2 border-gray-300 rounded-md ${errors.password ? "border-red-300" : ""
+                    }`}
                   {...register("password", {
                     required: "Le mot de passe est requis",
                   })}

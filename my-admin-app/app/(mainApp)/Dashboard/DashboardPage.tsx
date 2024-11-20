@@ -15,6 +15,7 @@ const DEFAULT_TIMEZONE = "Africa/Tunis";
 interface Checkout {
   id: string;
   total: number;
+  freeDelivery: boolean;
 }
 
 interface Package {
@@ -33,6 +34,7 @@ interface Stats {
   orders: number[];
   earnings: number[];
 }
+const DELIVERY_PRICE = 8;
 
 const getStats = (packages: Package[]): Stats => {
   const stats: Stats = {
@@ -43,25 +45,28 @@ const getStats = (packages: Package[]): Stats => {
   packages.forEach((pkg) => {
     if (pkg.status === "PAYED_AND_DELIVERED") {
       const packageDate = moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE);
+      const earningsAfterDelivery = pkg.Checkout.freeDelivery
+        ? pkg.Checkout.total 
+        : pkg.Checkout.total - DELIVERY_PRICE;
 
       if (packageDate.isSame(moment(), "day")) {
         stats.orders[0]++;
-        stats.earnings[0] += pkg.Checkout.total;
+        stats.earnings[0] += earningsAfterDelivery;
       } else if (packageDate.isSame(moment().subtract(1, "days"), "day")) {
         stats.orders[1]++;
-        stats.earnings[1] += pkg.Checkout.total;
+        stats.earnings[1] += earningsAfterDelivery;
       }
       if (packageDate.isSame(moment(), "week")) {
         stats.orders[2]++;
-        stats.earnings[2] += pkg.Checkout.total;
+        stats.earnings[2] += earningsAfterDelivery;
       }
       if (packageDate.isSame(moment(), "month")) {
         stats.orders[3]++;
-        stats.earnings[3] += pkg.Checkout.total;
+        stats.earnings[3] += earningsAfterDelivery;
       }
       if (packageDate.isSame(moment(), "year")) {
         stats.orders[4]++;
-        stats.earnings[4] += pkg.Checkout.total;
+        stats.earnings[4] += earningsAfterDelivery;
       }
     }
   });

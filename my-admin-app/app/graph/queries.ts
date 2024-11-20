@@ -8,6 +8,7 @@ export const GET_PACKAGES_QUERY = gql`
       status
       createdAt
       Checkout {
+        freeDelivery
         Governorate {
           id
           name
@@ -139,10 +140,6 @@ export const GET_BRANDS = gql`
       id
       logo
       name
-      Category {
-        id
-        name
-      }
     }
   }
 `;

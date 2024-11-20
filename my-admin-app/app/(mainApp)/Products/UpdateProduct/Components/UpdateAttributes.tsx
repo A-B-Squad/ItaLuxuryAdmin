@@ -12,21 +12,17 @@ const UpdateAttribute = ({ attributes, setAttributes }: any) => {
     field: string,
     value: string
   ) => {
-    const newAttributes = attributes.map((attribute: any, i: number) => {
-      if (i === index) {
-        return { ...attribute, [field]: value };
-      }
-      return attribute;
-    });
+
+    const newAttributes = [...attributes];
+    newAttributes[index][field as keyof Attribute] = value;
     setAttributes(newAttributes);
   };
-
-
-
 
   const handleAddAttribute = () => {
     setAttributes([...attributes, { name: "", value: "" }]);
   };
+
+
 
   return (
     <div className="attributes mb-4 bg-white p-6 rounded-lg shadow-lg  w-full mx-auto">

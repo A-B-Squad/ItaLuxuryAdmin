@@ -5,7 +5,7 @@ const CustomerInfo = ({ order, governmentInfo }: any) => {
     governmentInfo[order?.Checkout?.governorateId] || "N/A";
 
   return (
-    <div className="client w-full md:w-1/2 lg:w-1/3 mx-2 my-4">
+    <div className="client w-full  mx-2 my-4">
       <div className="rounded-lg border bg-white shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Client</h2>
@@ -26,7 +26,7 @@ const CustomerInfo = ({ order, governmentInfo }: any) => {
             </p>
             <p>
               <span className="font-semibold">Email:</span>{" "}
-              {order?.Checkout?.User?.email || "N/A"}
+              {order?.Checkout?.User?.email || order?.Checkout?.guestEmail || "N/A"}
             </p>
           </div>
         </div>

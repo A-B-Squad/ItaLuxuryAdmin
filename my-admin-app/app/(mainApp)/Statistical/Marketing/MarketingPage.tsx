@@ -99,8 +99,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ dateRange }) => {
     const statusCounts = statuses.map(
       (status) => groupedByStatus[status].count,
     );
-    console.log(statusCounts);
-
     return {
       byDate: {
         labels: sortedDates,
@@ -110,6 +108,11 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ dateRange }) => {
             data: sortedDates.map((date) => groupedByDate[date].total),
             backgroundColor: "rgba(153, 102, 255, 0.6)",
           },
+          {
+            label: "Order Count",
+            data: sortedDates.map((date) => groupedByDate[date].count),
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+          }
         ],
       },
       byStatus: {
@@ -126,8 +129,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ dateRange }) => {
             backgroundColor: "rgba(75, 192, 192, 0.6)",
           },
         ],
-      },
-    };
+      }
+    }
   }, [data, dateRange]);
 
   const options = {

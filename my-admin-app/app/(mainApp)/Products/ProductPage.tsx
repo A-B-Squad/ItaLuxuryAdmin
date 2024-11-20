@@ -58,7 +58,7 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
 
   return (
     <div className="w-full">
-      <div className="container w-full border shadow-md rounded-sm pb-6">
+      <div className="lg:container w-full border shadow-md rounded-sm pb-6">
         <h1 className="font-bold text-2xl py-5 px-4 border-b-2 w-full">
           Produits{" "}
           <span className="text-gray-600 font-medium text-base">
@@ -80,7 +80,7 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
               }}
             />
           )}
-          <div className="pagination flex justify-between items-center">
+          <div className="pagination flex flex-col lg:flex-row gap-4 lg:gap-0 justify-between items-center">
             {limitSearchedProducts.length > 0 && (
               <Pagination
                 currentPage={page}
