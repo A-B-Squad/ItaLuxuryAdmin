@@ -30,25 +30,27 @@ const UploadBannerAds = ({
     const file = result.info.secure_url;
     if (file) {
       // Apply Cloudinary optimizations for format and quality
-      const optimizedUrl = `${file.url.replace(
+      const optimizedUrl = result.info.secure_url.replace(
         "/upload/",
         "/upload/f_auto,q_auto/"
-      )}`;
+      );
 
       // Set the optimized URL for large image and input field
-      setLocalLargeImage(optimizedUrl);
-      setLocalInputField((prevField: any) => ({
-        ...prevField,
-        images: [optimizedUrl],
-      }));
 
-      setLocalLoadingImages(true);
+      if (optimizedUrl) {
+        setLocalLargeImage(optimizedUrl);
+        setLocalInputField((prevField: any) => ({
+          ...prevField,
+          images: [optimizedUrl],
+        }));
+
+        setLocalLoadingImages(true);
+      }
     }
   };
 
-
   return (
-    <div className="upload-banner-ads">
+    <div className="upload-banner">
       <h1 className="text-3xl font-semibold mb-4">Publicités en Bannière</h1>
       <div className="flex items-center mb-4 gap-2">
         <h4 className="text-lg font-medium text-gray-600  list-item">

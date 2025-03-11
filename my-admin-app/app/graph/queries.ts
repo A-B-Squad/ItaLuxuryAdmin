@@ -118,9 +118,7 @@ export const SEARCH_PRODUCTS_QUERY = gql`
             dateOfEnd
             price
             newPrice
-            Discount {
-              percentage
-            }
+          
           }
           images
           createdAt
@@ -186,10 +184,7 @@ export const BEST_SELLS_QUERY = gql`
         productDiscounts {
           newPrice
           price
-          Discount {
-            id
-            percentage
-          }
+         
         }
         categories {
           id
@@ -374,7 +369,15 @@ export const PACKAGE_BY_ID_QUERY = gql`
       status
       Checkout {
         id
+        userName
+        userId
+        guestEmail
+        deliveryComment
         paymentMethod
+        Governorate {
+          id
+          name
+        }
         User {
           fullName
           email
@@ -383,10 +386,6 @@ export const PACKAGE_BY_ID_QUERY = gql`
         Coupons {
           discount
         }
-        userId
-        guestEmail
-        deliveryComment
-        userName
         phone
         address
         governorateId
@@ -408,9 +407,7 @@ export const PACKAGE_BY_ID_QUERY = gql`
               dateOfEnd
               price
               newPrice
-              Discount {
-                percentage
-              }
+             
             }
           }
         }
@@ -418,14 +415,7 @@ export const PACKAGE_BY_ID_QUERY = gql`
     }
   }
 `;
-export const DISCOUNT_PERCENTAGE_QUERY = gql`
-  query DiscountsPercentage {
-    DiscountsPercentage {
-      id
-      percentage
-    }
-  }
-`;
+
 export const ADVERTISSMENT_QUERY = gql`
   query AdvertismentByPosition($position: String!) {
     advertismentByPosition(position: $position) {
@@ -470,9 +460,7 @@ export const PRODUCT_IN_TOP_DEALS = gql`
           dateOfStart
           newPrice
           price
-          Discount {
-            percentage
-          }
+         
         }
       }
     }
@@ -511,7 +499,7 @@ export const PRODUCT_BY_ID_QUERY = gql`
         newPrice
         dateOfEnd
         dateOfStart
-        discountId
+        
       }
       Colors {
         id

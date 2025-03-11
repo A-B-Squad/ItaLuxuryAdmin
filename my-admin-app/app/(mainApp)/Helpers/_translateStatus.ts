@@ -12,8 +12,8 @@ export const translateStatus = (status: string) => {
       return "REMBOURSER";
     case "BACK":
       return "RETOUR";
-    case "EXCHANGE":
-      return "ÉCHANGE";
+    case "CONFIRMED":
+      return "COMMANDE CONFIRMÉ";
     case "CANCELLED":
       return "ANNULÉ";
     default:

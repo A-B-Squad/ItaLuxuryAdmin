@@ -13,34 +13,44 @@ import { TiMessages } from "react-icons/ti";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import { PACKAGES_QUERY } from "../../graph/queries";
 
-const DecorativeShapes = () => (
-  <div className="relative bottom-0 left-0 right-0 pointer-events-none ">
-    <div className="w-16 h-16 bg-blue-500 opacity-10 rounded-full absolute -bottom-8 -left-8 floating"></div>
+import React, { useMemo } from 'react';
+
+const DecorativeShapes = React.memo(() => (
+  <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none overflow-hidden">
+    <div className="w-16 h-16 bg-dashboard-primary opacity-10 rounded-full absolute bottom-4 left-4 floating"></div>
     <div
-      className="w-24 h-24 bg-green-500 opacity-10 rounded-full absolute -bottom-12 -right-12 floating"
+      className="w-24 h-24 bg-dashboard-secondary opacity-10 rounded-full absolute bottom-6 right-6 floating"
       style={{ animationDelay: "2s" }}
     ></div>
     <div
-      className="w-12 h-12 bg-yellow-500 opacity-10 transform rotate-45 absolute bottom-16 left-1/2 floating"
+      className="w-12 h-12 bg-dashboard-accent opacity-10 transform rotate-45 absolute bottom-20 left-1/2 floating"
       style={{ animationDelay: "4s" }}
     ></div>
   </div>
-);
+));
+
+// Add display name for better debugging
+DecorativeShapes.displayName = 'DecorativeShapes';
 
 const SideBar = () => {
   const pathname = usePathname();
-  const { data } = useQuery(PACKAGES_QUERY);
+  const { data, loading } = useQuery(PACKAGES_QUERY, {
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first'
+  });
 
-  const hasProcessingOrders = data?.getAllPackages.some(
-    (order: { status: string }) =>
-      order.status === "PROCESSING" || order.status === "PAYED_NOT_DELIVERED",
-  );
+  // Memoize the processing orders check to avoid recalculation on every render
+  const hasProcessingOrders = useMemo(() => {
+    return data?.getAllPackages.some(
+      (order: { status: string }) =>
+        order.status === "PROCESSING" || order.status === "PAYED_NOT_DELIVERED",
+    );
+  }, [data]);
 
-
-  // Sidebar items with submenus
-  const sidebarItems = [
+  // Memoize sidebar items to prevent unnecessary re-renders
+  const sidebarItems = useMemo(() => [
     {
-      icon: <TbBrandGoogleHome size={24} />,
+      icon: <TbBrandGoogleHome size={22} />,
       text: "Tableau de bord",
       href: "/Dashboard",
       subItems: [],
@@ -48,9 +58,11 @@ const SideBar = () => {
     {
       icon: (
         <div className="relative">
-          <LuPackage2 size={24} />
+          <LuPackage2 size={22} />
           {hasProcessingOrders && (
-            <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-dashboard-danger rounded-full">
+              <div className="absolute inset-0 bg-dashboard-danger rounded-full animate-ping opacity-75"></div>
+            </div>
           )}
         </div>
       ),
@@ -63,7 +75,7 @@ const SideBar = () => {
       ],
     },
     {
-      icon: <TbPackages size={24} />,
+      icon: <TbPackages size={22} />,
       text: "Produits",
       href: "/Products",
       subItems: [
@@ -105,6 +117,7 @@ const SideBar = () => {
       text: "Statistiques",
       href: "/Statistics",
       subItems: [
+        { text: "Chiffre D'affaire", href: "/Statistical/YearlyTurnover" },
         { text: "Livraison", href: "/Statistical/Delivery" },
         { text: "Clients", href: "/Statistical/Customer" },
         { text: "Marketing", href: "/Statistical/Marketing" },
@@ -134,7 +147,7 @@ const SideBar = () => {
       subItems: [],
     },
     {
-      icon: <CiSettings size={24} />,
+      icon: <CiSettings size={22} />,
       text: "Réglages",
       href: "/Settings",
       subItems: [
@@ -146,80 +159,107 @@ const SideBar = () => {
         { text: "Integration", href: "/Settings/Integration" },
       ],
     },
-  ];
+  ], [hasProcessingOrders]); // Only re-create when processing orders change
 
   return (
     <Sidebar
-      backgroundColor="#202939"
+      className="overflow-hidden"
+      backgroundColor="#1e293b"
       style={{
         zIndex: "100",
         height: "100vh",
         position: "sticky",
         top: 0,
         left: 0,
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       }}
+      width="250px"
     >
-      <div className="relative h-full">
-        <Menu
-          menuItemStyles={{
-            button: ({ level, active }) => {
-              return {
-                color: active ? "#202939" : "#fff",
-                zIndex: "500",
-                backgroundColor: active ? "#fff" : "transparent",
-                "&:hover": {
-                  backgroundColor: "#2c3a50",
-                },
-              };
-            },
-          }}
-        >
+      <div className="relative h-full flex flex-col">
+        <div className="flex justify-center items-center py-4 mb-2 border-b border-opacity-20 border-white">
+          <Image
+            src="/LOGO.png"
+            alt="Logo"
+            className="rounded-md"
+            height={60}
+            width={120}
+            objectFit="contain"
+            priority
+          />
+        </div>
 
-          <div className="flex justify-center items-center py-4">
-            <Image
-              src="/LOGO.png"
-              alt="Logo"
-              className="rounded-md"
-              height={60}
-              width={120}
-              objectFit="contain"
-              priority
-            />
+        <div className="flex-grow overflow-y-auto scrollbar-hide">
+          <Menu
+            menuItemStyles={{
+              button: ({ level, active }) => {
+                return {
+                  color: active ? "#1e293b" : "#f8fafc", // text color
+                  backgroundColor: active ? "#f8fafc" : "transparent",
+                  marginTop: "2px",
+                  marginBottom: "2px",
+                  borderRadius: "6px",
+                  marginLeft: "8px",
+                  marginRight: "8px",
+                  fontWeight: active ? "600" : "400",
+                  "&:hover": {
+                    backgroundColor: active ? "#f8fafc" : "rgba(248, 250, 252, 0.1)",
+                  },
+                };
+              },
+              subMenuContent: () => ({
+                backgroundColor: "#1e293b", // dashboard-neutral-800
+              }),
+              icon: () => ({
+                color: "#94a3b8", // dashboard-neutral-400
+              }),
+            }}
+          >
+            {sidebarItems.map((item, index) =>
+              item.subItems.length > 0 ? (
+                <SubMenu
+                  key={index}
+                  icon={item.icon}
+                  label={
+                    <span className="text-sm font-medium">{item.text}</span>
+                  }
+                >
+                  {item.subItems.map((subItem, subIndex) => (
+                    <MenuItem
+                      key={subIndex}
+                      component={<Link href={subItem.href} />}
+                      active={pathname === subItem.href}
+                    >
+                      <span className="text-xs">{subItem.text}</span>
+                    </MenuItem>
+                  ))}
+                </SubMenu>
+              ) : (
+                <MenuItem
+                  key={index}
+                  icon={item.icon}
+                  component={<Link href={item.href} />}
+                  active={pathname === item.href}
+                >
+                  <span className="text-sm font-medium">{item.text}</span>
+                </MenuItem>
+              ),
+            )}
+          </Menu>
+        </div>
+
+        <div className="p-4 mt-auto border-t border-opacity-20 border-white">
+          <div className="flex items-center space-x-3 px-2 py-3 rounded-md bg-dashboard-neutral-700 bg-opacity-50">
+            <div className="w-8 h-8 rounded-full bg-dashboard-primary flex items-center justify-center text-white font-semibold">
+              A
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-white">Admin</p>
+              <p className="text-xs text-dashboard-neutral-400">Connecté</p>
+            </div>
           </div>
+        </div>
 
-          {sidebarItems.map((item, index) =>
-            item.subItems.length > 0 ? (
-              <SubMenu
-                key={index}
-                icon={item.icon}
-                label={
-                  <span className="text-sm">{item.text}</span>
-                }
-              >
-                {item.subItems.map((subItem, subIndex) => (
-                  <MenuItem
-                    key={subIndex}
-                    className="bg-[#202939e3]"
-                    component={<Link href={subItem.href} />}
-                    active={pathname === subItem.href}
-                  >
-                    <span className="text-xs">{subItem.text}</span>
-                  </MenuItem>
-                ))}
-              </SubMenu>
-            ) : (
-              <MenuItem
-                key={index}
-                icon={item.icon}
-                component={<Link href={item.href} />}
-                active={pathname === item.href}
-              >
-                <span className="text-base">{item.text}</span>
-              </MenuItem>
-            ),
-          )}
-        </Menu>
-        <div className="absolute top-0 inset-0 bg-gradient-to-b from-transparent to-black opacity-20 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-10 pointer-events-none"></div>
         <DecorativeShapes />
       </div>
     </Sidebar>

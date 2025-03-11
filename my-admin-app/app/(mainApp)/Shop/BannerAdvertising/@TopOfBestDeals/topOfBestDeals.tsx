@@ -17,7 +17,6 @@ const TopOfBestDeals = ({ setInputField, inputField }: any) => {
       if (ad) {
         setInputField({
           images: ad.images[0] ? [ad.images[0]] : [],
-
           link: ad.link || "",
           position: "BannerBestDeals",
         });

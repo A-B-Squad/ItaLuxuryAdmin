@@ -38,11 +38,12 @@ const OrderReference = ({ order, OrderStatus }: any) => {
                       alt={item.product.name}
                       className="w-12 h-12 border mr-2"
                     />
-                    <div>
-                      <p className="text-blue-800 w-56 font-medium">
-                        {item.product.name}
-                      </p>
-                    </div>
+                    <p className="text-blue-800 w-56 font-medium">
+                      {item.product.reference}
+                    </p>
+                    <p className="text-blue-800 w-56 font-medium">
+                      {item.product.name}
+                    </p>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -66,7 +67,8 @@ const OrderReference = ({ order, OrderStatus }: any) => {
           OrderStatus !== "BACK" &&
           OrderStatus !== "TRANSFER_TO_DELIVERY_COMPANY" &&
           OrderStatus !== "PAYED_AND_DELIVERED" &&
-          OrderStatus !== "PAYMENT_REFUSED" && (
+          OrderStatus !== "PAYMENT_REFUSED" &&
+          OrderStatus !== "REFUNDED" && (
             <div className="w-full flex justify-end">
               <Link
                 href={{

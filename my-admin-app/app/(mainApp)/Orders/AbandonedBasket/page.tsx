@@ -5,8 +5,8 @@ const ClientAbandonedBasketPage = dynamic(
   { ssr: false },
 );
 
-const AbandonedBasketPage: React.FC = () => {
+const AbandonedBasketWrapperd: React.FC = () => {
   return <ClientAbandonedBasketPage />;
 };
 
-export default AbandonedBasketPage;
+export default AbandonedBasketWrapperd;

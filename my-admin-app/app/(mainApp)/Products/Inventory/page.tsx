@@ -117,6 +117,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
           "Prix",
           "Marge bénéficiaire",
           "Gains",
+          "Vendus",
           "Casse",
           "Inventaire",
         ],
@@ -129,10 +130,11 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
           product.price.toFixed(2),
           calculateProfitMargin(product.price, product.purchasePrice) + "%",
           calculateEarnings(product.price, product.purchasePrice).toFixed(2),
+          product.solde,
           product.broken,
           product.inventory,
         ]),
-        ["Total", "", "", "", "", totalEarnings.toFixed(2), "", totalInventory],
+        ["Total", "", "", "", "", totalEarnings.toFixed(2),"" ,"", totalInventory],
       ],
       styles: {
         fontSize: 10, // Cell font size
@@ -175,6 +177,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
         "Marge bénéficiaire",
         "Gains",
         "Casse",
+        "Vendus",
         "Inventaire",
       ], // En-têtes
       ...allProducts.map((product) => [
@@ -184,6 +187,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
         product.price.toFixed(2),
         calculateProfitMargin(product.price, product.purchasePrice) + "%",
         calculateEarnings(product.price, product.purchasePrice).toFixed(2),
+        product.solde,
         product.broken,
         product.inventory,
       ]),
@@ -203,12 +207,13 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
     // Add the total number of products
     const totalProducts = allProducts.length;
     data.push([
-      `Nombre total de produits: ${totalProducts}`, // Add a row for total products
+      `Nombre total de produits: ${totalProducts}`, 
       "",
       "",
       "",
       "",
       totalEarnings.toFixed(2),
+      "",
       "",
       totalInventory,
     ]);

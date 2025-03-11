@@ -13,6 +13,27 @@ interface OrderRowProps {
   deliveryPrice: number;
 }
 
+const getStatusStyle = (status: string) => {
+  switch (status) {
+    case "PAYED_AND_DELIVERED":
+      return "bg-dashboard-success/10 text-dashboard-success border border-dashboard-success/20";
+    case "PROCESSING":
+    case "PAYED_NOT_DELIVERED":
+      return "bg-dashboard-warning/10 text-dashboard-warning border border-dashboard-warning/20";
+    case "CANCELLED":
+    case "PAYMENT_REFUSED":
+      return "bg-dashboard-danger/10 text-dashboard-danger border border-dashboard-danger/20";
+    case "CONFIRMED":
+      return "bg-dashboard-info/10 text-dashboard-info border border-dashboard-info/20";
+    case "TRANSFER_TO_DELIVERY_COMPANY":
+      return "bg-dashboard-primary/10 text-dashboard-primary border border-dashboard-primary/20";
+    case "REFUNDED":
+      return "bg-dashboard-secondary/10 text-dashboard-secondary border border-dashboard-secondary/20";
+    default:
+      return "bg-dashboard-neutral-100 text-dashboard-neutral-600 border border-dashboard-neutral-200";
+  }
+};
+
 const OrderRow: React.FC<OrderRowProps> = ({
   order,
   formatDate,
@@ -21,48 +42,44 @@ const OrderRow: React.FC<OrderRowProps> = ({
   deliveryPrice,
 }) => (
   <tr
-    key={order.id}
-    className={`border-b h-10 text-sm text-center ${order.status === "CANCELLED" ? "cancelled-order" : ""
-      }`}
-    style={
-      order.status === "CANCELLED"
-        ? {
-          background:
-            "repeating-linear-gradient(45deg,#fff,#fff 10px,#f6f6f6 0,#f6f6f6 20px)",
-        }
-        : {}
-    }
+    className={`hover:bg-dashboard-neutral-50 transition-colors ${
+      order.status === "CANCELLED" 
+        ? "bg-[repeating-linear-gradient(45deg,#fff,#fff_10px,#f9fafb_0,#f9fafb_20px)]" 
+        : ""
+    }`}
   >
-    <td className="text-blue-600">{order.customId}</td>
-    <td>{formatDate(order.createdAt)}</td>
-    <td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-dashboard-primary">
+      {order.customId}
+    </td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm text-dashboard-neutral-700">
+      {formatDate(order.createdAt)}
+    </td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm text-dashboard-neutral-700">
       {order.Checkout.userId ? order.Checkout.userId : "Client(e) Invite"}
     </td>
-    <td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm text-dashboard-neutral-700">
       {order.Checkout.userName}
     </td>
-    <td>
-      <span
-        className={`px-2 py-1 rounded ${order.status === "PAYED_AND_DELIVERED"
-          ? "bg-green-100 text-green-600"
-          : order.status === "PROCESSING" ||
-            order.status === "PAYED_NOT_DELIVERED"
-            ? "bg-yellow-100 text-yellow-800"
-            : order.status === "CANCELLED" ||
-              order.status === "PAYMENT_REFUSED"
-              ? "bg-red-100 text-red-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
-      >
+    <td className="px-4 py-3 whitespace-nowrap text-sm">
+      <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${getStatusStyle(order?.status)}`}>
         {translateStatus(order.status)}
       </span>
     </td>
-    <td>{translatePaymentMethodStatus(order.Checkout.paymentMethod)} </td>
-    <td>{order.Checkout.freeDelivery ? 0 : deliveryPrice.toFixed(3)} DT</td>
-    <td>{order.Checkout.total.toFixed(3)} DT</td>
-
-    <td className="Edits py-3 text-sm">
-      <div className="flex items-center justify-center gap-2">
+    <td className="px-4 py-3 whitespace-nowrap text-sm text-dashboard-neutral-700">
+      {translatePaymentMethodStatus(order.Checkout.paymentMethod)}
+    </td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm text-dashboard-neutral-700">
+      {order.Checkout.freeDelivery ? (
+        <span className="text-dashboard-success font-medium">Gratuit</span>
+      ) : (
+        `${deliveryPrice.toFixed(3)} DT`
+      )}
+    </td>
+    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-dashboard-neutral-900">
+      {order.Checkout.total.toFixed(3)} DT
+    </td>
+    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+      <div className="flex items-center justify-end gap-2">
         <Link
           href={{
             pathname: "Orders/UpdateOrder",
@@ -70,7 +87,8 @@ const OrderRow: React.FC<OrderRowProps> = ({
               orderId: order.id,
             },
           }}
-          className="p-2 w-9 flex items-center justify-center hover:opacity-40 transition-opacity shadow-md h-9 rounded-full border-2"
+          className="p-1.5 flex items-center justify-center hover:bg-dashboard-neutral-100 transition-colors rounded-md text-dashboard-neutral-700 hover:text-dashboard-primary"
+          title="Modifier la commande"
         >
           <FiEdit2 size={18} />
         </Link>
@@ -78,10 +96,10 @@ const OrderRow: React.FC<OrderRowProps> = ({
         <button
           type="button"
           onClick={() => generateInvoice(order, deliveryPrice)}
-          title="Imprimer Bonne"
-          className="p-2 w-9 h-9 flex items-center justify-center hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
+          title="Imprimer Facture"
+          className="p-1.5 flex items-center justify-center hover:bg-dashboard-neutral-100 transition-colors rounded-md text-dashboard-neutral-700 hover:text-dashboard-primary"
         >
-          <AiOutlinePrinter size={20} />
+          <AiOutlinePrinter size={18} />
         </button>
       </div>
     </td>

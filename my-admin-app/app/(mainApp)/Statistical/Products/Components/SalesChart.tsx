@@ -1,9 +1,8 @@
 "use client";
-import React, { useRef, useMemo, useState } from "react";
-import { Chart, registerables, ChartData, ChartOptions } from "chart.js";
+import React, { useRef, useMemo } from "react";
+import { Chart, registerables, ChartOptions } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { format } from "date-fns";
-
 import { DateRange } from "react-day-picker";
 import "chartjs-adapter-date-fns";
 
@@ -41,7 +40,6 @@ const SalesChart: React.FC<{
 }> = ({ data, dateRange }) => {
   const chartRef = useRef<Chart | null>(null);
 
-  const [selectedPreset, setSelectedPreset] = useState("last28");
   const processData = (data: Data) => {
     const packages = data.getAllPackages;
     const productSales: {
@@ -114,9 +112,8 @@ const SalesChart: React.FC<{
         return productSales[dateStr]?.[product]?.quantity || 0;
       }),
       borderColor: `hsl(${(index * 360) / productNames.length}, 70%, 50%)`,
-      backgroundColor: `hsla(${
-        (index * 360) / productNames.length
-      }, 70%, 50%, 0.2)`,
+      backgroundColor: `hsla(${(index * 360) / productNames.length
+        }, 70%, 50%, 0.2)`,
       fill: false,
       tension: 0.4,
     }));
@@ -126,13 +123,33 @@ const SalesChart: React.FC<{
 
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          boxWidth: 20,
+          font: {
+            size: 11,
+            family: "'Inter', sans-serif"
+          },
+          padding: 15
+        }
       },
       tooltip: {
         mode: "index",
         intersect: false,
+        backgroundColor: 'rgba(30, 41, 59, 0.9)', // dashboard-neutral-800
+        titleFont: {
+          size: 13,
+          family: "'Inter', sans-serif"
+        },
+        bodyFont: {
+          size: 12,
+          family: "'Inter', sans-serif"
+        },
+        padding: 12,
+        cornerRadius: 4,
         callbacks: {
           label: function (context) {
             const dataIndex = context.dataIndex;
@@ -154,7 +171,17 @@ const SalesChart: React.FC<{
       },
       title: {
         display: true,
-        text: "Product Quantities Sold Over Time",
+        text: "Quantités de produits vendus",
+        font: {
+          size: 16,
+          family: "'Inter', sans-serif",
+          weight: 'bold',
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        },
+        color: '#1e293b' // dashboard-neutral-800
       },
     },
     scales: {
@@ -170,17 +197,45 @@ const SalesChart: React.FC<{
         title: {
           display: true,
           text: "Date",
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+            weight: 'bold'
+          },
+          color: '#64748b' // dashboard-neutral-500
         },
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 11,
+            family: "'Inter', sans-serif"
+          }
+        }
       },
       y: {
         title: {
           display: true,
-          text: "Quantity Sold",
+          text: "Quantité vendue",
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+            weight: 'bold'
+          },
+          color: '#64748b' // dashboard-neutral-500
         },
         beginAtZero: true,
         ticks: {
           stepSize: 1,
+          font: {
+            size: 11,
+            family: "'Inter', sans-serif"
+          }
         },
+        grid: {
+          color: "rgba(0, 0, 0, 0.05)"
+        }
       },
     },
     interaction: {
@@ -191,13 +246,18 @@ const SalesChart: React.FC<{
   };
 
   return (
-    <div className=" shadow rounded-lg w-4/5   bg-gray-50 p-2 border">
-      <h2 className="text-lg font-semibold mb-4">Sales Chart</h2>
-      <Line data={chartData} options={chartOptions} />
-      <p className="mt-4 text-sm text-gray-600">
-        Most purchased product:{" "}
-        <span className="font-semibold">{mostPurchasedProduct}</span>
-      </p>
+    <div className="w-full h-full">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-dashboard-neutral-800">Ventes par produit</h2>
+          <p className="text-sm text-dashboard-neutral-600">
+            Produit le plus vendu: <span className="font-semibold text-dashboard-primary">{mostPurchasedProduct}</span>
+          </p>
+        </div>
+      </div>
+      <div className="h-[350px]">
+        <Line data={chartData} options={chartOptions} />
+      </div>
     </div>
   );
 };

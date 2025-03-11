@@ -44,7 +44,7 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   const idClientText = "Id: " + order.Checkout.userId;
   const nameText = "Nom: " + order.Checkout.userName;
   const phoneText = `Tel: ${order.Checkout.phone[0] || "N/A"}${order.Checkout.phone[1] ? ` / ${order.Checkout.phone[1]}` : ""}`;
-  const emailText = order.Checkout.email ? "Email: " + order.Checkout.email : "Email: N/A";
+  const emailText = order.Checkout.guestEmail ? "Email: " + order.Checkout.guestEmail : "Email: N/A";
 
   const cityText = "Ville: " + order.Checkout.Governorate.name;
   const addressText = "Adresse: " + order.Checkout.address;
@@ -65,9 +65,9 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   doc.text(idClientText, 15, 73 + lineHeight);
   doc.text(nameText, 15, 73 + 2 * lineHeight);
   doc.text(phoneText, 15, 73 + 3 * lineHeight);
-  doc.text(emailText, 15, 73 + 4 * lineHeight); 
-  doc.text(cityText, 15, 73 + 5 * lineHeight); 
-  doc.text(addressLines, 15, 73 + 6 * lineHeight); 
+  doc.text(emailText, 15, 73 + 4 * lineHeight);
+  doc.text(cityText, 15, 73 + 5 * lineHeight);
+  doc.text(addressLines, 15, 73 + 6 * lineHeight);
   doc.text(paymentMethodText, 15, 73 + (6 + addressLines.length) * lineHeight);
 
   // Barcode
@@ -113,8 +113,10 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
       item.product.name || "",
       "PCE",
       item.productQuantity,
-      item.price.toFixed(3),
-      (item.productQuantity * item.price).toFixed(3),
+      item.discountedPrice
+        ? item.discountedPrice.toFixed(3)
+        : item.price.toFixed(3),
+      (item.productQuantity * (item.discountedPrice || item.price)).toFixed(3),
     ]),
     theme: "striped",
     headStyles: { fillColor: [32, 41, 57], textColor: 255, fontStyle: "bold" },
@@ -133,7 +135,7 @@ export const generateInvoice = (order: Order, deliveryPrice: number) => {
   const finalY = (doc as any).lastAutoTable.finalY + 10;
 
   const productTotal = order.Checkout.productInCheckout.reduce(
-    (sum, item) => sum + item.productQuantity * item.price,
+    (sum, item) => sum + item.productQuantity * (item.discountedPrice || item.price),
     0,
   );
   const deliveryFee = order.Checkout.freeDelivery ? 0.0 : deliveryPrice;

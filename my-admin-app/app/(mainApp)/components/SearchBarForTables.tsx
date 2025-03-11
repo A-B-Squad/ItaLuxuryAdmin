@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
-import { IoSearch } from "react-icons/io5";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { IoSearch, IoClose, IoFilter, IoArrowUp, IoArrowDown } from "react-icons/io5";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ReloadButton from "./ReloadPage";
+import { debounce } from "lodash";
 
 interface SearchBarProps {
   page:
@@ -26,6 +27,13 @@ interface SearchBarProps {
 const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // Update local state when URL params change
+  useEffect(() => {
+    setSearchValue(searchParams.get("q") || "");
+  }, [searchParams]);
 
   const updateSearchParams = useCallback(
     (newQuery: string, newOrder: string) => {
@@ -45,21 +53,33 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
     [router, searchParams, page],
   );
 
+  // Debounce search to improve performance
+  const debouncedSearch = useMemo(
+    () => debounce((query: string) => {
+      updateSearchParams(query, searchParams.get("order") || "default");
+    }, 300),
+    [updateSearchParams, searchParams]
+  );
+
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateSearchParams(
-        e.target.value,
-        searchParams.get("order") || "default",
-      );
+      const newValue = e.target.value;
+      setSearchValue(newValue);
+      debouncedSearch(newValue);
     },
-    [updateSearchParams, searchParams],
+    [debouncedSearch],
   );
+
+  const handleClearSearch = useCallback(() => {
+    setSearchValue("");
+    updateSearchParams("", searchParams.get("order") || "default");
+  }, [updateSearchParams, searchParams]);
 
   const handleFilterChange = useCallback(
     (value: string) => {
-      updateSearchParams(searchParams.get("q") || "", value);
+      updateSearchParams(searchValue, value);
     },
-    [updateSearchParams, searchParams],
+    [updateSearchParams, searchValue],
   );
 
   const placeholder = useMemo(() => {
@@ -76,9 +96,9 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
   const filterOptions = useMemo(() => {
     if (page === "Coupons") {
       return [
-        { value: "default", label: "Filtres de recherche" },
-        { value: "USED", label: "Utilisé" },
-        { value: "UNUSED", label: "Non Utilisé" },
+        { value: "default", label: "Filtres de recherche", icon: <IoFilter /> },
+        { value: "USED", label: "Utilisé", icon: null },
+        { value: "UNUSED", label: "Non Utilisé", icon: null },
       ];
     } else if (
       page !== "Products/Categories" &&
@@ -86,9 +106,9 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       page !== "TopDeals"
     ) {
       return [
-        { value: "default", label: "Filtres de recherche" },
-        { value: "ASC", label: "prix : Asc" },
-        { value: "DESC", label: "prix : Desc" },
+        { value: "default", label: "Filtres de recherche", icon: <IoFilter /> },
+        { value: "ASC", label: "Prix : Croissant", icon: <IoArrowUp /> },
+        { value: "DESC", label: "Prix : Décroissant", icon: <IoArrowDown /> },
       ];
     }
     return null;
@@ -102,26 +122,43 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
     [page],
   );
 
+  const currentOrder = searchParams.get("order") || "default";
+
   return (
     <form
-      className="flex flex-col md:flex-row w-full gap-3 px-3 mb-4"
-      onSubmit={(e) => e.preventDefault()}
+      className="flex flex-col md:flex-row w-full gap-3 px-3 mb-6"
+      onSubmit={(e) => {
+        e.preventDefault();
+        debouncedSearch.cancel();
+        updateSearchParams(searchValue, searchParams.get("order") || "default");
+      }}
     >
-      <div className="relative flex flex-col sm:flex-row gap-2 w-full md:w-[80%]">
-        <div className="search w-full relative">
+      <div className="relative flex flex-col sm:flex-row gap-3 w-full md:w-[80%]">
+        <div className={`search w-full relative transition-all duration-200 group`}>
+          <div className={`absolute inset-0 -m-0.5 rounded-lg ${isSearchFocused ? 'bg-gradient-to-r from-mainColorAdminDash/30 to-blue-500/30' : 'bg-transparent'} transition-all duration-300`}></div>
           <input
             onChange={handleInputChange}
             type="text"
             placeholder={placeholder}
-            className="px-10 w-full h-10  relative border rounded-md outline-none"
-            defaultValue={searchParams.get("q") || ""}
+            className="px-12 w-full h-11 relative border border-gray-300 rounded-lg outline-none transition-all bg-white shadow-sm focus:shadow-md"
+            value={searchValue}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
           />
-          <button
-            type="submit"
-            className="absolute left-1 bottom-2 text-gray-700 cursor-pointer"
-          >
-            <IoSearch size={24} />
-          </button>
+          <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-mainColorAdminDash transition-colors">
+            <IoSearch size={20} />
+          </div>
+
+          {searchValue && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors"
+              aria-label="Effacer la recherche"
+            >
+              <IoClose size={18} />
+            </button>
+          )}
         </div>
         <div className="sm:w-auto">
           <ReloadButton />
@@ -130,16 +167,23 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       {showFilter && filterOptions && (
         <Select
           onValueChange={handleFilterChange}
-          defaultValue={searchParams.get("order") || "default"}
+          value={currentOrder}
         >
-          <SelectTrigger className="w-full md:w-[20%]">
+          <SelectTrigger className="w-full md:w-[20%] h-11 border-gray-300 bg-white shadow-sm hover:border-mainColorAdminDash transition-colors">
             <SelectValue placeholder="Filtres de recherche" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="border-gray-200 shadow-lg">
             <SelectGroup>
               {filterOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-2">
+                    {option.icon && <span className="text-gray-500">{option.icon}</span>}
+                    <span>{option.label}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectGroup>

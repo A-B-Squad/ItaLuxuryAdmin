@@ -49,25 +49,9 @@ const ReviewsRow: React.FC<InventoryRowProps> = ({ product }) => {
           <div>
             <Link
               target="_blank"
-              href={{
-                pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
-                  product.name,
-                )}`,
-                query: {
-                  productId: product.id,
-                  collection: [
-                    product.categories[0]?.name,
-                    product.categories[0]?.id,
-                    product.categories[0]?.subcategories[0]?.name,
-                    product.categories[1]?.subcategories[0]?.id,
-                    product.categories[0]?.subcategories[0]?.subcategories[1]
-                      ?.name,
-                    product.categories[0]?.subcategories[0]?.subcategories[1]
-                      ?.id,
-                    product.name,
-                  ],
-                },
-              }}
+              href={
+                `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}}`
+              }
               className="font-semibold hover:opacity-85 transition-opacity text-black"
             >
               {product.name}

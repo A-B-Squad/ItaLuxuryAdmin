@@ -5,7 +5,6 @@ import { FiEdit2 } from "react-icons/fi";
 import { BiShow } from "react-icons/bi";
 import { MdDeleteOutline } from "react-icons/md";
 import moment from "moment";
-import prepRoute from "@/app/(mainApp)/Helpers/_prepRoute";
 
 interface ProductRowProps {
   product: any;
@@ -16,7 +15,6 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
   const formatDate = (timestamp: string) => {
     return moment(parseInt(timestamp, 10)).format("DD/MM/YYYY");
   };
-  console.log(product);
 
   return (
     <tr className="text-gray-700 text-xs  font-semibold">
@@ -64,11 +62,10 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
       </td>
       <td className="visibility text-center  py-3  border">
         <span
-          className={`px-2 py-1 w-full font-semibold leading-tight ${
-            product.isVisible
-              ? "text-green-700 bg-green-100"
-              : "text-red-700 bg-red-100"
-          } rounded-sm`}
+          className={`px-2 py-1 w-full font-semibold leading-tight ${product.isVisible
+            ? "text-green-700 bg-green-100"
+            : "text-red-700 bg-red-100"
+            } rounded-sm`}
         >
           {product.isVisible ? "Visible" : "Non visible"}
         </span>
@@ -93,24 +90,9 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           </Link>
           <Link
             target="_blank"
-            href={{
-              pathname: `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie/${prepRoute(
-                product.name,
-              )}`,
-              query: {
-                productId: product.id,
-                collection: [
-                  product.categories[0]?.name,
-                  product.categories[0]?.id,
-                  product.categories[0]?.subcategories[0]?.name,
-                  product.categories[1]?.subcategories[0]?.id,
-                  product.categories[0]?.subcategories[0]?.subcategories[1]
-                    ?.name,
-                  product.categories[0]?.subcategories[0]?.subcategories[1]?.id,
-                  product.name,
-                ],
-              },
-            }}
+            href={
+              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}}`
+            }
             className="p-2 w-10 hover:opacity-40 transition-opacity shadow-md h-10 rounded-full border-2"
           >
             <BiShow size={22} />

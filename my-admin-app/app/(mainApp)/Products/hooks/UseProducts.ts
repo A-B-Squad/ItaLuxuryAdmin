@@ -29,6 +29,7 @@ const useProducts = (
         },
         fetchPolicy: "cache-and-network",
       });
+      
       const { data: allSearchedProduct } = await searchProducts({
         variables: {
           input: {

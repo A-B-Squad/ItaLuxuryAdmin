@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
@@ -14,9 +14,11 @@ import {
   IoCall,
   IoMail,
   IoLocationSharp,
+  IoSaveOutline,
 } from "react-icons/io5";
 import { IconType } from "react-icons";
 import BackUp from "@/app/(mainApp)/components/BackUp";
+
 
 // Define types for the state
 interface CompanyData {
@@ -34,17 +36,15 @@ interface FormField {
   label: string;
   field: keyof CompanyData;
   index?: number;
+  placeholder?: string;
+  type?: string;
 }
-
-const Loader = () => (
-  <div className="flex justify-center items-center h-full w-full">
-    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-900"></div>
-  </div>
-);
 
 const CompanyInfopage = () => {
   const { toast } = useToast();
   const [showBackUp, setShowBackUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [logoLoading, setLogoLoading] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyData>({
     phone: ["", ""],
     deliveringPrice: 0,
@@ -54,15 +54,13 @@ const CompanyInfopage = () => {
     location: "",
     email: "",
   });
-  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
-    {},
-  );
 
-  const { data: companyInfoData } = useQuery(COMPANY_INFO_QUERY);
+  const { data: companyInfoData, loading: queryLoading } = useQuery(COMPANY_INFO_QUERY);
   const [createCompanyInfo] = useMutation(CREATE_COMPANY_INFO_MUTATIONS);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
+      setIsLoading(true);
       const input = {
         logo: companyInfo.logo,
         phone: companyInfo.phone,
@@ -73,40 +71,48 @@ const CompanyInfopage = () => {
         deliveringPrice: companyInfo.deliveringPrice,
       };
 
-      if (
-        !input.logo ||
-        input.phone.length === 0 ||
-        !input.instagram ||
-        !input.facebook ||
-        !input.location ||
-        !input.email ||
-        !input.deliveringPrice
-      ) {
+      // Validate required fields
+      const missingFields = [];
+      if (!input.logo) missingFields.push("Logo");
+      if (!input.phone[0]) missingFields.push("Numéro de téléphone principal");
+      if (!input.instagram) missingFields.push("Instagram");
+      if (!input.facebook) missingFields.push("Facebook");
+      if (!input.location) missingFields.push("Adresse");
+      if (!input.email) missingFields.push("Email");
+      if (!input.deliveringPrice) missingFields.push("Prix de livraison");
+
+      if (missingFields.length > 0) {
         toast({
-          title: "Erreur",
-          description:
-            "Veuillez remplir tous les champs pour chaque information de l'entreprise.",
-          className: "bg-red-800 text-white",
+          title: "Champs manquants",
+          description: `Veuillez remplir les champs suivants: ${missingFields.join(", ")}`,
+          variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
       await createCompanyInfo({ variables: { input } });
+
+
+
       toast({
         title: "Succès",
         description: "Informations de l'entreprise mises à jour avec succès.",
         className: "bg-green-600 text-white",
       });
+
+      setShowBackUp(false);
     } catch (error) {
       console.error("Error while saving:", error);
       toast({
         title: "Erreur",
-        description:
-          "Impossible de mettre à jour les informations de l'entreprise.",
-        className: "bg-red-800 text-white",
+        description: "Impossible de mettre à jour les informations de l'entreprise.",
+        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [companyInfo, createCompanyInfo, toast]);
 
   useEffect(() => {
     if (companyInfoData?.companyInfo) {
@@ -120,7 +126,7 @@ const CompanyInfopage = () => {
         email,
       } = companyInfoData.companyInfo;
       setCompanyInfo({
-        phone: phone,
+        phone: phone.length ? phone : ["", ""],
         deliveringPrice,
         logo,
         instagram,
@@ -131,8 +137,9 @@ const CompanyInfopage = () => {
     }
   }, [companyInfoData]);
 
-  const handleSuccessUpload = (result: any) => {
+  const handleSuccessUpload = useCallback((result: any) => {
     setShowBackUp(true);
+    setLogoLoading(false);
 
     const file = result.info;
     if (file) {
@@ -140,15 +147,10 @@ const CompanyInfopage = () => {
         ...prev,
         logo: file.url,
       }));
-
-      setLoadingImages((prev) => ({
-        ...prev,
-        [file.url]: true,
-      }));
     }
-  };
+  }, []);
 
-  const handleInputChange = (
+  const handleInputChange = useCallback((
     field: keyof CompanyData,
     value: string | number,
   ) => {
@@ -157,9 +159,9 @@ const CompanyInfopage = () => {
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const handlePhoneInputChange = (
+  const handlePhoneInputChange = useCallback((
     index: number,
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -171,131 +173,183 @@ const CompanyInfopage = () => {
       ...prev,
       phone: newPhone,
     }));
-  };
-
-  const handleNumberInputChange = (
-    field: keyof CompanyData,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setShowBackUp(true);
-
-    const value = parseFloat(e.target.value);
-    setCompanyInfo((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  }, [companyInfo.phone]);
 
   const formFields: FormField[] = [
-    { icon: IoLogoInstagram, label: "Instagram", field: "instagram" },
-    { icon: IoLogoFacebook, label: "Facebook", field: "facebook" },
-    { icon: IoCall, label: "Numéro de téléphone 1", field: "phone", index: 0 },
-    { icon: IoCall, label: "Numéro de téléphone 2", field: "phone", index: 1 },
-    { icon: IoLocationSharp, label: "Location", field: "location" },
-    { icon: IoMail, label: "Email", field: "email" },
+    {
+      icon: IoLogoInstagram,
+      label: "Instagram",
+      field: "instagram",
+      placeholder: "Lien Instagram"
+    },
+    {
+      icon: IoLogoFacebook,
+      label: "Facebook",
+      field: "facebook",
+      placeholder: "Lien Facebook"
+    },
+    {
+      icon: IoCall,
+      label: "Numéro de téléphone principal",
+      field: "phone",
+      index: 0,
+      placeholder: "+216 6 XX XX XX XX"
+    },
+    {
+      icon: IoCall,
+      label: "Numéro de téléphone secondaire",
+      field: "phone",
+      index: 1,
+      placeholder: "+216 6 XX XX XX XX"
+    },
+    {
+      icon: IoLocationSharp,
+      label: "Adresse",
+      field: "location",
+      placeholder: "Adresse complète"
+    },
+    {
+      icon: IoMail,
+      label: "Email",
+      field: "email",
+      placeholder: "contact@italuxury.com",
+      type: "email"
+    },
     {
       icon: IoImageOutline,
       label: "Prix de livraison",
       field: "deliveringPrice",
+      placeholder: "0.00",
+      type: "number"
     },
   ];
 
   return (
-    <div className="company-info bg-gray-50 min-h-screen py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 pb-2 border-b border-gray-200">
-          Informations de l'entreprise
-        </h1>
-
-        <div className="mb-8">
-          {companyInfo.logo ? (
-            <div className="h-[150px] w-[250px] relative border-2 border-gray-300 rounded-lg overflow-hidden">
-              <Image
-                src={companyInfo.logo}
-                alt="Logo de l'entreprise"
-                layout="fill"
-                objectFit="contain"
-                className="bg-white"
-                onLoadingComplete={() =>
-                  setLoadingImages((prev) => ({
-                    ...prev,
-                    [companyInfo.logo]: false,
-                  }))
-                }
-              />
-              {loadingImages[companyInfo.logo] && <Loader />}
-            </div>
-          ) : (
-            <div className="h-[150px] w-[250px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 bg-white">
-              <span className="text-sm">250px / 150px</span>
-              <span className="text-sm">png / jpg / gif</span>
-            </div>
-          )}
+    <div className="company-info py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="border-b px-6 py-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Informations de l'entreprise
+          </h2>
         </div>
 
-        <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Ajouter une Nouvelle Logo
-          </p>
-          <CldUploadWidget
-            uploadPreset="ita-luxury"
-            onSuccess={(result: any, { widget }) => {
-              handleSuccessUpload(result);
-              widget.close();
-            }}
-          >
-            {({ open }) => (
-              <button
-                type="button"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => open && open()}
-              >
-                <IoImageOutline className="mr-2 -ml-1 h-5 w-5" />
-                Choisir une image
-              </button>
-            )}
-          </CldUploadWidget>
-        </div>
+        <div className="p-6">
+          <div className="space-y-8">
+            {/* Logo Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">Logo de l'entreprise</h3>
 
-        <div className="space-y-6">
-          {formFields.map((item, idx) => (
-            <div
-              key={idx}
-              className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start"
-            >
-              <label
-                htmlFor={item.field}
-                className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
-              >
-                <item.icon className="inline-block mr-2 h-5 w-5 text-gray-400" />
-                {item.label}
-              </label>
-              <div className="mt-1 sm:mt-0 sm:col-span-2">
-                <input
-                  type={item.field === "deliveringPrice" ? "number" : "text"}
-                  name={item.field}
-                  id={item.field}
-                  value={
-                    item.index !== undefined
-                      ? companyInfo.phone[item.index]
-                      : companyInfo[item.field].toString()
-                  }
-                  onChange={(e) =>
-                    item.index !== undefined
-                      ? handlePhoneInputChange(item.index, e)
-                      : item.field === "deliveringPrice"
-                        ? handleNumberInputChange(item.field, e)
-                        : handleInputChange(item.field, e.target.value)
-                  }
-                  className="max-w-lg block w-full px-3 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md"
-                />
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                {queryLoading ? (
+                  <div className="h-[150px] w-[250px] rounded-lg bg-gray-200 animate-pulse" />
+                ) : companyInfo.logo ? (
+                  <div className="h-[150px] w-[250px] relative border rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                    <Image
+                      src={companyInfo.logo}
+                      alt="Logo de l'entreprise"
+                      layout="fill"
+                      objectFit="contain"
+                      className="bg-white"
+                      onLoadingComplete={() => setLogoLoading(false)}
+                    />
+                    {logoLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-900"></div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-[150px] w-[250px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 bg-white">
+                    <IoImageOutline className="h-8 w-8 mb-2" />
+                    <span className="text-sm">250px / 150px</span>
+                    <span className="text-sm">png / jpg / gif</span>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Téléchargez le logo de votre entreprise. Formats recommandés: PNG, JPG ou GIF.
+                  </p>
+
+                  <CldUploadWidget
+                    uploadPreset="ita-luxury"
+                    onSuccess={(result: any, { widget }) => {
+                      handleSuccessUpload(result);
+                      widget.close();
+                    }}
+                    onUpload={() => setLogoLoading(true)}
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center"
+                        onClick={() => open && open()}
+                        disabled={logoLoading}
+                      >
+                        {logoLoading ? (
+                          <>
+                            <div className="animate-spin mr-2 h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full" />
+                            Chargement...
+                          </>
+                        ) : (
+                          <>
+                            <IoImageOutline className="mr-2 h-4 w-4" />
+                            Choisir une image
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                </div>
               </div>
             </div>
-          ))}
+
+            {/* Form Fields */}
+            <div className="grid gap-6">
+              {formFields.map((item, idx) => (
+                <div key={idx} className="grid sm:grid-cols-3 gap-4 items-center">
+                  <label
+                    htmlFor={`${item.field}${item.index !== undefined ? item.index : ''}`}
+                    className="flex items-center text-gray-700 text-sm font-medium"
+                  >
+                    <item.icon className="mr-2 h-5 w-5 text-gray-500" />
+                    {item.label}
+                  </label>
+
+                  <div className="sm:col-span-2">
+                    <input
+                      type={item.type || "text"}
+                      id={`${item.field}${item.index !== undefined ? item.index : ''}`}
+                      placeholder={item.placeholder}
+                      value={
+                        item.index !== undefined
+                          ? companyInfo.phone[item.index]
+                          : item.field === "deliveringPrice"
+                            ? companyInfo[item.field].toString()
+                            : companyInfo[item.field]
+                      }
+                      onChange={(e) =>
+                        item.index !== undefined
+                          ? handlePhoneInputChange(item.index, e)
+                          : item.field === "deliveringPrice"
+                            ? handleInputChange(item.field, parseFloat(e.target.value) || 0)
+                            : handleInputChange(item.field, e.target.value)
+                      }
+                      className="max-w-md w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <BackUp onSave={handleSave} showBackUp={showBackUp} />
+      <BackUp
+        onSave={handleSave}
+        showBackUp={showBackUp}
+        isLoading={isLoading}
+      />
     </div>
   );
 };

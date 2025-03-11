@@ -1,118 +1,62 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PACKAGES_QUERY } from "@/app/graph/queries";
 import { useQuery } from "@apollo/client";
 import SalesChart from "./Components/SalesChart";
-import DoughnutProductSalesCharts from "./Components/DoughnutChart";
 import { DateRange } from "react-day-picker";
-import { format, subDays, startOfDay } from "date-fns";
-import { FaCalendarAlt } from "react-icons/fa";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectValue,
-  SelectItem,
-} from "@/components/ui/select";
+import { subDays } from "date-fns";
 import Loading from "../loading";
+import DateRangePicker from "@/components/ui/date-range-picker";
 
 const ProductPage = () => {
   const { loading, error, data } = useQuery(PACKAGES_QUERY);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 28),
     to: new Date(),
   });
-  const [selectedPreset, setSelectedPreset] = useState("last28");
-  const [formattedDateRange, setFormattedDateRange] = useState<string>("");
-
-  const handlePresetChange = (value: string) => {
-    setSelectedPreset(value);
-    const today = new Date();
-    let from: Date;
-    switch (value) {
-      case "today":
-        from = startOfDay(today);
-        break;
-      case "yesterday":
-        from = startOfDay(subDays(today, 1));
-        break;
-      case "last7":
-        from = subDays(today, 7);
-        break;
-      case "last14":
-        from = subDays(today, 14);
-        break;
-      case "last28":
-        from = subDays(today, 28);
-        break;
-      default:
-        from = subDays(today, 28);
-    }
-    setDateRange({ from, to: today });
-  };
-
-  useEffect(() => {
-    if (dateRange && dateRange.from && dateRange.to) {
-      const fromFormatted = format(dateRange.from, "dd/MM/yyyy");
-      const toFormatted = format(dateRange.to, "dd/MM/yyyy");
-      setFormattedDateRange(`${fromFormatted} - ${toFormatted}`);
-    } else {
-      setFormattedDateRange("");
-    }
-  }, [dateRange]);
 
   if (loading) return <Loading />;
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) return (
+    <div className="flex items-center justify-center h-96 bg-dashboard-neutral-50 rounded-lg">
+      <div className="text-center p-6 bg-white rounded-lg shadow-md border border-dashboard-neutral-200">
+        <h3 className="text-xl font-bold text-dashboard-neutral-800 mb-2">Erreur de chargement</h3>
+        <p className="text-dashboard-neutral-600 mb-4">{error.message}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-dashboard-primary text-white px-4 py-2 rounded-md hover:bg-dashboard-primary-dark transition-all"
+        >
+          Réessayer
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="ProductPage relative">
-      <div className=" flex sticky items-center justify-between  mt-5 top-0 w-full">
-        <div className="flex items-center  flex-col">
-          <p className="text-sm font-medium">Selected Date Range:</p>
-          <p className="text-sm">
-            {formattedDateRange || "No date range selected"}
-          </p>
+    <div className="w-full bg-dashboard-neutral-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-3">
+          <h1 className="text-2xl font-bold text-dashboard-neutral-800">Analyse des Produits</h1>
+
+          {/* DateRangePicker component */}
+          <div className="mt-3 md:mt-0">
+            <DateRangePicker
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+            />
+          </div>
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="flex items-center border p-2 rounded bg-white text-gray-700 hover:bg-gray-100 transition duration-300"
-          >
-            <FaCalendarAlt className="mr-2" />
-            {showCalendar ? "Hide Calendar" : "Show Calendar"}
-          </button>
-          {showCalendar && (
-            <div className="absolute right-0 mt-2 bg-white p-2 rounded-md shadow-md z-10">
-              <Select onValueChange={handlePresetChange} value={selectedPreset}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last7">Last 7 Days</SelectItem>
-                  <SelectItem value="last14">Last 14 Days</SelectItem>
-                  <SelectItem value="last28">Last 28 Days</SelectItem>
-                </SelectContent>
-              </Select>
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(range) => setDateRange(range)}
-                numberOfMonths={2}
-              />
+
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-md border border-dashboard-neutral-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-dashboard-neutral-800">Produits les plus vendus</h2>
             </div>
-          )}
-        </div>
-      </div>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Best Selling Products</h1>
-        <div className="flex flex-col w-full gap-4 justify-center items-center ">
-          <SalesChart data={data} dateRange={dateRange} />
-          {/* error in Doughnut moduke */}
-          {/* <DoughnutProductSalesCharts data={data} dateRange={dateRange} /> */}
+            <div className="h-[400px]">
+              <SalesChart data={data} dateRange={dateRange} />
+            </div>
+          </div>
+          
+        
         </div>
       </div>
     </div>

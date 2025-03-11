@@ -1,20 +1,20 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import ChoiceCategory from "./Components/UpdateCategory";
-import UpdateBrand from "./Components/UpdateBrand";
-import UpdateInventory from "./Components/UpdateInventory";
-import UpdateDescription from "./Components/UpdateDescription";
-import UpdatePrice from "./Components/UpdatePrice";
-import UpdateAttribute from "./Components/UpdateAttributes";
-import UpdateImage from "./Components/UploadImages";
-import { useMutation, useQuery } from "@apollo/client";
-import { UPDATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
-import UpdateReference from "./Components/UpdateReference";
-import UpdateColors from "./Components/UpdateColors";
-import { useToast } from "@/components/ui/use-toast";
-import { PRODUCT_BY_ID_QUERY } from "../../../graph/queries";
-import Load from "./Load";
 import { formatDate } from "@/app/(mainApp)/Helpers/_formatDate";
+import { useToast } from "@/components/ui/use-toast";
+import { useMutation, useQuery } from "@apollo/client";
+import { useEffect, useState } from "react";
+import { UPDATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
+import { PRODUCT_BY_ID_QUERY } from "../../../graph/queries";
+import UpdateAttribute from "./Components/UpdateAttributes";
+import UpdateBrand from "./Components/UpdateBrand";
+import ChoiceCategory from "./Components/UpdateCategory";
+import UpdateColors from "./Components/UpdateColors";
+import UpdateDescription from "./Components/UpdateDescription";
+import UpdateInventory from "./Components/UpdateInventory";
+import UpdatePrice from "./Components/UpdatePrice";
+import UpdateReference from "./Components/UpdateReference";
+import UpdateImage from "./Components/UploadImages";
+import Load from "./Load";
 
 interface Attribute {
   name: string;
@@ -27,15 +27,12 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [attributes, setAttributes] = useState<Attribute[]>([
     { name: "", value: "" },
   ]);
-  const [discountType, setDiscountType] = useState<
-    "empty" | "percentage" | "manual"
-  >("empty");
+
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [stock, setStock] = useState<number>(0);
   const [reference, setReference] = useState<string>("");
-  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
   const [purchasePrice, setPurchasePrice] = useState<number>(0);
@@ -47,9 +44,7 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [dateOfEndDiscount, setDateOfEndDiscount] = useState<
     string | Date | null
   >(null);
-  const [selectedDiscountId, setSelectedDicountId] = useState<string | null>(
-    null,
-  );
+
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<boolean>(true);
   const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
@@ -74,7 +69,6 @@ const UpdateProduct = ({ searchParams }: any) => {
     if (!loading && !error && productDataById && productDataById.productById) {
       const product = productDataById.productById;
 
-      // Ne mettez à jour l'état que si les valeurs changent réellement
       setTitle((prev) => (prev !== product.name ? product.name : prev));
       setDescription((prev) =>
         prev !== product.description ? product.description : prev,
@@ -104,18 +98,21 @@ const UpdateProduct = ({ searchParams }: any) => {
         prev !== product.Brand?.id ? product.Brand?.id : prev,
       );
 
-      // Mettre à jour les attributs uniquement si nécessaire
-      setAttributes((prev) => {
-        const newAttributes = product.attributes.map(
-          (attr: { name: any; value: any }) => ({
-            name: attr.name,
-            value: attr.value,
-          }),
-        );
-        return JSON.stringify(prev) !== JSON.stringify(newAttributes)
-          ? newAttributes
-          : prev;
-      });
+      // Update attributes only if necessary
+
+      const rawAttributes = product.attributes || [];
+      const newAttributes =
+        rawAttributes
+          .map((attr: any) => ({
+            name: attr.name?.trim() || "",
+            value: attr.value?.trim() || "",
+          }))
+          .filter((attr: { name: any; value: any; }) => attr.name && attr.value)
+        ;
+      // Update attributes state only if necessary
+      if (JSON.stringify(attributes) !== JSON.stringify(newAttributes)) {
+        setAttributes(newAttributes);
+      }
 
       if (product.categories.length > 0) {
         const category = product.categories;
@@ -139,35 +136,24 @@ const UpdateProduct = ({ searchParams }: any) => {
 
       if (product.productDiscounts && product.productDiscounts.length > 0) {
         const discount = product.productDiscounts[0];
-        setDiscountType(discount.discountId ? "percentage" : "manual");
-        setSelectedDicountId(discount.discountId || null);
+        setIsDiscountEnabled(true);
+        setManualDiscountPrice(discount.price - discount.newPrice)
+
         const startDate = formatDate(discount.dateOfStart);
         const endDate = formatDate(discount.dateOfEnd);
         setDateOfStartDiscount(startDate);
         setDateOfEndDiscount(endDate);
       } else {
-        setDiscountType("empty");
+        setIsDiscountEnabled(false);
+
       }
     }
   }, [productDataById, loading, error]);
 
 
 
-  const removeDuplicateAttributes = (attributes: Attribute[]) => {
-    const seen = new Set();
-    return attributes
-      .filter(attr => attr.name.trim() && attr.value.trim())
-      .filter(attr => {
-        const key = attr.name.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-  };
-
 
   const handleUpdateProduct = () => {
-    const cleanedAttributes = removeDuplicateAttributes(attributes);
 
     if (
       !title ||
@@ -197,7 +183,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         });
         return;
       }
-      if (discountType === "manual" && !manualDiscountPrice) {
+      if (!manualDiscountPrice) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
@@ -206,15 +192,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         });
         return;
       }
-      if (discountType === "percentage" && !selectedDiscountId) {
-        toast({
-          title: "Erreur de mise à jour",
-          variant: "destructive",
-          description: "Veuillez sélectionner un type de remise.",
-          duration: 5000,
-        });
-        return;
-      }
+
     }
 
     if (!originalPrice && !hasDiscount) {
@@ -230,7 +208,7 @@ const UpdateProduct = ({ searchParams }: any) => {
     const productData = {
       productId: productId,
       input: {
-        attributeInputs: cleanedAttributes,
+        attributeInputs: attributes,
         brandId: brandId !== "empty" ? brandId : null,
         categories: [
           selectedIds.categoryId,
@@ -247,7 +225,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         colorsId: selectedColor,
         reference,
         ...(hasDiscount &&
-          discountType === "manual" && {
+          isDiscountEnabled && {
           discount: [
             {
               newPrice: finalDiscountPrice,
@@ -256,17 +234,7 @@ const UpdateProduct = ({ searchParams }: any) => {
             },
           ],
         }),
-        ...(hasDiscount &&
-          discountType === "percentage" && {
-          discount: [
-            {
-              discountId: selectedDiscountId,
-              dateOfStart: dateOfStartDiscount,
-              dateOfEnd: dateOfEndDiscount,
-              newPrice: finalDiscountPrice,
-            },
-          ],
-        }),
+
       },
     };
 
@@ -309,8 +277,8 @@ const UpdateProduct = ({ searchParams }: any) => {
   return (
     <div className="container mx-auto py-10 bg-slate-100 w-full">
       <h1 className="text-2xl font-bold mb-6">Mettre à jour un produit</h1>
-      <div className="details flex w-full gap-5">
-        <div className="baseDetails w-3/4 flex flex-col gap-3">
+      <div className="details flex flex-col lg:flex-row w-full gap-5">
+        <div className="baseDetails w-full lg:w-3/4 flex flex-col gap-3">
           <div className="p-3 rounded-md shadow-lg bg-white">
             <div className="title mb-4">
               <label className="text-lg font-bold mb-4">Titre</label>
@@ -329,8 +297,6 @@ const UpdateProduct = ({ searchParams }: any) => {
           </div>
 
           <UpdatePrice
-            discountPercentage={discountPercentage}
-            setDiscountPercentage={setDiscountPercentage}
             manualDiscountPrice={manualDiscountPrice}
             setManualDiscountPrice={setManualDiscountPrice}
             originalPrice={originalPrice}
@@ -341,11 +307,7 @@ const UpdateProduct = ({ searchParams }: any) => {
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}
             setDateOfStartDiscount={setDateOfStartDiscount}
-            selectedDiscountId={selectedDiscountId}
             setFinalDiscountPrice={setFinalDiscountPrice}
-            setSelectedDicountId={setSelectedDicountId}
-            discountType={discountType}
-            setDiscountType={setDiscountType}
             isDiscountEnabled={isDiscountEnabled}
             setIsDiscountEnabled={setIsDiscountEnabled}
           />
@@ -361,7 +323,7 @@ const UpdateProduct = ({ searchParams }: any) => {
           />
         </div>
 
-        <div className="moreDetails w-1/4 flex flex-col gap-3">
+        <div className="moreDetails w-full lg:w-1/4 flex flex-col gap-3">
           <div className="visibility bg-white rounded-md shadow-md p-3">
             <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
               Visibilité
