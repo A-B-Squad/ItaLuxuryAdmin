@@ -1,32 +1,37 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { FiEdit2 } from "react-icons/fi";
-import { BiShow } from "react-icons/bi";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { FiEdit2, FiExternalLink, FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
 import { CATEGORY_QUERY } from "@/app/graph/queries";
 import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
 import Link from "next/link";
 import SearchBarForTables from "@/app/(mainApp)/components/SearchBarForTables";
-import { CiSquareMinus, CiSquarePlus } from "react-icons/ci";
 import AddCategories from "../components/AddCategoriesButton";
 import prepRoute from "@/app/(mainApp)/Helpers/_prepRoute";
 import Loading from "@/app/loading";
 import { useToast } from "@/components/ui/use-toast";
 import { DELETE_CATEGORIES_MUTATIONS } from "../../../../graph/mutations";
+import DeleteModal from "@/app/(mainApp)/components/DeleteModal";
 
-// Main component for displaying and managing categories
-const AllCategories = ({ searchParams }: any) => {
-  console.log(searchParams);
+interface Category {
+  id: string;
+  name: string;
+  smallImage: string;
+  subcategories?: Category[];
+}
 
-  //toast for notification
-  const { toast } = useToast();
+interface AllCategoriesProps {
+  searchParams: {
+    q?: string;
+  };
+}
 
+const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
   // State management
-  const [categories, setCategories] = useState([]);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(),
-  );
+  const { toast } = useToast();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<{
     id: string;
@@ -40,83 +45,77 @@ const AllCategories = ({ searchParams }: any) => {
   const { data, loading, error, refetch } = useQuery(CATEGORY_QUERY, {
     fetchPolicy: "cache-and-network",
   });
-  const [deleteCategoriesMutation] = useMutation(DELETE_CATEGORIES_MUTATIONS);
+
+  const [deleteCategoriesMutation, { loading: isDeleting }] = useMutation(DELETE_CATEGORIES_MUTATIONS);
 
   // Update categories state when data is fetched
   useEffect(() => {
-    if (data && data.categories) {
+    if (data?.categories) {
       setCategories(data.categories);
     }
   }, [data]);
 
-  // Recursive function to search through categories and subcategories
-  const filterAndSortCategories = (categoriesList: any) => {
-    // If no search query is provided, return all categories
-    if (!query) {
-      return categoriesList;
-    }
+  // Memoized filtered categories to improve performance
+  const filteredCategories = useMemo(() => {
+    if (!categories.length) return [];
 
-    let filteredCategories = categoriesList
-      .map((category: any) => {
-        // Check if the category name matches the search query
-        const isMatch = category.name
-          .toLowerCase()
-          .includes(query.toLowerCase());
+    const filterAndSortCategories = (categoriesList: Category[]): Category[] => {
+      if (!query) return categoriesList;
 
-        // Recursively search in subcategories
-        const matchedSubcategories = category.subcategories
-          ? filterAndSortCategories(category.subcategories)
-          : [];
+      return categoriesList
+        .filter(category => {
+          const isMatch = category.name.toLowerCase().includes(query.toLowerCase());
+          const hasMatchingSubcategories = category.subcategories
+            ? filterAndSortCategories(category.subcategories).length > 0
+            : false;
 
-        // If there's a match in either the category or its subcategories, return the category
-        if (isMatch || matchedSubcategories.length > 0) {
-          return {
-            ...category,
-            subcategories: matchedSubcategories, // Include only matching subcategories
-          };
-        }
+          return isMatch || hasMatchingSubcategories;
+        })
+        .map(category => {
+          if (category.subcategories) {
+            return {
+              ...category,
+              subcategories: filterAndSortCategories(category.subcategories)
+            };
+          }
+          return category;
+        });
+    };
 
-        return null;
-      })
-      .filter((category: any) => category !== null);
-
-    return filteredCategories;
-  };
-
-  const filteredCategories = filterAndSortCategories(categories);
+    return filterAndSortCategories(categories);
+  }, [categories, query]);
 
   // Handle category deletion
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = useCallback(async () => {
     if (!categoryToDelete) return;
 
-    deleteCategoriesMutation({
-      variables: {
-        deleteCategoryId: categoryToDelete.id,
-      },
-      onCompleted: () => {
-        toast({
-          title: "Succès",
-          className: "text-white bg-green-500 border-0",
-          description: `La catégorie "${categoryToDelete.name}" a été supprimée avec succès.`,
-          duration: 5000,
-        });
-        refetch();
-        setShowDeleteModal(false);
-        setCategoryToDelete(null);
-      },
-      onError: (err) => {
-        toast({
-          title: "Erreur",
-          className: "text-white bg-red-500 border-0",
-          description: `Error deleting category: ${err}`,
-          duration: 5000,
-        });
-      },
-    });
-  };
+    try {
+      await deleteCategoriesMutation({
+        variables: {
+          deleteCategoryId: categoryToDelete.id,
+        },
+      });
+
+      toast({
+        title: "Catégorie supprimée",
+        description: `La catégorie "${categoryToDelete.name}" a été supprimée avec succès.`,
+        className: "bg-green-600 text-white",
+      });
+
+      await refetch();
+      setShowDeleteModal(false);
+      setCategoryToDelete(null);
+    } catch (err) {
+      toast({
+        title: "Erreur",
+        description: `Impossible de supprimer la catégorie: ${err instanceof Error ? err.message : 'Erreur inconnue'}`,
+        variant: "destructive",
+      });
+    }
+  }, [categoryToDelete, deleteCategoriesMutation, refetch, toast]);
 
   // Toggle category expansion
-  const toggleCategory = (categoryId: string) => {
+  const toggleCategory = useCallback((categoryId: string) => {
     setExpandedCategories((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(categoryId)) {
@@ -126,143 +125,164 @@ const AllCategories = ({ searchParams }: any) => {
       }
       return newSet;
     });
-  };
+  }, []);
 
   // Render a single category row (recursive for subcategories)
-  const renderCategoryRow = (category: any, depth = 0) => {
+  const renderCategoryRow = useCallback((category: Category, depth = 0) => {
     const isExpanded = expandedCategories.has(category.id);
-    const hasSubcategories =
-      category.subcategories && category.subcategories.length > 0;
+    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
 
     return (
-      <>
-        <tr className="text-gray-700" key={category.id}>
-          {/* Category name and image */}
-          <td className="px-4 py-3 border">
+      <React.Fragment key={category.id}>
+        <tr className={`border-b border-gray-100 ${depth % 2 === 1 ? 'bg-gray-50/30' : ''}`}>
+          <td className="px-6 py-4">
             <div
-              className="flex items-center text-sm"
-              style={{ paddingLeft: `${depth * 20}px` }}
+              className="flex items-center"
+              style={{ paddingLeft: `${depth * 24}px` }}
             >
-              {/* Expand/collapse button for categories with subcategories */}
-              {hasSubcategories && (
+              {hasSubcategories ? (
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className="mr-2"
+                  className="mr-3 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  aria-label={isExpanded ? "Collapse category" : "Expand category"}
                 >
                   {isExpanded ? (
-                    <CiSquareMinus
-                      color="#a8a8a8"
-                      className="outline-none"
-                      size={30}
-                    />
+                    <FiChevronDown className="text-gray-600" size={18} />
                   ) : (
-                    <CiSquarePlus
-                      color="black"
-                      className="outline-none"
-                      size={30}
-                    />
+                    <FiChevronRight className="text-gray-600" size={18} />
                   )}
                 </button>
+              ) : (
+                <div className="w-[26px] mr-3"></div>
               )}
-              {/* Category image */}
-              <div className="relative w-12 h-12 mr-3 rounded-full border">
+
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg shadow-sm mr-3">
                 <Image
-                  className="w-full h-full rounded-full"
+                  className="h-full w-full object-cover"
                   src={
                     category.smallImage ||
                     "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
                   }
                   layout="fill"
-                  objectFit="contain"
-                  alt=""
+                  objectFit="cover"
+                  alt={category.name}
                 />
               </div>
-              {/* Category name */}
-              <p className="font-semibold text-black">{category.name}</p>
+
+              <p className="font-medium text-gray-900">
+                {category.name}
+                {hasSubcategories && (
+                  <span className="ml-2 text-xs text-gray-500 font-normal">
+                    ({category.subcategories?.length || 0})
+                  </span>
+                )}
+              </p>
             </div>
           </td>
 
-          {/* Action buttons */}
-          <td className="px-4 py-3 text-sm border">
-            <div className="flex justify-center items-center gap-2">
-              {/* Edit button */}
+          <td className="px-6 py-4">
+            <div className="flex items-center justify-end space-x-3">
               <Link
-                href={`/Products/UpdateCategory?categoryId=${category.id}`}
-                className="p-2 w-10 h-10 hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
+                href={`/Products/Categories/UpdateCategory?categoryId=${category.id}`}
+                className="group relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-blue-600 focus:outline-none"
+                title="Modifier"
               >
-                <FiEdit2 size={20} />
+                <FiEdit2 size={15} />
               </Link>
-              {/* Delete button */}
+
               <button
                 type="button"
                 onClick={() => {
                   setCategoryToDelete({ id: category.id, name: category.name });
                   setShowDeleteModal(true);
                 }}
-                className="p-2 w-10 h-10 hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
+                className="group relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-red-200 hover:text-red-600 focus:outline-none"
+                title="Supprimer"
+                disabled={isDeleting}
               >
-                <MdDeleteOutline size={20} />
+                <MdDeleteOutline size={15} />
               </button>
-              {/* View button */}
+
               <Link
                 target="_blank"
-                href={`${
-                  process.env.NEXT_PUBLIC_BASE_URL_DOMAIN
-                }/Collections/tunisie/${prepRoute(category.name)}/?category=${
-                  category.name
-                }&categories=${encodeURIComponent(category.name)}`}
-                className="p-2 hover:opacity-40 transition-opacity shadow-md w-10 h-10 rounded-full border-2"
+                href={`${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/Collections/tunisie/?${new URLSearchParams({
+                  category: category.name,
+                })}`}
+                className="group relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-gray-300 hover:text-green-600 focus:outline-none"
+                title="Voir sur le site"
               >
-                <BiShow size={20} />
+                <FiExternalLink size={15} />
               </Link>
             </div>
           </td>
         </tr>
-        {/* Render subcategories if expanded */}
-        {isExpanded &&
-          category.subcategories?.map((subcategory: any) =>
-            renderCategoryRow(subcategory, depth + 1),
-          )}
-      </>
-    );
-  };
 
-  // Show loading state while fetching data
+        {isExpanded &&
+          category.subcategories?.map((subcategory) =>
+            renderCategoryRow(subcategory, depth + 1)
+          )}
+      </React.Fragment>
+    );
+  }, [expandedCategories, toggleCategory, isDeleting]);
+
   if (loading) return <Loading />;
 
-  // Show error message if data fetch fails
-  if (error) return <p>Error loading categories</p>;
+  if (error) return (
+    <div className="container mx-auto p-8">
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <p className="font-medium">Erreur lors du chargement des catégories</p>
+        <p className="text-sm mt-1">{error.message}</p>
+        <button
+          onClick={() => refetch()}
+          className="mt-3 px-4 py-2 bg-white border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
+        >
+          Réessayer
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto relative border shadow-md rounded-sm pb-24">
-      {/* Header */}
-      <h1 className="font-bold text-xl py-5 px-4 border-b-2">
-        Catégories{"  "}
-        <span className="text-gray-600 font-medium text-base">
-          ({categories.length || 0})
-        </span>
-      </h1>
-      <div className="mt-5">
-        {/* Search bar component */}
-        <SearchBarForTables page="Products/Categories" />
-        <div className="overflow-x-auto">
-          {/* Categories table */}
-          <table className="w-full shadow-md">
-            <thead className="bg-mainColorAdminDash text-white">
-              <tr>
-                <th className="px-4 py-3 text-left">Nom</th>
-                <th className="px-4 py-3 text">Actions</th>
+    <div className="w-full bg-white border shadow-md rounded-lg overflow-hidden">
+      <div className="flex justify-between items-center border-b-2 px-6 py-4">
+        <h1 className="font-bold text-xl text-gray-800">
+          Catégories{" "}
+          <span className="text-gray-500 font-medium text-base ml-2">
+            ({filteredCategories.length || 0})
+          </span>
+        </h1>
+      </div>
+
+      <div className="p-6">
+        <div className="mb-6">
+          <SearchBarForTables page="Products/Categories" />
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-mainColorAdminDash text-white border-b border-gray-300">
+                <th className="px-6 py-4 text-left font-medium text-sm">Nom</th>
+                <th className="px-6 py-4 text-right font-medium text-sm">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody>
               {filteredCategories.length > 0 ? (
-                filteredCategories.map((category: any) =>
-                  renderCategoryRow(category),
-                )
+                filteredCategories.map((category) => renderCategoryRow(category))
               ) : (
                 <tr>
-                  <td colSpan={2} className="text-center py-5">
-                    Aucune catégorie trouvée
+                  <td colSpan={2} className="px-6 py-16 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <p className="text-lg font-medium mb-2">Aucune catégorie trouvée</p>
+                      <p className="text-sm text-gray-400 max-w-md">
+                        {query ? "Essayez de modifier vos critères de recherche" : "Commencez par ajouter une nouvelle catégorie"}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -271,45 +291,18 @@ const AllCategories = ({ searchParams }: any) => {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
-      {showDeleteModal && (
-        <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-          id="my-modal"
-        >
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Delete Category
-              </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Are you sure you want to delete the category "
-                  {categoryToDelete?.name}"? Cette action est irréversible.
-                </p>
-              </div>
-              <div className="items-center px-4 py-3">
-                <button
-                  id="ok-btn"
-                  className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2"
-                  onClick={handleDeleteCategory}
-                >
-                  Delete
-                </button>
-                <button
-                  id="cancel-btn"
-                  className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {showDeleteModal && categoryToDelete && (
+        <DeleteModal
+          sectionName="Catégorie"
+          productName={categoryToDelete.name}
+          onConfirm={handleDeleteCategory}
+          onCancel={() => setShowDeleteModal(false)}
+        />
       )}
-      {/* Component for adding new categories */}
-      <AddCategories />
+
+      <div className="fixed bottom-6 right-6">
+        <AddCategories />
+      </div>
     </div>
   );
 };

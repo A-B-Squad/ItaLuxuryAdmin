@@ -39,7 +39,7 @@ export interface ProductInCheckout {
 export interface Checkout {
   id: string;
   User?: User;
-  email?: string;
+  guestEmail?: string;
   freeDelivery: boolean;
   userId?: string;
   phone: string[];
@@ -63,4 +63,50 @@ export interface Order {
   customId: string;
   createdAt: string;
   Checkout: Checkout;
+}
+
+
+
+export interface Package {
+  id: string;
+  checkoutId: string;
+  status: string;
+  createdAt: string;
+  Checkout: Checkout;
+}
+
+
+export interface StatsPeriod {
+  count: number;
+  total: number;
+}
+
+export interface DetailedStats {
+  today: StatsPeriod;
+  thisWeek: StatsPeriod;
+  thisMonth: StatsPeriod;
+  thisYear: StatsPeriod;
+  byStatus: Record<string, number>;
+}
+
+export interface PackageData {
+  getAllPackages: Package[];
+}
+
+export interface StatsPeriod {
+  count: number;
+  total: number;
+}
+
+export interface DetailedStats {
+  today: StatsPeriod;
+  thisWeek: StatsPeriod;
+  thisMonth: StatsPeriod;
+  thisYear: StatsPeriod;
+  byStatus: Record<string, number>;
+}
+
+export interface SimpleStats {
+  orders: number[];
+  earnings: number[];
 }

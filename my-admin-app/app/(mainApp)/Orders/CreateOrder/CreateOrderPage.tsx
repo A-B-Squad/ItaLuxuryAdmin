@@ -355,8 +355,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
                 {
                   productQuantity: 1,
                   price: selectedProduct.price,
-                  discountedPrice:
-                    selectedProduct.discountedPrice || selectedProduct.price,
+                  discountedPrice: selectedProduct?.productDiscounts[0]?.newPrice || selectedProduct.price,
                   product: selectedProduct,
                 },
               ],
@@ -385,7 +384,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
             productQuantity: 1,
             price: selectedProduct.price,
             discountedPrice:
-              selectedProduct.discountedPrice || selectedProduct.price,
+              selectedProduct?.productDiscounts[0]?.newPrice || selectedProduct.price,
             product: selectedProduct,
           };
           updatedProductInCheckout = [
@@ -426,12 +425,27 @@ const CreateOrderPage = ({ searchParams }: any) => {
   return (
     <div className="w-full pt-4 sm:pt-6 md:pt-10 pb-20">
       <div className="container px-4 w-full">
+        {/* Header with back button */}
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => router.back()}
+            className="mr-3 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Retour"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-xl sm:text-2xl font-bold">
+            {packageId ? "Modifier la commande" : "Créer une commande"}
+          </h1>
+        </div>
+
         {/* Main content wrapper with responsive grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main content area */}
           <div className="lg:col-span-8">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4">Créer un Commandes</h1>
-            <div className="bg-white w-full border rounded-md py-4 sm:py-6 px-3 shadow-md">
+            <div className="bg-white w-full border rounded-lg py-4 sm:py-6 px-4 shadow-sm">
               <ProductTable
                 onDeleteClick={setProductToDelete}
                 packageData={packageData}
@@ -450,13 +464,13 @@ const CreateOrderPage = ({ searchParams }: any) => {
               )}
 
               {/* Delivery Price Section */}
-              <div className="DeliveryPrice mt-4 space-y-2">
-                <h3 className="text-lg font-medium mb-2">Frais de livraison</h3>
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <h3 className="text-lg font-medium mb-3">Options de livraison</h3>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <label className="inline-flex items-center cursor-pointer">
                     <input
-                      type="checkbox"
-                      className="hidden"
+                      type="radio"
+                      className="sr-only"
                       checked={isFreeDelivery}
                       onChange={() => {
                         setIsFreeDelivery(true);
@@ -464,25 +478,13 @@ const CreateOrderPage = ({ searchParams }: any) => {
                       }}
                     />
                     <div
-                      className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${isFreeDelivery
-                          ? "bg-mainColorAdminDash border-mainColorAdminDash"
+                      className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${isFreeDelivery
+                          ? "border-mainColorAdminDash"
                           : "border-gray-300"
                         }`}
                     >
                       {isFreeDelivery && (
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <div className="w-3 h-3 rounded-full bg-mainColorAdminDash"></div>
                       )}
                     </div>
                     <span>Livraison gratuite</span>
@@ -490,8 +492,8 @@ const CreateOrderPage = ({ searchParams }: any) => {
 
                   <label className="inline-flex items-center cursor-pointer">
                     <input
-                      type="checkbox"
-                      className="hidden"
+                      type="radio"
+                      className="sr-only"
                       checked={!isFreeDelivery}
                       onChange={() => {
                         setIsFreeDelivery(false);
@@ -499,54 +501,53 @@ const CreateOrderPage = ({ searchParams }: any) => {
                       }}
                     />
                     <div
-                      className={`w-6 h-6 border-2 rounded-md mr-2 flex items-center justify-center ${!isFreeDelivery
-                          ? "bg-mainColorAdminDash border-mainColorAdminDash"
+                      className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${!isFreeDelivery
+                          ? "border-mainColorAdminDash"
                           : "border-gray-300"
                         }`}
                     >
                       {!isFreeDelivery && (
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <div className="w-3 h-3 rounded-full bg-mainColorAdminDash"></div>
                       )}
                     </div>
-                    <span>Livraison payée {deliveryPrice.toFixed(3)} DT</span>
+                    <span>Livraison payée <span className="font-medium">{deliveryPrice.toFixed(3)} DT</span></span>
                   </label>
                 </div>
               </div>
 
               {/* Discount Section */}
-              <div className="Discount mt-6">
-                <h3 className="text-lg font-medium mb-2">Remise</h3>
-                <input
-                  min={0}
-                  type="number"
-                  className="py-2 px-3 w-full sm:w-4/5 border outline-none rounded-md"
-                  value={inputManualDiscount}
-                  onChange={(e) => {
-                    setInputManualDiscount(Number(e.target.value));
-                    setShowBackUp(true);
-                  }}
-                />
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <h3 className="text-lg font-medium mb-3">Remise manuelle</h3>
+                <div className="relative w-full sm:w-1/2">
+                  <input
+                    min={0}
+                    type="number"
+                    className="py-2 px-3 w-full border border-gray-300 outline-none rounded-md focus:ring-2 focus:ring-mainColorAdminDash/30 focus:border-mainColorAdminDash"
+                    value={inputManualDiscount}
+                    onChange={(e) => {
+                      setInputManualDiscount(Number(e.target.value));
+                      setShowBackUp(true);
+                    }}
+                    placeholder="Montant de la remise"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500">DT</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Cette remise sera appliquée en plus des remises produits
+                </p>
               </div>
 
               {/* Order Summary */}
-              <OrderSummary
-                packageData={packageData}
-                inputManualDiscount={inputManualDiscount}
-                deliveryPrice={deliveryPrice}
-                isFreeDelivery={isFreeDelivery}
-              />
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <OrderSummary
+                  packageData={packageData}
+                  inputManualDiscount={inputManualDiscount}
+                  deliveryPrice={deliveryPrice}
+                  isFreeDelivery={isFreeDelivery}
+                />
+              </div>
             </div>
           </div>
 
@@ -558,6 +559,22 @@ const CreateOrderPage = ({ searchParams }: any) => {
               order={packageData}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Floating action button for save */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-10">
+        <div className="container mx-auto flex justify-end">
+          <button
+            onClick={packageId ? handleUpdateCheckout : createCheckoutFromAdminDash}
+            className="bg-mainColorAdminDash hover:bg-mainColorAdminDash/90 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2"
+            disabled={!packageData?.Checkout.productInCheckout.length}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {packageId ? "Mettre à jour la commande" : "Créer la commande"}
+          </button>
         </div>
       </div>
 

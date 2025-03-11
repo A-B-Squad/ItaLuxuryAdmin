@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { MdDeleteOutline } from "react-icons/md";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Console } from "console";
 
 interface ProductRowProps {
   item: any;
@@ -25,6 +26,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
   const discountedPrice = existingProductInCheckout.discountedPrice;
 
   useEffect(() => {
+    
     const currentPrice = discountedPrice || price;
     setTotal(parseFloat((currentPrice * quantity).toFixed(3)));
   }, [quantity, price, discountedPrice]);

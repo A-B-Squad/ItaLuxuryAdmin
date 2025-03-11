@@ -20,7 +20,56 @@ const config = {
     },
     extend: {
       colors: {
-        mainColorAdminDash: "#202939",
+        // Primary brand colors
+        mainColorAdminDash: "#1E293B", // Slate 800 - Main brand color (dark blue)
+
+        // Dashboard color system
+        dashboard: {
+          primary: {
+            DEFAULT: "#3B82F6", // Blue 500
+            light: "#93C5FD",   // Blue 300
+            dark: "#1D4ED8",    // Blue 700
+          },
+          secondary: {
+            DEFAULT: "#6366F1", // Indigo 500
+            light: "#A5B4FC",   // Indigo 300
+            dark: "#4338CA",    // Indigo 700
+          },
+          success: {
+            DEFAULT: "#10B981", // Emerald 500
+            light: "#6EE7B7",   // Emerald 300
+            dark: "#047857",    // Emerald 700
+          },
+          warning: {
+            DEFAULT: "#F59E0B", // Amber 500
+            light: "#FCD34D",   // Amber 300
+            dark: "#B45309",    // Amber 700
+          },
+          danger: {
+            DEFAULT: "#EF4444", // Red 500
+            light: "#FCA5A5",   // Red 300
+            dark: "#B91C1C",    // Red 700
+          },
+          info: {
+            DEFAULT: "#06B6D4", // Cyan 500
+            light: "#67E8F9",   // Cyan 300
+            dark: "#0E7490",    // Cyan 700
+          },
+          neutral: {
+            50: "#F8FAFC",      // Slate 50
+            100: "#F1F5F9",     // Slate 100
+            200: "#E2E8F0",     // Slate 200
+            300: "#CBD5E1",     // Slate 300
+            400: "#94A3B8",     // Slate 400
+            500: "#64748B",     // Slate 500
+            600: "#475569",     // Slate 600
+            700: "#334155",     // Slate 700
+            800: "#1E293B",     // Slate 800
+            900: "#0F172A",     // Slate 900
+          },
+        },
+
+        // Original colors
         lightBeige: "#F0EDD4",
         mediumBeige: "#ECCDB4",
         strongBeige: "#f17e7e",

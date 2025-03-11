@@ -1,8 +1,8 @@
 import React from "react";
 import CustomerPage from "./CustomerPage";
 
-const customerPage = () => {
+const CustomerPageWrapper = () => {
   return <CustomerPage />;
 };
 
-export default customerPage;
+export default CustomerPageWrapper;

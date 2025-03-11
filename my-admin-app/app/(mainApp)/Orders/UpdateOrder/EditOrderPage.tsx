@@ -14,6 +14,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { CiSaveDown2 } from "react-icons/ci";
+import { useRouter } from "next/navigation";
+import SmallSpinner from "../../components/SmallSpinner";
 import CancelModal from "./[...orderId]/components/CancelModal";
 import Comments from "./[...orderId]/components/Comments";
 import CustomerInfo from "./[...orderId]/components/CustomerInfo";
@@ -24,23 +26,25 @@ import RefundModal from "./[...orderId]/components/RefundModal";
 
 const EditOrderPage = ({ searchParams }: any) => {
   const { toast } = useToast();
+  const router = useRouter();
   const orderId = searchParams ? searchParams.orderId : "";
   const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [productStatuses, setProductStatuses] = useState<{
     [key: string]: { broken: boolean; quantity: number };
   }>({});
+
   const [getPackage, { data, loading, error, refetch }] = useLazyQuery(
     PACKAGE_BY_ID_QUERY,
     {
-      onCompleted: (data) => {
-        console.log(data?.packageById.Checkout.paymentMethod);
-      },
-    },
+      fetchPolicy: "network-only",
+    }
   );
-  const [payedOrToDeliveryPackage] = useMutation(
+
+  const [payedOrConfirmedOrInTransitPackage] = useMutation(
     PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
   );
   const [cancelPackage] = useMutation(CANCEL_PACKAGE_MUTATIONS);
@@ -51,12 +55,14 @@ const EditOrderPage = ({ searchParams }: any) => {
   const order = data?.packageById;
 
   useQuery(COMPANY_INFO_QUERY, {
+    fetchPolicy: "cache-first",
     onCompleted: (companyData) => {
       setDeliveryPrice(companyData.companyInfo.deliveringPrice);
     },
   });
 
   useQuery(GET_GOVERMENT_INFO, {
+    fetchPolicy: "cache-first",
     onCompleted: (data) => {
       const govMap = data.allGovernorate.reduce((map: any, gov: any) => {
         map[gov.id] = gov.name;
@@ -111,6 +117,7 @@ const EditOrderPage = ({ searchParams }: any) => {
   };
 
   const handleCancelPackage = async () => {
+    setIsSubmitting(true);
     const brokenProducts = Object.entries(productStatuses).flatMap(
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
@@ -129,11 +136,11 @@ const EditOrderPage = ({ searchParams }: any) => {
         },
       });
       setShowCancelModal(false);
-      refetch();
+      await refetch();
       toast({
         title: "Commande annulée",
         description: "La commande a été annulée avec succès.",
-        variant: "default",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error("Error cancelling package:", error);
@@ -143,10 +150,13 @@ const EditOrderPage = ({ searchParams }: any) => {
           "Une erreur est survenue lors de l'annulation de la commande.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRefundSubmit = async () => {
+    setIsSubmitting(true);
     const brokenProducts = Object.entries(productStatuses).flatMap(
       ([productId, status]: any) => {
         const brokenCount = status.items.filter(Boolean).length;
@@ -165,11 +175,11 @@ const EditOrderPage = ({ searchParams }: any) => {
         },
       });
       setShowRefundModal(false);
-      refetch();
+      await refetch();
       toast({
         title: "Commande remboursée",
         description: "La commande a été remboursée avec succès.",
-        variant: "default",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error("Error refunding package:", error);
@@ -179,12 +189,45 @@ const EditOrderPage = ({ searchParams }: any) => {
           "Une erreur est survenue lors du remboursement de la commande.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmedOrder = async () => {
+    setIsSubmitting(true);
+    try {
+      await payedOrConfirmedOrInTransitPackage({
+        variables: {
+          packageId: orderId,
+          paymentMethod: order?.Checkout.paymentMethod,
+          status: "CONFIRMED",
+        },
+      });
+      await refetch();
+      toast({
+        title: "Commande confirmée",
+        description:
+          "La commande a été confirmée pour livraison avec succès.",
+        className: "bg-green-50 border-green-200",
+      });
+    } catch (error) {
+      console.error("Error updating package status:", error);
+      toast({
+        title: "Erreur",
+        description:
+          "Une erreur est survenue lors de la confirmation de la commande.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleTransferToDeliveryOrder = async () => {
+    setIsSubmitting(true);
     try {
-      await payedOrToDeliveryPackage({
+      await payedOrConfirmedOrInTransitPackage({
         variables: {
           packageId: orderId,
           paymentMethod: order?.Checkout.paymentMethod,
@@ -196,7 +239,7 @@ const EditOrderPage = ({ searchParams }: any) => {
         title: "Commande transférée",
         description:
           "La commande a été transférée à la société de livraison avec succès.",
-        variant: "default",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error("Error updating package status:", error);
@@ -206,12 +249,15 @@ const EditOrderPage = ({ searchParams }: any) => {
           "Une erreur est survenue lors du transfert de la commande.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handlePayedPackageOrder = async () => {
+    setIsSubmitting(true);
     try {
-      await payedOrToDeliveryPackage({
+      await payedOrConfirmedOrInTransitPackage({
         variables: {
           packageId: orderId,
           paymentMethod: order?.Checkout.paymentMethod,
@@ -222,7 +268,7 @@ const EditOrderPage = ({ searchParams }: any) => {
       toast({
         title: "Commande payée",
         description: "La commande a été marquée comme payée avec succès.",
-        variant: "default",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error("Error updating package status:", error);
@@ -232,19 +278,54 @@ const EditOrderPage = ({ searchParams }: any) => {
           "Une erreur est survenue lors de la mise à jour du statut de paiement.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>Erreur: {error.message}</p>;
+  if (loading) {
+    return (
+      <div className="w-full h-64 flex items-center justify-center">
+        <SmallSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+          <h2 className="text-lg font-medium mb-2">Erreur de chargement</h2>
+          <p>{error.message}</p>
+          <button
+            onClick={() => router.back()}
+            className="mt-3 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="order w-full py-4 sm:py-6 md:py-10">
       <div className="container w-full px-4">
-        {/* Header */}
-        <h1 className="text-xl sm:text-2xl font-bold mb-4 md:mb-6">
-          Modifier la commande #{order?.customId}
-        </h1>
+        {/* Header with back button */}
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => router.back()}
+            className="mr-3 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Retour"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-xl sm:text-2xl font-bold">
+            Commande #{order?.customId}
+          </h1>
+        </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -253,10 +334,12 @@ const EditOrderPage = ({ searchParams }: any) => {
             <OrderDetails
               deliveryPrice={deliveryPrice}
               order={order}
+              handleConfirmedOrder={handleConfirmedOrder}
               handleCancelOrder={handleCancelOrder}
               handleTransferToDeliveryOrder={handleTransferToDeliveryOrder}
               handlePayedPackageOrder={handlePayedPackageOrder}
               handleRefundOrder={handleRefundOrder}
+              isSubmitting={isSubmitting}
             />
 
             <OrderReference
@@ -288,13 +371,26 @@ const EditOrderPage = ({ searchParams }: any) => {
       </div>
 
       {/* Fixed Bottom Bar */}
-      <div className="bg-white shadow-md fixed left-0 bottom-0 w-full py-4 flex items-center gap-2 px-2 border justify-end">
+      <div className="bg-white shadow-md fixed left-0 bottom-0 w-full py-4 flex items-center gap-2 px-4 border justify-end z-10">
         <button
           onClick={() => generateInvoice(order, deliveryPrice)}
-          className="w-full sm:w-auto text-white flex items-center justify-center gap-2 bg-mainColorAdminDash hover:opacity-85 transition-all px-4 py-2.5 rounded-md tracking-wider"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto text-white flex items-center justify-center gap-2 bg-mainColorAdminDash hover:opacity-85 transition-all px-4 py-2.5 rounded-md tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="text-sm sm:text-base">Imprimer la commande</span>
-          <CiSaveDown2 className="w-5 h-5 sm:w-6 sm:h-6" />
+          {isSubmitting ? (
+            <>
+              <span className="text-sm sm:text-base">Traitement...</span>
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </>
+          ) : (
+            <>
+              <span className="text-sm sm:text-base">Imprimer la commande</span>
+              <CiSaveDown2 className="w-5 h-5 sm:w-6 sm:h-6" />
+            </>
+          )}
         </button>
       </div>
 
@@ -307,6 +403,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           handleStatusChange={handleStatusChange}
           handleCancelPackage={handleCancelPackage}
           setShowCancelModal={setShowCancelModal}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -318,6 +415,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           handleStatusChange={handleStatusChange}
           handleRefundSubmit={handleRefundSubmit}
           setShowRefundModal={setShowRefundModal}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

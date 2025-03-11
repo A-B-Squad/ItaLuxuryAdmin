@@ -17,43 +17,41 @@ const OrderTable: React.FC<OrderTableProps> = ({
   generateInvoice,
   deliveryPrice,
 }) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full bg-white">
-      <thead className="bg-gray-800 text-white">
+  <table className="min-w-full divide-y divide-dashboard-neutral-200">
+    <thead>
+      <tr className="bg-dashboard-neutral-50">
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Réf</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Date de création</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Client ID</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Client Nom</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Statut</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Méthode de Paiement</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Livraison</th>
+        <th className="py-3 px-4 text-left text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Total</th>
+        <th className="py-3 px-4 text-right text-xs font-medium text-dashboard-neutral-500 uppercase tracking-wider">Actions</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white divide-y divide-dashboard-neutral-200">
+      {orders.length === 0 ? (
         <tr>
-          <th className="py-3 px-4 text-center">Réf</th>
-          <th className="py-3 px-4 text-center">Date de création</th>
-          <th className="py-3 px-4 text-center">Client id</th>
-          <th className="py-3 px-4 text-center">Client Nom</th>
-          <th className="py-3 px-4 text-center">Statut</th>
-          <th className="py-3 px-4 text-center"> Payment Methode</th>
-          <th className="py-3 px-4 text-center">Livraison</th>
-          <th className="py-3 px-4 text-center">Total</th>
-          <th className="py-3 px-4 text-center">Actions</th>
+          <td colSpan={9} className="text-center py-8 text-dashboard-neutral-500">
+            Aucune commande disponible
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        {orders.length === 0 ? (
-          <tr>
-            <td colSpan={6} className="text-center py-4">
-              Aucune commande disponible
-            </td>
-          </tr>
-        ) : (
-          orders.map((order: Order) => (
-            <OrderRow
-              key={order.id}
-              order={order}
-              formatDate={formatDate}
-              translateStatus={translateStatus}
-              generateInvoice={generateInvoice}
-              deliveryPrice={deliveryPrice}
-            />
-          ))
-        )}
-      </tbody>
-    </table>
-  </div>
+      ) : (
+        orders.map((order: Order) => (
+          <OrderRow
+            key={order.id}
+            order={order}
+            formatDate={formatDate}
+            translateStatus={translateStatus}
+            generateInvoice={generateInvoice}
+            deliveryPrice={deliveryPrice}
+          />
+        ))
+      )}
+    </tbody>
+  </table>
 );
 
 export default OrderTable;

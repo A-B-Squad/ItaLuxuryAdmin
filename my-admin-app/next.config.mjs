@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Image configuration (preserved from original)
+  // Image configuration
   images: {
     remotePatterns: [
       {
@@ -54,10 +54,10 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://upload-widget.cloudinary.com https://js.pusher.com https://cdn.tiny.cloud",
+              "frame-src 'self' https://upload-widget.cloudinary.com",
+              "connect-src 'self' https://upload-widget.cloudinary.com https://www.ita-luxury.com https://ita-luxury.com https://admin.ita-luxury.com http://localhost:4000 http://localhost:4001 https://*.pusher.com https://*.pushnotifications.pusher.com https://cdn.tiny.cloud", "style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud",
               "img-src 'self' data: https:",
-              "connect-src 'self' https://www.ita-luxury.com https://ita-luxury.com https://admin.ita-luxury.com http://localhost:4000 http://localhost:4001",
               "font-src 'self'",
               "object-src 'none'",
               "base-uri 'self'"
@@ -80,8 +80,6 @@ const nextConfig = {
       }
     ];
   },
-
-
 };
 
 export default nextConfig;

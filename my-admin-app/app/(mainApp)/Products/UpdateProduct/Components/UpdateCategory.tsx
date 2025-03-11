@@ -34,31 +34,35 @@ const ChoiceCategory = ({ selectedIds, setSelectedIds }: any) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const { loading, error, data: AllCategory } = useQuery(CATEGORY_QUERY);
 
+
   useEffect(() => {
     if (AllCategory && AllCategory.categories) {
-      const transformedCategories = transformCategories(AllCategory.categories);
+      const categories = AllCategory.categories || [];
+      const transformedCategories = transformCategories(categories);
       setCategories(transformedCategories);
     }
   }, [AllCategory]);
-  
+
+
 
   const transformCategories = (categoriesData: any) => {
     return (
       categoriesData?.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
-        subcategories:
-          cat?.subcategories?.map((subcat: any) => ({
-            id: subcat.id,
-            name: subcat.name,
-            subSubcategories: subcat?.subcategories?.map((subSubcat: any) => ({
-              id: subSubcat.id,
-              name: subSubcat.name,
-            })),
+        subcategories: cat?.subcategories?.map((subcat: any) => ({
+          id: subcat.id,
+          name: subcat.name,
+          subSubcategories: subcat?.subcategories?.map((subSubcat: any) => ({
+            id: subSubcat.id,
+            name: subSubcat.name,
           })) || [],
+        })) || [],
       })) || []
     );
   };
+
+
 
   const handleCategoryChange = (value: string) => {
     setSelectedIds({
@@ -85,18 +89,16 @@ const ChoiceCategory = ({ selectedIds, setSelectedIds }: any) => {
 
   const getSubcategories = useMemo(() => {
     const selectedCategoryObj = categories.find(
-      (cat) => cat.id === selectedIds.categoryId,
+      (cat) => cat.id === selectedIds.categoryId
     );
-    return selectedCategoryObj ? selectedCategoryObj.subcategories : [];
+    return selectedCategoryObj?.subcategories || [];
   }, [categories, selectedIds.categoryId]);
 
   const getSubSubcategories = useMemo(() => {
     const selectedSubcategoryObj = getSubcategories.find(
-      (subcat) => subcat.id === selectedIds.subcategoryId,
+      (subcat) => subcat.id === selectedIds.subcategoryId
     );
-    return selectedSubcategoryObj
-      ? selectedSubcategoryObj.subSubcategories
-      : [];
+    return selectedSubcategoryObj?.subSubcategories || [];
   }, [getSubcategories, selectedIds.subcategoryId]);
 
   const getSelectedIdsArray = (): string[] => {

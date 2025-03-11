@@ -1,26 +1,14 @@
-import React, { useState, ChangeEvent, useEffect, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useQuery } from "@apollo/client";
-import { DISCOUNT_PERCENTAGE_QUERY } from "@/app/graph/queries";
-import { Button } from "@/components/ui/button";
+
 import { formatDate } from "@/app/(mainApp)/Helpers/_formatDate";
-import Load from "./Load";
-import { toast, useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 // Define interfaces for props and discount options
 interface AddPriceProps {
-  discountPercentage: number;
-  setDiscountPercentage: (percentage: number) => void;
+ 
   manualDiscountPrice: number;
   setManualDiscountPrice: (price: number) => void;
   originalPrice: number;
@@ -31,11 +19,7 @@ interface AddPriceProps {
   setDateOfEndDiscount: (date: string | null) => void;
   dateOfStartDiscount: string | Date | null;
   setDateOfStartDiscount: (date: string | null) => void;
-  setSelectedDicountId: (id: string | null) => void;
   setFinalDiscountPrice: (finalDiscountPrice: number) => void;
-  discountType: "percentage" | "manual" | "empty";
-  setDiscountType: (type: "percentage" | "manual" | "empty") => void;
-  selectedDiscountId: string | null;
   isDiscountEnabled: boolean;
   setIsDiscountEnabled: (type: boolean) => void;
 }
@@ -46,8 +30,7 @@ interface DiscountOption {
 }
 
 const AddPrice: React.FC<AddPriceProps> = ({
-  discountPercentage,
-  setDiscountPercentage,
+
   manualDiscountPrice,
   setManualDiscountPrice,
   originalPrice,
@@ -58,17 +41,12 @@ const AddPrice: React.FC<AddPriceProps> = ({
   setDateOfEndDiscount,
   dateOfStartDiscount,
   setDateOfStartDiscount,
-  setSelectedDicountId,
   setFinalDiscountPrice,
-  discountType,
-  setDiscountType,
-  selectedDiscountId,
   isDiscountEnabled,
   setIsDiscountEnabled,
 }) => {
   const { toast } = useToast()
   // GraphQL query for discount percentages
-  const { data, loading, error } = useQuery(DISCOUNT_PERCENTAGE_QUERY);
   // State variables
   const [discountedPrice, setDiscountedPrice] = useState<string>("0.00");
   const [date, setDate] = useState<DateRange | undefined>(() => ({
@@ -77,20 +55,12 @@ const AddPrice: React.FC<AddPriceProps> = ({
   }));
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const discountOptions: DiscountOption[] = data?.DiscountsPercentage || [];
 
   const updateDiscountedPrice = useCallback((price: number) => {
-    if (discountType === "percentage") {
-      const discount = (price * discountPercentage) / 100;
-      const finalPrice = price - discount;
-      setDiscountedPrice(finalPrice.toFixed(2));
-      setFinalDiscountPrice(finalPrice);
-    } else if (discountType === "manual") {
-      const finalPrice = Math.max(0, price - manualDiscountPrice);
-      setDiscountedPrice(finalPrice.toFixed(2));
-      setFinalDiscountPrice(finalPrice);
-    }
-  }, [discountType, discountPercentage, manualDiscountPrice, setFinalDiscountPrice]);
+    const finalPrice = Math.max(0, price - manualDiscountPrice);
+    setDiscountedPrice(finalPrice.toFixed(2));
+    setFinalDiscountPrice(finalPrice);
+  }, [manualDiscountPrice, setFinalDiscountPrice]);
 
 
 
@@ -143,16 +113,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
     setOriginalPrice(price);
     updateDiscountedPrice(price);
   };
-  // Handle discount percentage changes
-  const handleDiscountPercentageChange = (value: string) => {
-    const percentage = parseInt(value) || 0;
-    setDiscountPercentage(percentage);
-    const selectedOption = discountOptions.find(
-      (option: DiscountOption) => option.percentage === percentage
-    );
-    setSelectedDicountId(selectedOption ? selectedOption.id : null);
-    updateDiscountedPrice(originalPrice);
-  };
+
 
   // Handle manual discount price changes
   const handleManualDiscountPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -170,7 +131,6 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
     if (inputValue === '') {
       setManualDiscountPrice(0);
-      setSelectedDicountId(null);
       updateDiscountedPrice(originalPrice);
       return;
     }
@@ -189,33 +149,11 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
     const validDiscountPrice = Math.max(0, Math.min(discountPrice, originalPrice));
     setManualDiscountPrice(validDiscountPrice);
-    setSelectedDicountId(null);
     updateDiscountedPrice(originalPrice);
   };
 
-  // Handle discount type changes
-  const handleDiscountTypeChange = (value: string) => {
-    const type = value as "percentage" | "manual";
 
-    if (!purchasePrice || !originalPrice) {
-      toast({
-        title: "Erreur",
-        variant: "destructive",
-        description: "Veuillez d'abord ajouter le prix d'achat.",
-        duration: 5000,
-      });
-      return;
-    }
-    setDiscountType(type);
-    updateDiscountedPrice(originalPrice);
-  };
 
-  // Calculate discounted price based on percentage
-  const calculateDiscountedPrice = (price: number, percentage: number) => {
-    const discount = (price * percentage) / 100;
-    const finalPrice = price - discount;
-    updateFinalPrice(finalPrice);
-  };
 
   // Handle purchase price changes
   const handlePurchasePriceChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -258,13 +196,6 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
 
 
-  // Helper function to update selected discount
-  const updateSelectedDiscount = (percentage: number) => {
-    const selectedOption = discountOptions.find(
-      (option: DiscountOption) => option.percentage === percentage,
-    );
-    setSelectedDicountId(selectedOption ? selectedOption.id : null);
-  };
 
   // Helper function to update final price
   const updateFinalPrice = (finalPrice: number) => {
@@ -276,30 +207,25 @@ const AddPrice: React.FC<AddPriceProps> = ({
   // Helper function to reset discount values
   const resetDiscountValues = () => {
     setIsDiscountEnabled(false);
-    setDiscountPercentage(0);
     setManualDiscountPrice(0);
     setDateOfStartDiscount(null);
     setDateOfEndDiscount(null);
-    setSelectedDicountId(null);
     setDiscountedPrice("0.00");
     setFinalDiscountPrice(0);
     setDate(undefined);
-    setDiscountType("empty");
   };
 
- 
+
   useEffect(() => {
-    if (discountType !== "empty" && isDiscountEnabled) {
+    if (isDiscountEnabled) {
       updateDiscountedPrice(originalPrice);
     } else {
       setDiscountedPrice(originalPrice.toFixed(2));
     }
-  }, [discountType, isDiscountEnabled, originalPrice, updateDiscountedPrice]);
+  }, [isDiscountEnabled, originalPrice, updateDiscountedPrice]);
 
 
 
-  if (loading) return <Load />;
-  if (error) return <p>Error loading discount percentages</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg w-full my-3 mx-auto relative">
@@ -353,66 +279,22 @@ const AddPrice: React.FC<AddPriceProps> = ({
       {isDiscountEnabled && (
         <>
           <div className="discount mb-4">
-            <label className="block text-gray-700">Type de remise</label>
-            <Select
-              value={discountType}
-              onValueChange={handleDiscountTypeChange}
-            >
-              <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
-                <SelectValue placeholder="Sélectionner le type de remise" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Types de remise</SelectLabel>
-                  <SelectItem value="percentage">Pourcentage</SelectItem>
-                  <SelectItem value="manual">Valeur</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
 
-            {discountType === "percentage" && (
-              <div className="mt-4">
-                <label className="block text-gray-700">
-                  Valeur de la remise (%)
-                </label>
-                <Select
-                  value={discountPercentage.toString()}
-                  onValueChange={handleDiscountPercentageChange}
-                >
-                  <SelectTrigger className="w-full p-2 border border-gray-300 rounded mt-1">
-                    <SelectValue placeholder="Sélectionner la valeur de la remise" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Valeurs de la remise</SelectLabel>
-                      {discountOptions.map((option: DiscountOption) => (
-                        <SelectItem
-                          key={option.id}
-                          value={option.percentage.toString()}
-                        >
-                          {option.percentage}%
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {discountType === "manual" && (
-              <div className="mt-4">
-                <label className="block text-gray-700">
-                  Valeur de la remise (Direct)
-                </label>
-                <input
-                  type="number"
-                  className="w-full p-2 border border-gray-300 rounded mt-1"
-                  value={manualDiscountPrice}
-                  onChange={handleManualDiscountPriceChange}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            )}
+
+
+            <div className="mt-4">
+              <label className="block text-gray-700">
+                Valeur de la remise (Direct)
+              </label>
+              <input
+                type="number"
+                className="w-full p-2 border border-gray-300 rounded mt-1"
+                value={manualDiscountPrice}
+                onChange={handleManualDiscountPriceChange}
+                min="0"
+                step="0.01"
+              />
+            </div>
           </div>
 
           <div className="mb-4">

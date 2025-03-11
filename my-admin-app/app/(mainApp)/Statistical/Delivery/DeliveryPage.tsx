@@ -1,7 +1,7 @@
 "use client";
 import { useQuery } from "@apollo/client";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 
 import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "@/app/graph/queries";
@@ -22,7 +22,7 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import { startOfDay, subDays } from "date-fns";
+import { format, startOfDay, subDays } from "date-fns";
 import moment from "moment";
 import { DateRange } from "react-day-picker";
 import {
@@ -48,12 +48,14 @@ import { IoTrendingDown, IoTrendingUp } from "react-icons/io5";
 import { translateStatus } from "../../Helpers/_translateStatus";
 import AnimatedCounter from "../../Hook/AnimatedCounter";
 import Loading from "../loading";
+import DateRangePicker from "@/components/ui/date-range-picker";
 
 type Status =
   | "RETOUR"
   | "ÉCHANGE"
   | "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON"
   | "EN TRAITEMENT"
+  | "COMMANDE CONFIRMÉ"
   | "ANNULÉ"
   | "PAYÉ ET LIVRÉ"
   | "PAYÉ MAIS NON LIVRÉ"
@@ -82,9 +84,11 @@ interface StatusCardData {
 }
 
 const DeliveryPage: React.FC = () => {
-  const { loading, error, data } = useQuery(PACKAGES_QUERY);
+  const { loading, error, data } = useQuery(PACKAGES_QUERY, {
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: true
+  });
   const [statusCards, setStatusCards] = useState<StatusCardData[]>([]);
-  const [formattedDateRange, setFormattedDateRange] = useState<string>("");
   const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
 
   const [chartData, setChartData] = useState<any>({
@@ -92,35 +96,29 @@ const DeliveryPage: React.FC = () => {
     datasets: [],
   });
   const [averageDeliveryTime, setAverageDeliveryTime] = useState(0);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 28),
     to: new Date(),
   });
-  const [selectedPreset, setSelectedPreset] = useState("last28");
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {
       setDeliveryPrice(companyData.companyInfo.deliveringPrice);
     },
   });
-  useEffect(() => {
-    if (dateRange && dateRange.from && dateRange.to) {
-      const fromFormatted = moment(dateRange.from).format("DD/MM/YYYY");
-      const toFormatted = moment(dateRange.to).format("DD/MM/YYYY");
-      setFormattedDateRange(`${fromFormatted} - ${toFormatted}`);
-    } else {
-      setFormattedDateRange("");
-    }
-  }, [dateRange]);
+
+
+
+  // Process data when it changes
   useEffect(() => {
     if (data && data.getAllPackages) {
       processData(data.getAllPackages);
     }
   }, [data, translateStatus, dateRange]);
 
-  const processData = (packages: Package[]) => {
+  // Process data with memoization for better performance
+  const processData = useCallback((packages: Package[]) => {
     const statusCounts: { [key: string]: number } = {};
     const dateData: { [key: string]: { [key: string]: number } } = {};
     const totalPriceData: { [key: string]: { [key: string]: number } } = {};
@@ -237,28 +235,35 @@ const DeliveryPage: React.FC = () => {
         title: "Commandes en dépôt",
         count: statusCounts["EN TRAITEMENT"] || 0,
         icon: <FaWarehouse />,
-        color: "bg-yellow-700",
+        color: "bg-dashboard-warning",
+        payment: totalRevenueDeposit,
+      },
+      {
+        title: "Commandes en dépôt et Confirme",
+        count: statusCounts["COMMANDE CONFIRMÉ"] || 0,
+        icon: <FaWarehouse />,
+        color: "bg-dashboard-secondary",
         payment: totalRevenueDeposit,
       },
       {
         title: "En transit",
         count: statusCounts["TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON"] || 0,
         icon: <FaTruck />,
-        color: "bg-green-700",
+        color: "bg-dashboard-primary",
         payment: totalRevenueTransit,
       },
       {
         title: "Commandes payées non livrées",
         count: statusCounts["PAYÉ MAIS NON LIVRÉ"] || 0,
         icon: <FaMoneyBillWave />,
-        color: "bg-purple-600",
+        color: "bg-dashboard-info",
         payment: totalRevenuePaidNotDelivered,
       },
       {
         title: "Commandes payées et livrées",
         count: statusCounts["PAYÉ ET LIVRÉ"] || 0,
         icon: <FaBoxOpen />,
-        color: "bg-purple-800",
+        color: "bg-dashboard-success",
         payment: totalRevenueDelivered,
         profit: totalProfit,
       },
@@ -269,7 +274,7 @@ const DeliveryPage: React.FC = () => {
           (statusCounts["ÉCHANGE"] || 0) +
           (statusCounts["ANNULÉ"] || 0),
         icon: <FaBox />,
-        color: "bg-blue-700",
+        color: "bg-dashboard-danger",
         loss: totalLoss,
       },
     ];
@@ -285,19 +290,19 @@ const DeliveryPage: React.FC = () => {
       {
         label: "EN TRAITEMENT",
         data: labels.map((date) => dateData[date].processing),
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        backgroundColor: "rgba(245, 158, 11, 0.7)", // dashboard-warning
         total: labels.map((date) => totalPriceData[date]?.processing || 0),
       },
       {
         label: "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON",
         data: labels.map((date) => dateData[date].transit),
-        backgroundColor: "rgba(255, 159, 64, 0.5)",
+        backgroundColor: "rgba(59, 130, 246, 0.7)", // dashboard-primary
         total: labels.map((date) => totalPriceData[date]?.transit || 0),
       },
       {
         label: "PAYÉ MAIS NON LIVRÉ",
         data: labels.map((date) => dateData[date].paidNotDelivered),
-        backgroundColor: "rgba(153, 102, 255, 0.5)",
+        backgroundColor: "rgba(6, 182, 212, 0.7)", // dashboard-info
         total: labels.map(
           (date) => totalPriceData[date]?.paidNotDelivered || 0,
         ),
@@ -305,29 +310,30 @@ const DeliveryPage: React.FC = () => {
       {
         label: "PAYÉ ET LIVRÉ",
         data: labels.map((date) => dateData[date].delivered),
-        backgroundColor: "rgba(255, 205, 86, 0.5)",
+        backgroundColor: "rgba(16, 185, 129, 0.7)", // dashboard-success
         total: labels.map((date) => totalPriceData[date]?.delivered || 0),
       },
       {
         label: "ANNULÉ",
         data: labels.map((date) => dateData[date].returned),
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
+        backgroundColor: "rgba(239, 68, 68, 0.7)", // dashboard-danger
         total: labels.map((date) => totalPriceData[date]?.returned || 0),
       },
     ];
 
     setChartData({ labels, datasets });
-  };
+  }, [dateRange, deliveryPrice]);
 
-  const getChartCategory = (status: Status) => {
+  const getChartCategory = useCallback((status: Status) => {
     switch (status) {
       case "EN TRAITEMENT":
         return "processing";
       case "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON":
         return "transit";
       case "PAYÉ ET LIVRÉ":
-      case "PAYÉ MAIS NON LIVRÉ":
         return "delivered";
+      case "PAYÉ MAIS NON LIVRÉ":
+        return "paidNotDelivered";
       case "RETOUR":
       case "ÉCHANGE":
       case "ANNULÉ":
@@ -336,249 +342,278 @@ const DeliveryPage: React.FC = () => {
       default:
         return "processing";
     }
-  };
+  }, []);
 
-  const handlePresetChange = (value: string) => {
-    setSelectedPreset(value);
-    const today = new Date();
-    let from: Date;
-    switch (value) {
-      case "today":
-        from = startOfDay(today);
-        break;
-      case "yesterday":
-        from = startOfDay(subDays(today, 1));
-        break;
-      case "last7":
-        from = subDays(today, 7);
-        break;
-      case "last14":
-        from = subDays(today, 14);
-        break;
-      case "last28":
-        from = subDays(today, 28);
-        break;
-      default:
-        from = subDays(today, 28);
-    }
-    setDateRange({ from, to: today });
-  };
+
+
+  // Chart options with memoization
+  const chartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 11, family: "'Inter', sans-serif" },
+          maxRotation: 45,
+          minRotation: 45
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: "rgba(0, 0, 0, 0.05)" },
+        ticks: {
+          font: { size: 11, family: "'Inter', sans-serif" }
+        }
+      },
+    },
+    plugins: {
+      tooltip: {
+        backgroundColor: 'rgba(30, 41, 59, 0.9)', // dashboard-neutral-800
+        titleFont: {
+          size: 13,
+          family: "'Inter', sans-serif"
+        },
+        bodyFont: {
+          size: 12,
+          family: "'Inter', sans-serif"
+        },
+        padding: 12,
+        cornerRadius: 4,
+        callbacks: {
+          afterBody: (tooltipItems: any) => {
+            if (tooltipItems.length === 0) return "";
+            const datasetIndex = tooltipItems[0].datasetIndex;
+            const dataIndex = tooltipItems[0].dataIndex;
+            const dataset = chartData.datasets[datasetIndex];
+            const totalPrice = dataset.total[dataIndex];
+            return `Total Price: ${totalPrice.toFixed(2)} DT`;
+          },
+        },
+      },
+      legend: {
+        position: "top" as const,
+        labels: {
+          boxWidth: 20,
+          font: { size: 11, family: "'Inter', sans-serif" },
+          padding: 15
+        }
+      },
+      title: {
+        display: true,
+        text: "Statut de la commande au fil du temps",
+        font: {
+          size: 16,
+          family: "'Inter', sans-serif",
+          weight: 'bold'
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        }
+      },
+    },
+  }), [chartData]) as any;
 
   if (loading) return <Loading />;
-  if (error) return <p>Error: {error.message}</p>;
-
-  const averageTimeInHours = (averageDeliveryTime / (1000 * 60 * 60)).toFixed(
-    2,
+  if (error) return (
+    <div className="flex items-center justify-center h-96 bg-dashboard-neutral-50 rounded-lg">
+      <div className="text-center p-6 bg-white rounded-lg shadow-md border border-dashboard-neutral-200">
+        <div className="text-dashboard-danger text-5xl mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold text-dashboard-neutral-800 mb-2">Error Loading Data</h3>
+        <p className="text-dashboard-neutral-600 mb-4">{error.message}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-dashboard-primary text-white px-4 py-2 rounded-md hover:bg-dashboard-primary-dark transition-all"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
   );
+
+  const averageTimeInHours = (averageDeliveryTime / (1000 * 60 * 60)).toFixed(2);
   const maxDeliveryTime = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
   const deliveryTimePercentage = Math.min(
     (averageDeliveryTime / maxDeliveryTime) * 100,
     100,
   );
   const getColorForPercentage = (percentage: number): string => {
-    if (percentage <= 33) return "#4CAF50";
-    if (percentage <= 66) return "#FFC107";
-    return "#F44336";
+    if (percentage <= 33) return "#10B981"; // dashboard-success
+    if (percentage <= 66) return "#F59E0B"; // dashboard-warning
+    return "#EF4444"; // dashboard-danger
   };
 
-
   return (
-    <div className="DeliveryPage px-2 sm:px-4 md:px-6">
-      <div className="container text-mainColorAdminDash p-2 sm:p-5 w-full">
-        {/* Calendar and Date Range Selection */}
-        <div className="relative flex flex-col items-end z-50 mb-5">
-          <button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="flex items-center border p-2 rounded bg-white text-mainColorAdminDash hover:bg-[#374151] transition duration-300 w-full sm:w-auto"
-          >
-            <FaCalendarAlt className="mr-2" />
-            {showCalendar ? "Hide Calendar" : "Show Calendar"}
-          </button>
-          {showCalendar && (
-            <div className="absolute top-full right-0 bg-white p-2 rounded-md text-mainColorAdminDash w-full sm:w-auto">
-              <Select onValueChange={handlePresetChange} value={selectedPreset}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Select a period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last7">Last 7 Days</SelectItem>
-                  <SelectItem value="last14">Last 14 Days</SelectItem>
-                  <SelectItem value="last28">Last 28 Days</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="w-full bg-dashboard-neutral-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold text-dashboard-neutral-800 mb-6 border-b pb-3">Analyse des Livraisons</h1>
 
-              <div className="overflow-x-auto">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => setDateRange(range)}
-                  numberOfMonths={1}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          )}
-          <div className="mb-5 w-full text-center sm:text-left">
-            <p className="text-lg font-bold mb-2">Selected Date Range:</p>
-            <p className="text-md">
-              {formattedDateRange || "No date range selected"}
-            </p>
-          </div>
+        {/* Calendar and Date Range Selection */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 bg-dashboard-neutral-100 p-4 rounded-lg">
+          <DateRangePicker
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+          />
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {statusCards.map((card, index) => (
             <div
               key={index}
-              className={`${card.color} text-white shadow-md p-4 rounded-lg flex flex-col items-start justify-between`}
+              className={`bg-white border-l-4 ${card.color.replace('bg-', 'border-')} shadow-md p-4 rounded-lg`}
             >
-              <div className="flex items-center justify-between w-full">
-                <h3 className="text-sm sm:text-lg font-bold truncate">{card.title}</h3>
-                {card.icon}
+              <div className="flex items-center justify-between">
+                <h3 className="text-dashboard-neutral-800 font-semibold text-sm">{card.title}</h3>
+                <div className={`${card.color} p-2 rounded-full text-white`}>
+                  {card.icon}
+                </div>
               </div>
-              <div className="mt-2 relative w-full">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full relative">
-                  <p className="text-xl sm:text-2xl font-bold">
-                    <AnimatedCounter from={0} to={card.count} /> Unit
+              <div className="mt-3">
+                <div className="flex items-end justify-between">
+                  <p className="text-2xl font-bold text-dashboard-neutral-900">
+                    <AnimatedCounter from={0} to={card.count} />
                   </p>
+                  <span className="text-xs font-medium text-dashboard-neutral-500">unités</span>
+                </div>
 
-                  {card.payment !== undefined && (
-                    <p className="text-sm flex items-center gap-1 font-semibold">
-                      <FaRegMoneyBillAlt />
-                      <AnimatedCounter from={0} to={card.payment} />
-                      DT
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col sm:flex-row justify-between">
-                  {card.profit !== undefined && (
-                    <p className="text-sm flex items-center">
-                      <IoTrendingUp />
+                {card.payment !== undefined && (
+                  <div className="mt-2 flex items-center text-dashboard-neutral-700">
+                    <FaRegMoneyBillAlt className="mr-1 text-dashboard-primary" />
+                    <span className="font-medium">
+                      <AnimatedCounter from={0} to={card.payment} /> DT
+                    </span>
+                  </div>
+                )}
+
+                {card.profit !== undefined && (
+                  <div className="mt-1 flex items-center text-dashboard-success">
+                    <IoTrendingUp className="mr-1" />
+                    <span className="font-medium">
                       <AnimatedCounter from={0} to={card.profit} /> DT
-                    </p>
-                  )}
-                  {card.loss !== undefined && (
-                    <p className="text-sm flex items-center">
-                      <IoTrendingDown />
+                    </span>
+                  </div>
+                )}
+
+                {card.loss !== undefined && (
+                  <div className="mt-1 flex items-center text-dashboard-danger">
+                    <IoTrendingDown className="mr-1" />
+                    <span className="font-medium">
                       <AnimatedCounter from={0} to={card.loss} /> DT
-                    </p>
-                  )}
-                </div>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {/* Charts and Delivery Time */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <div className="bg-white shadow-md text-mainColorAdminDash flex items-center justify-center w-full h-full lg:h-[500px] rounded-lg border">
-            <div className="flex flex-col items-center justify-center mt-5 ">
-              <h3 className="text-lg font-bold mb-1 ">
-                Délai de livraison (moyen)
-              </h3>
-              <svg width="300" height="300" viewBox="0 0 300 300">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white shadow-md rounded-lg border border-dashboard-neutral-200 p-4">
+            <h3 className="text-lg font-semibold text-dashboard-neutral-800 mb-4 flex items-center">
+              <div className="w-1 h-6 bg-dashboard-info rounded-full mr-2"></div>
+              Délai de livraison moyen
+            </h3>
+            <div className="flex flex-col items-center justify-center">
+              <svg width="220" height="220" viewBox="0 0 220 220" className="mb-4">
                 <circle
-                  cx="150"
-                  cy="150"
-                  r="120"
+                  cx="110"
+                  cy="110"
+                  r="90"
                   fill="none"
-                  stroke="#e0e0e0"
-                  strokeWidth="30"
+                  stroke="#E2E8F0" // dashboard-neutral-200
+                  strokeWidth="20"
                 />
                 <motion.circle
-                  cx="150"
-                  cy="150"
-                  r="120"
+                  cx="110"
+                  cy="110"
+                  r="90"
                   fill="none"
                   stroke={getColorForPercentage(deliveryTimePercentage)}
-                  strokeWidth="30"
-                  strokeDasharray={`${2 * Math.PI * 120}`}
-                  transform="rotate(-90 150 150)"
-                  initial={{ strokeDashoffset: 2 * Math.PI * 120 }}
+                  strokeWidth="20"
+                  strokeDasharray={`${2 * Math.PI * 90}`}
+                  transform="rotate(-90 110 110)"
+                  initial={{ strokeDashoffset: 2 * Math.PI * 90 }}
                   animate={{
                     strokeDashoffset:
-                      2 * Math.PI * 120 * (1 - deliveryTimePercentage / 100),
+                      2 * Math.PI * 90 * (1 - deliveryTimePercentage / 100),
                   }}
                   transition={{ duration: 1, ease: "easeInOut" }}
                 />
                 <text
-                  x="150"
-                  y="140"
+                  x="110"
+                  y="100"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="35px"
-                  fontWeight="800"
-                  fill="#333"
+                  fontSize="32px"
+                  fontWeight="700"
+                  fill="#1E293B" // dashboard-neutral-800
                 >
                   {averageTimeInHours}
                 </text>
                 <text
-                  x="150"
-                  y="180"
+                  x="110"
+                  y="135"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="20px"
-                  fontWeight="600"
-                  fill="#666"
+                  fontSize="16px"
+                  fontWeight="500"
+                  fill="#64748B" // dashboard-neutral-500
                 >
-                  hours
+                  heures
                 </text>
               </svg>
-              <p className="mt-2 text-center text-sm">
-                Délai moyen de livraison
-              </p>
+              <div className="text-center">
+                <p className="text-dashboard-neutral-600 text-sm">
+                  Temps moyen entre la commande et la livraison
+                </p>
+                <div className="mt-2 flex justify-center space-x-4">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-dashboard-success mr-1"></div>
+                    <span className="text-xs text-dashboard-neutral-600">Rapide (&lt;16h)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-dashboard-warning mr-1"></div>
+                    <span className="text-xs text-dashboard-neutral-600">Normal (16-32h)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-dashboard-danger mr-1"></div>
+                    <span className="text-xs text-dashboard-neutral-600">Lent (&gt;32h)</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gray-50 p-2 shadow-md text-mainColorAdminDash flex items-center justify-center lg:col-span-2 rounded-lg h-[300px] sm:h-[400px] lg:h-[500px] w-full border">
-            <Bar
-              data={chartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  x: {
-                    grid: { display: false },
-                    ticks: {
-                      font: { size: 10 },
-                      maxRotation: 45,
-                      minRotation: 45
-                    }
-                  },
-                  y: {
-                    beginAtZero: true,
-                    grid: { color: "rgba(0, 0, 0, 0.1)" },
-                    ticks: { font: { size: 10 } }
-                  },
-                },
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      afterBody: (tooltipItems) => {
-                        if (tooltipItems.length === 0) return "";
-                        const datasetIndex = tooltipItems[0].datasetIndex;
-                        const dataIndex = tooltipItems[0].dataIndex;
-                        const dataset = chartData.datasets[datasetIndex];
-                        const totalPrice = dataset.total[dataIndex];
-                        return `Total Price: ${totalPrice.toFixed(2)} DT`;
-                      },
-                    },
-                  },
-                  legend: {
-                    position: "top" as const,
-                    labels: { font: { size: 10 } }
-                  },
-                  title: {
-                    display: true,
-                    text: "Statut de la commande au fil du temps",
-                    font: { size: 14 }
-                  },
-                },
-              }}
-            />
+          <div className="bg-white p-4 shadow-md rounded-lg border border-dashboard-neutral-200 lg:col-span-2">
+            <h3 className="text-lg font-semibold text-dashboard-neutral-800 mb-4 flex items-center">
+              <div className="w-1 h-6 bg-dashboard-primary rounded-full mr-2"></div>
+              Statut des commandes au fil du temps
+            </h3>
+            <div className="h-[400px]">
+              <Bar
+                data={{
+                  ...chartData,
+                  datasets: chartData.datasets.map((dataset: any, index: number) => ({
+                    ...dataset,
+                    backgroundColor: [
+                      "rgba(245, 158, 11, 0.7)", // dashboard-warning
+                      "rgba(59, 130, 246, 0.7)", // dashboard-primary
+                      "rgba(6, 182, 212, 0.7)",  // dashboard-info
+                      "rgba(16, 185, 129, 0.7)", // dashboard-success
+                      "rgba(239, 68, 68, 0.7)",  // dashboard-danger
+                    ][index % 5]
+                  }))
+                }}
+                options={chartOptions}
+              />
+            </div>
           </div>
         </div>
       </div>

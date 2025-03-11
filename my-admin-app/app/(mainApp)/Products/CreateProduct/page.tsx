@@ -29,7 +29,6 @@ const CreateProductPage = () => {
   const [description, setDescription] = useState<string>("");
   const [stock, setStock] = useState<number>(0);
   const [reference, setReference] = useState<string>("");
-  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
   const [purchasePrice, setPurchasePrice] = useState<number>(0);
@@ -41,9 +40,7 @@ const CreateProductPage = () => {
   >(null);
   const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
 
-  const [selectedDiscountId, setSelectedDicountId] = useState<string | null>(
-    null,
-  );
+
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<boolean>(true);
   const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
@@ -53,9 +50,7 @@ const CreateProductPage = () => {
     subcategoryId: "",
     subSubcategoryId: "",
   });
-  const [discountType, setDiscountType] = useState<
-    "empty" | "percentage" | "manual"
-  >("empty");
+
   const [brand, setBrand] = useState<string | null>(null);
   const [createProductMutation] = useMutation(CREATE_PRODUCT_MUTATIONS);
 
@@ -88,7 +83,7 @@ const CreateProductPage = () => {
         });
         return;
       }
-      if (discountType === "manual" && !manualDiscountPrice) {
+      if ( !manualDiscountPrice) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
@@ -97,15 +92,7 @@ const CreateProductPage = () => {
         });
         return;
       }
-      if (discountType === "percentage" && !selectedDiscountId) {
-        toast({
-          title: "Erreur de mise à jour",
-          variant: "destructive",
-          description: "Veuillez sélectionner un type de remise.",
-          duration: 5000,
-        });
-        return;
-      }
+ 
     }
 
     if (!originalPrice && !hasDiscount) {
@@ -141,7 +128,6 @@ const CreateProductPage = () => {
         ...(hasDiscount && {
           discount: [
             {
-              discountId: selectedDiscountId,
               dateOfStart: dateOfStartDiscount,
               dateOfEnd: dateOfEndDiscount,
               newPrice: finalDiscountPrice,
@@ -161,13 +147,11 @@ const CreateProductPage = () => {
         setDescription("");
         setStock(0);
         setReference("");
-        setDiscountPercentage(0);
         setManualDiscountPrice(0);
         setOriginalPrice(0);
         setPurchasePrice(0);
         setDateOfStartDiscount(null);
         setDateOfEndDiscount(null);
-        setSelectedDicountId(null);
         setSelectedColor(null);
         setVisibility(true);
         setSelectedIds({
@@ -199,8 +183,8 @@ const CreateProductPage = () => {
   return (
     <div className="container mx-auto py-10 bg-slate-100 w-full">
       <h1 className="text-2xl font-bold mb-6">Créer un produit</h1>
-      <div className="details flex w-full gap-5">
-        <div className="baseDetails w-3/4 flex flex-col gap-3">
+      <div className="details flex flex-col lg:flex-row w-full gap-5">
+        <div className="baseDetails w-full  lg:w-3/4 flex flex-col gap-3">
           <div className="p-3 rounded-md shadow-lg bg-white">
             <div className="title mb-4">
               <label className="text-lg font-bold mb-4">Titre</label>
@@ -221,8 +205,7 @@ const CreateProductPage = () => {
           <AddPrice
             isDiscountEnabled={isDiscountEnabled}
             setIsDiscountEnabled={setIsDiscountEnabled}
-            discountPercentage={discountPercentage}
-            setDiscountPercentage={setDiscountPercentage}
+      
             manualDiscountPrice={manualDiscountPrice}
             setManualDiscountPrice={setManualDiscountPrice}
             originalPrice={originalPrice}
@@ -233,10 +216,7 @@ const CreateProductPage = () => {
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}
             setDateOfStartDiscount={setDateOfStartDiscount}
-            selectedDiscountId={selectedDiscountId}
-            setSelectedDicountId={setSelectedDicountId}
-            setDiscountType={setDiscountType}
-            discountType={discountType}
+    
             setFinalDiscountPrice={setFinalDiscountPrice}
           />
 
@@ -248,7 +228,7 @@ const CreateProductPage = () => {
           <AddAttribute attributes={attributes} setAttributes={setAttributes} />
         </div>
 
-        <div className="moreDetails w-1/4 flex flex-col gap-3">
+        <div className="moreDetails w-full   lg:w-1/4 flex flex-col gap-3">
           <div className="visibility bg-white rounded-md shadow-md p-3">
             <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
               Visibilité

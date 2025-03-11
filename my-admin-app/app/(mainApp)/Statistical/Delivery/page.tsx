@@ -1,8 +1,8 @@
 import React from "react";
 import DeliveryPage from "./DeliveryPage";
 
-const deliveryPage = () => {
+const DeliveryPageWrapper = () => {
   return <DeliveryPage />;
 };
 
-export default deliveryPage;
+export default DeliveryPageWrapper;

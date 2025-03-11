@@ -134,12 +134,12 @@ export const DELETE_COUPONS_MUTATIONS = gql`
   }
 `;
 export const PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS = gql`
-  mutation PayedOrToDeliveryPackage(
+  mutation PayedOrConfirmedOrInTransitPackage(
     $packageId: ID!
     $status: String!
     $paymentMethod: PaymentMethod!
   ) {
-    payedOrToDeliveryPackage(
+    payedOrConfirmedOrInTransitPackage(
       packageId: $packageId
       status: $status
       paymentMethod: $paymentMethod
