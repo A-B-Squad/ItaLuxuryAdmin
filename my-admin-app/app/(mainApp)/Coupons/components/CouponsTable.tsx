@@ -4,7 +4,6 @@ import CouponsRow from "./CouponsRow";
 
 interface Coupon {
   id: string;
-  // Add other properties as needed
 }
 
 interface CouponsTableProps {

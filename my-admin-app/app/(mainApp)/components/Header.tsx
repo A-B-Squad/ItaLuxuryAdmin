@@ -5,7 +5,6 @@ import { FiMenu, FiPieChart, FiBell } from "react-icons/fi";
 import { IoIosNotificationsOutline, IoMdClose } from "react-icons/io";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Cookies from "js-cookie";
-import * as PusherPushNotifications from '@pusher/push-notifications-web';
 import { AnimatePresence, motion } from "framer-motion";
 
 interface HeaderProps {
@@ -37,14 +36,14 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
       // Create audio element and set properties
       notificationSoundRef.current = new Audio('/sounds/notification.mp3');
       notificationSoundRef.current.volume = 1;
-      
+
       // Preload the sound for faster playback
       notificationSoundRef.current.preload = 'auto';
-      
+
       // Try to load the sound file
       notificationSoundRef.current.load();
     }
-    
+
     // Cleanup function
     return () => {
       if (notificationSoundRef.current) {
@@ -59,7 +58,7 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
     if (notificationSoundRef.current) {
       // Reset to beginning if already playing
       notificationSoundRef.current.currentTime = 0;
-      
+
       // Play the sound with error handling
       notificationSoundRef.current.play().catch(err => {
         console.warn('Could not play notification sound:', err);
@@ -67,18 +66,20 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
     }
   }, []);
 
+
+
   // Register service worker for push notifications
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then(registration => {
           console.log('Service Worker registered with scope:', registration.scope);
-          
+
           // Listen for messages from service worker
           navigator.serviceWorker.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'PUSH_NOTIFICATION') {
               const { title, body, data } = event.data.notification || {};
-              
+
               // Handle the notification
               handleNewNotification({
                 title: title || 'Nouvelle notification',
@@ -104,94 +105,76 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
       read: false,
       link: data.link,
     };
-    
+
     // Play notification sound
     playNotificationSound();
-    
+
     setNotifications(prev => {
       const updated = [newNotification, ...prev];
       localStorage.setItem('admin-notifications', JSON.stringify(updated));
       return updated;
     });
-    
+
     setUnreadCount(prev => prev + 1);
   }, [playNotificationSound]);
 
-  
-  // Initialize Pusher Beams
+
   useEffect(() => {
-    let beamsClientInstance: any = null;
-    
-    try {
-      // Fix the constructor usage
-      beamsClientInstance = new (PusherPushNotifications as any).Client({
-        instanceId: process.env.NEXT_PUBLIC_BEAMS_INSTANCE_ID || '',
-      });
-      
-      beamsClientInstance.start()
-        .then(() => beamsClientInstance.addDeviceInterest('admin-notifications'))
-        .then(() => {
-          console.log('Successfully registered with Pusher Beams');
-        })
-        .catch(console.error);
-    } catch (error) {
-      console.error('Error initializing Pusher Beams:', error);
-    }
-    
-    // Clean up on unmount
-    return () => {
-      if (beamsClientInstance) {
-        
-        // Only clear interests if the SDK was successfully started
-        beamsClientInstance.getDeviceInterests()
-          .then((interests: string[]) => {
-            if (interests && interests.length > 0) {
-              return beamsClientInstance.clearDeviceInterests();
-            }
-          })
-          .catch((error: any) => {
-            console.error('Error clearing device interests:', error);
-          });
+    // Handle notification events from the service worker with proper typing
+    const handleNotificationEvent = (event: CustomEvent<any>) => {
+      if (event.detail) {
+        handleNewNotification(event.detail);
       }
     };
-  }, []);
 
-  // Load saved notifications from localStorage
-  useEffect(() => {
+    // Use the correct event listener type
+    window.addEventListener('new-notification', handleNotificationEvent as EventListener);
+
+    // Load saved notifications from localStorage
     const savedNotifications = localStorage.getItem('admin-notifications');
     if (savedNotifications) {
-      const parsedNotifications = JSON.parse(savedNotifications);
-      setNotifications(parsedNotifications);
-      
-      // Calculate unread count
-      const unread = parsedNotifications.filter((n: Notification) => !n.read).length;
-      setUnreadCount(unread);
+      try {
+        const parsedNotifications = JSON.parse(savedNotifications);
+        setNotifications(parsedNotifications);
+
+        // Calculate unread count with proper type checking
+        const unread = parsedNotifications.filter((n: Notification) => !n.read).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Error parsing notifications:', error);
+        // Handle corrupted localStorage data
+        localStorage.removeItem('admin-notifications');
+      }
     }
-    
+
     // Mock notification for development (remove in production)
+    let mockNotificationTimer: NodeJS.Timeout | undefined;
     if (process.env.NODE_ENV === 'development') {
-      const mockNotificationTimer = setTimeout(() => {
+      mockNotificationTimer = setTimeout(() => {
         handleNewNotification({
           title: 'Nouvelle commande',
           message: 'Une nouvelle commande (#12345) a été placée',
           link: '/Orders',
         });
       }, 5000);
-      
-      return () => clearTimeout(mockNotificationTimer);
     }
+
+    return () => {
+      if (mockNotificationTimer) clearTimeout(mockNotificationTimer);
+      window.removeEventListener('new-notification', handleNotificationEvent as EventListener);
+    };
   }, [handleNewNotification]);
 
   // Mark notification as read
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => {
-      const updated = prev.map(notification => 
+      const updated = prev.map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
       );
       localStorage.setItem('admin-notifications', JSON.stringify(updated));
       return updated;
     });
-    
+
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
@@ -202,18 +185,18 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
       localStorage.setItem('admin-notifications', JSON.stringify(updated));
       return updated;
     });
-    
+
     setUnreadCount(0);
   }, []);
 
   // Handle notification click
   const handleNotificationClick = useCallback((notification: Notification) => {
     markAsRead(notification.id);
-    
+
     if (notification.link) {
       router.push(notification.link);
     }
-    
+
     setShowNotifications(false);
   }, [markAsRead, router]);
 
@@ -225,7 +208,7 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
     const diffMins = Math.round(diffMs / 60000);
     const diffHours = Math.round(diffMins / 60);
     const diffDays = Math.round(diffHours / 24);
-    
+
     if (diffMins < 60) {
       return `${diffMins} min`;
     } else if (diffHours < 24) {
@@ -404,7 +387,7 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
 
         <div className="flex gap-3 items-center">
           <div className="relative">
-            <button 
+            <button
               className="p-2 relative rounded-full hover:bg-gray-100 transition-colors"
               onClick={() => setShowNotifications(!showNotifications)}
               aria-label="Notifications"
@@ -416,10 +399,10 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
                 </span>
               )}
             </button>
-            
+
             <AnimatePresence>
               {showNotifications && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
@@ -430,14 +413,14 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
                     <h3 className="font-semibold text-gray-700">Notifications</h3>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
-                        <button 
+                        <button
                           onClick={markAllAsRead}
                           className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           Tout marquer comme lu
                         </button>
                       )}
-                      <button 
+                      <button
                         onClick={() => setShowNotifications(false)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
@@ -445,11 +428,11 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="max-h-[60vh] overflow-y-auto">
                     {notifications.length > 0 ? (
                       notifications.map(notification => (
-                        <div 
+                        <div
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
                           className={`p-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50' : ''}`}
@@ -478,7 +461,7 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
               )}
             </AnimatePresence>
           </div>
-          
+
           <div className="relative">
             <button
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -487,10 +470,10 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
             >
               <CiUser size={26} className="text-gray-600" />
             </button>
-            
+
             <AnimatePresence>
               {showUserMenu && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
