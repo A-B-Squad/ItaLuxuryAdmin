@@ -10,7 +10,7 @@ self.addEventListener('push', event => {
         console.log('Push notification received in service worker:', data);
 
         // Extract notification details
-        const title = data.notification?.title || 'Nouvelle notifissscation';
+        const title = data.notification?.title || 'Nouvelle notification';
         const options = {
             body: data.notification?.body || '',
             icon: '/images/logo.png',
@@ -30,7 +30,7 @@ self.addEventListener('push', event => {
                         notification: {
                             title: title,
                             body: options.body,
-                            data: options.data
+                            data: options.data || { link: '/Orders' }  // Ensure we always have a link
                         }
                     });
                 });
@@ -51,7 +51,7 @@ self.addEventListener('notificationclick', event => {
     event.notification.close();
 
     // Navigate to the URL when notification is clicked
-    const urlToOpen = event.notification.data?.link || '/';
+    const urlToOpen = event.notification.data?.link || '/Orders';
 
     event.waitUntil(
         self.clients.matchAll({

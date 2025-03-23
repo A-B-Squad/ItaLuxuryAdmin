@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { CATEGORY_QUERY, GET_CATEGORY_BY_ID } from "@/app/graph/queries";
@@ -27,8 +27,15 @@ interface Category {
   subcategories: Category[];
 }
 
+interface FormErrors {
+  name: string;
+  description: string;
+  smallImage: string;
+}
+
 const UpdateCategory = () => {
   const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryId = searchParams.get("categoryId");
 
@@ -40,6 +47,13 @@ const UpdateCategory = () => {
     bigImage: "",
   });
 
+  const [formErrors, setFormErrors] = useState<FormErrors>({
+    name: "",
+    description: "",
+    smallImage: "",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState({
     smallImageLoad: false,
     bigImageLoad: false,
@@ -71,138 +85,194 @@ const UpdateCategory = () => {
     }
   }, [categoryData?.categoryById]);
 
-  if (categoriesLoading || categoryLoading) return <Loading />;
+  const validateForm = useCallback(() => {
+    const errors = {
+      name: "",
+      description: "",
+      smallImage: "",
+    };
+    let isValid = true;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const { smallImage, bigImage, name, description, parentCategory } =
-      formData;
-
-    if (!smallImage || !description || !name) {
-      toast({
-        title: "Erreur de mise à jour",
-        variant: "destructive",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        duration: 5000,
-      });
-      return;
+    if (!formData.name.trim()) {
+      errors.name = "Le nom de la catégorie est requis";
+      isValid = false;
     }
-    console.log({
-      id: categoryId,
-      input: {
-        name,
-        description,
-        parentId: parentCategory,
-        smallImage,
-        bigImage,
-      },
-    });
 
-    updateCategory({
-      variables: {
-        updateCategoryId: categoryId,
-        input: {
-          name,
-          description,
-          parentId: parentCategory,
-          smallImage,
-          bigImage,
-        },
-      },
-      onCompleted() {
+    if (!formData.description.trim()) {
+      errors.description = "La description est requise";
+      isValid = false;
+    }
+
+    if (!formData.smallImage) {
+      errors.smallImage = "L'image de vignette est requise";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  }, [formData]);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      
+      if (!validateForm()) {
+        toast({
+          title: "Formulaire incomplet",
+          variant: "destructive",
+          description: "Veuillez corriger les erreurs dans le formulaire.",
+          duration: 5000,
+        });
+        return;
+      }
+      
+      setIsSubmitting(true);
+      
+      try {
+        await updateCategory({
+          variables: {
+            updateCategoryId: categoryId,
+            input: {
+              name: formData.name,
+              description: formData.description,
+              parentId: formData.parentCategory || null,
+              smallImage: formData.smallImage,
+              bigImage: formData.bigImage || null,
+            },
+          },
+        });
+        
         toast({
           title: "Catégorie mise à jour",
           className: "text-white bg-mainColorAdminDash border-0",
           description: "La catégorie a été mise à jour avec succès.",
           duration: 5000,
         });
-      },
-      onError(err) {
+        
+        // Navigate back to categories list
+        router.push("/Products/Categories");
+        
+      } catch (error: any) {
         toast({
           title: "Erreur",
           className: "text-white bg-red-500 border-0",
-          description: err.message,
+          description: error.message || "Une erreur est survenue",
           duration: 5000,
         });
-      },
-    });
-  };
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [categoryId, formData, router, toast, updateCategory, validateForm]
+  );
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+      
+      // Clear error when user types
+      if (formErrors[name as keyof FormErrors]) {
+        setFormErrors(prev => ({
+          ...prev,
+          [name]: "",
+        }));
+      }
+    },
+    [formErrors]
+  );
 
-  const handleImageUpload = (result: any, position: string) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [position]: result.info.secure_url,
-    }));
+  const handleImageUpload = useCallback(
+    (result: any, position: "smallImage" | "bigImage") => {
+      
+    const optimizedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto/"
+    );
+  
+      setFormData(prev => ({
+        ...prev,
+        [position]: optimizedUrl,
+      }));
 
-    setUploadingImage((prev) => ({ ...prev, [`${position}Load`]: false }));
-  };
+      setUploadingImage(prev => ({ 
+        ...prev, 
+        [`${position}Load`]: false 
+      }));
+      
+      // Clear error when image is uploaded
+      if (position === "smallImage" && formErrors.smallImage) {
+        setFormErrors(prev => ({
+          ...prev,
+          smallImage: "",
+        }));
+      }
+    },
+    [formErrors]
+  );
 
-  const renderCategoryOptions = (categories: Category[] | undefined) => {
+  const renderCategoryOptions = useCallback((categories: Category[] | undefined) => {
+    if (!categories || categories.length === 0) {
+      return (
+        <SelectTrigger className="w-full p-2 border border-gray-300 rounded h-12 outline-none mt-1">
+          <SelectValue placeholder="Aucune catégorie disponible" />
+        </SelectTrigger>
+      );
+    }
+    
+    // Filter out the current category to prevent circular references
+    const filteredCategories = categories.filter(cat => cat.id !== categoryId);
+    
     return (
       <>
         <SelectTrigger className="w-full p-2 border border-gray-300 rounded h-12 outline-none mt-1">
-          <SelectValue placeholder="Sélectionner une catégorie" />
+          <SelectValue placeholder="Sélectionner une catégorie (optionnel)" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectLabel>Catégories</SelectLabel>
-            {categories?.map((cat) => (
+            {filteredCategories.map((cat) => (
               <React.Fragment key={cat.id}>
                 <SelectItem
                   value={cat.id}
                   className="flex items-center font-semibold tracking-wide cursor-pointer"
                 >
-                  <Image
-                    src={
-                      cat.smallImage ||
-                      "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                    }
-                    alt={
-                      cat.name ||
-                      "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                    }
-                    width={30}
-                    height={30}
-                    className="inline-block h-10 w-10 mr-2"
-                  />
+                  {cat.smallImage && (
+                    <Image
+                      src={cat.smallImage}
+                      alt={cat.name}
+                      width={30}
+                      height={30}
+                      className="inline-block h-10 w-10 mr-2"
+                    />
+                  )}
                   {cat.name}
                 </SelectItem>
-                {cat.subcategories && (
+                {cat.subcategories && cat.subcategories.length > 0 && (
                   <SelectGroup className="ml-10">
-                    {cat.subcategories.map((subcat) => (
-                      <SelectItem
-                        key={subcat.id}
-                        value={subcat.id}
-                        className="flex items-center font-semisemibold cursor-pointer"
-                      >
-                        <Image
-                          src={
-                            subcat.smallImage ||
-                            "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                          }
-                          alt={
-                            subcat.name ||
-                            "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                          }
-                          width={30}
-                          height={30}
-                          className="inline-block h-10 w-10 mr-2"
-                        />
-                        {subcat.name}
-                      </SelectItem>
-                    ))}
+                    {cat.subcategories
+                      .filter(subcat => subcat.id !== categoryId)
+                      .map((subcat) => (
+                        <SelectItem
+                          key={subcat.id}
+                          value={subcat.id}
+                          className="flex items-center font-semisemibold cursor-pointer"
+                        >
+                          {subcat.smallImage && (
+                            <Image
+                              src={subcat.smallImage}
+                              alt={subcat.name}
+                              width={30}
+                              height={30}
+                              className="inline-block h-10 w-10 mr-2"
+                            />
+                          )}
+                          {subcat.name}
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 )}
               </React.Fragment>
@@ -211,18 +281,29 @@ const UpdateCategory = () => {
         </SelectContent>
       </>
     );
-  };
+  }, [categoryId]);
+
+  if (categoriesLoading || categoryLoading) return <Loading />;
 
   return (
     <div className="container mx-auto py-10 h-full bg-white w-full">
-      <h1 className="text-2xl font-semibold mb-6">Modifier la catégorie</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Modifier la catégorie</h1>
+        <button
+          onClick={() => router.push("/Products/Categories")}
+          className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+        >
+          Retour aux catégories
+        </button>
+      </div>
+      
       <form onSubmit={handleSubmit} className="space-y-6 h-full">
         <div className="flex gap-3 w-full">
-          <div className="inputs flex flex-col gap-5 bg-white w-full shadow-sm border rounded-md p-3 h-full">
+          <div className="inputs flex flex-col gap-5 bg-white w-full shadow-sm border rounded-md p-5 h-full">
             <div className="flex space-x-4">
               <div className="flex-grow">
-                <label htmlFor="name" className="text-lg font-semibold mb-10">
-                  Nom
+                <label htmlFor="name" className="text-lg font-semibold mb-1 block">
+                  Nom <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -231,15 +312,20 @@ const UpdateCategory = () => {
                   placeholder="Nom de la catégorie"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="block w-full py-2 px-3 border-gray-300 rounded-md outline-none border"
+                  className={`block w-full py-2 px-3 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.name ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {formErrors.name && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                )}
               </div>
             </div>
 
             <div>
               <label
                 htmlFor="parentCategory"
-                className="text-lg font-semibold mb-10"
+                className="text-lg font-semibold mb-1 block"
               >
                 Catégorie Parentale
               </label>
@@ -251,14 +337,17 @@ const UpdateCategory = () => {
               >
                 {renderCategoryOptions(allCategories?.categories)}
               </Select>
+              <p className="mt-1 text-sm text-gray-500">
+                Optionnel - Sélectionnez une catégorie parente si vous créez une sous-catégorie
+              </p>
             </div>
 
             <div>
               <label
                 htmlFor="description"
-                className="text-lg font-semibold mb-10"
+                className="text-lg font-semibold mb-1 block"
               >
-                Description
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="description"
@@ -266,14 +355,22 @@ const UpdateCategory = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className="mt-1 block w-full py-2 px-3 border-gray-300 rounded-md outline-none border"
+                className={`mt-1 block w-full py-2 px-3 rounded-md outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formErrors.description ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {formErrors.description && (
+                <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
+              )}
             </div>
 
-            <div className="largeImage border shadow-sm bg-white w-full h-full p-3 rounded-md">
-              <label className="block text-sm font-medium text-gray-700">
-                Image de la catégorie (1700 x 443)
+            <div className="largeImage border shadow-sm bg-white w-full h-full p-4 rounded-md">
+              <label className="block text-lg font-semibold mb-2">
+                Image de bannière
               </label>
+              <p className="text-sm text-gray-500 mb-2">
+                Format recommandé: 1700 x 443 pixels
+              </p>
               <CldUploadWidget
                 uploadPreset="ita-luxury"
                 onSuccess={(result, { widget }) => {
@@ -287,7 +384,7 @@ const UpdateCategory = () => {
                 {({ open }) => (
                   <div
                     onClick={() => open()}
-                    className="mt-1 flex cursor-pointer justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+                    className="mt-1 flex cursor-pointer justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-blue-400 transition-colors"
                   >
                     <div className="space-y-1 text-center">
                       <svg
@@ -304,40 +401,50 @@ const UpdateCategory = () => {
                           strokeLinejoin="round"
                         />
                       </svg>
-                      <div className="flex text-sm text-gray-600">
-                        <p className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                      <div className="flex justify-center text-sm text-gray-600">
+                        <p className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
                           Choisissez le fichier à télécharger
                         </p>
                       </div>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF jusqu'à 10MB
+                      </p>
                     </div>
                   </div>
                 )}
               </CldUploadWidget>
               {formData.bigImage && (
-                <div className="w-full relative h-[120px] border flex items-center justify-center">
-                  {uploadingImage.bigImageLoad && <SmallSpinner />}
-                  <Image
-                    src={formData.bigImage}
-                    alt={formData.name}
-                    layout="fill"
-                    objectFit="contain"
-                    onLoadingComplete={() =>
-                      setUploadingImage((prev) => ({
-                        ...prev,
-                        bigImageLoad: false,
-                      }))
-                    }
-                    className="border mt-3"
-                  />
+                <div className="w-full relative h-[120px] border mt-3 rounded overflow-hidden">
+                  {uploadingImage.bigImageLoad ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <SmallSpinner />
+                    </div>
+                  ) : (
+                    <Image
+                      src={formData.bigImage}
+                      alt={formData.name || "Image de bannière"}
+                      width={1700}
+                      height={443}
+                      className="object-contain p-2"
+                    />
+                  )}
                 </div>
               )}
+              <div className="mt-3">
+                <p className="text-sm text-gray-500">
+                  Cette image sera affichée en haut de la page de la catégorie.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="smallImage border shadow-sm bg-white w-4/12 h-full p-3 rounded-md">
-            <label className="block text-sm font-medium text-gray-700">
-              Image de la vignette de la catégorie (120 x 120)
+          <div className="smallImage border shadow-sm bg-white w-4/12 h-full p-5 rounded-md">
+            <label className="block text-lg font-semibold mb-2">
+              Image de vignette <span className="text-red-500">*</span>
             </label>
+            <p className="text-sm text-gray-500 mb-2">
+              Format recommandé: 120 x 120 pixels
+            </p>
             <CldUploadWidget
               uploadPreset="ita-luxury"
               onSuccess={(result, { widget }) => {
@@ -351,7 +458,9 @@ const UpdateCategory = () => {
               {({ open }) => (
                 <div
                   onClick={() => open()}
-                  className="mt-1 flex cursor-pointer justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+                  className={`mt-1 flex cursor-pointer justify-center px-6 pt-5 pb-6 border-2 rounded-md hover:border-blue-400 transition-colors ${
+                    formErrors.smallImage ? "border-red-500 border-dashed" : "border-gray-300 border-dashed"
+                  }`}
                 >
                   <div className="space-y-1 text-center">
                     <svg
@@ -368,42 +477,72 @@ const UpdateCategory = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <p className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                    <div className="flex justify-center text-sm text-gray-600">
+                      <p className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
                         Choisissez le fichier à télécharger
                       </p>
                     </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF jusqu'à 10MB
+                    </p>
                   </div>
                 </div>
               )}
             </CldUploadWidget>
             {formData.smallImage && (
-              <div className="w-full max-w-[120px] max-h-[120px] h-full border flex items-center justify-center">
-                {uploadingImage.smallImageLoad && <SmallSpinner />}
-                <Image
-                  src={formData.smallImage}
-                  alt={formData.name}
-                  width={100}
-                  height={100}
-                  objectFit="contain"
-                  onLoadingComplete={() =>
-                    setUploadingImage((prev) => ({
-                      ...prev,
-                      smallImageLoad: false,
-                    }))
-                  }
-                  className="border mt-3"
-                />
+              <div className="w-full relative h-[120px] border mt-3 rounded-md overflow-hidden flex items-center justify-center">
+                {uploadingImage.smallImageLoad ? (
+                  <SmallSpinner />
+                ) : (
+                  <Image
+                    src={formData.smallImage}
+                    alt={formData.name || "Vignette de catégorie"}
+                    width={120}
+                    height={120}
+                    className="object-contain"
+                  />
+                )}
               </div>
             )}
+            
+            <div className="mt-6">
+              <p className="text-sm text-gray-500 mb-2">
+                Cette image sera utilisée comme icône de la catégorie dans les menus et les listes.
+              </p>
+              {formErrors.smallImage && (
+                <p className="mt-1 text-sm text-red-500">{formErrors.smallImage}</p>
+              )}
+            </div>
           </div>
         </div>
-        <div>
+
+        <div className="mt-6 flex gap-4">
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-mainColorAdminDash hover:opacity-80 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isSubmitting}
+            className={`flex-1 flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+              isSubmitting 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-mainColorAdminDash hover:bg-opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            }`}
           >
-            Mettre à jour la catégorie
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <SmallSpinner />
+                <span className="ml-2">Mise à jour en cours...</span>
+              </div>
+            ) : (
+              "Mettre à jour la catégorie"
+            )}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => router.push("/Products/Categories")}
+            disabled={isSubmitting}
+            className="flex-1 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Annuler
           </button>
         </div>
       </form>
