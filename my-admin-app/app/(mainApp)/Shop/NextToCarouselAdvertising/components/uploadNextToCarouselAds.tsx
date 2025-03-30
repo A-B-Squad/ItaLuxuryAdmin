@@ -3,6 +3,20 @@ import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import React, { useState } from "react";
 import { IoImageOutline } from "react-icons/io5";
+import { FiLink } from "react-icons/fi";
+
+// Define proper types for the component props
+interface UploadNextToCarouselAdsProps {
+  title: string;
+  localLargeImage: string;
+  setLocalLargeImage: (url: string) => void;
+  localInputField: {
+    images: string;
+    link: string;
+    position: string;
+  };
+  setLocalInputField: (data: any) => void;
+}
 
 const LoaderSpiner = () => (
   <div className="flex justify-center items-center h-full w-full">
@@ -10,13 +24,13 @@ const LoaderSpiner = () => (
   </div>
 );
 
-const UploadNextToCarouselAds = ({
+const UploadNextToCarouselAds: React.FC<UploadNextToCarouselAdsProps> = ({
   title,
   localLargeImage,
   setLocalLargeImage,
   localInputField,
   setLocalInputField,
-}: any) => {
+}) => {
   const [localLoadingImages, setLocalLoadingImages] = useState<boolean>(false);
 
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +45,7 @@ const UploadNextToCarouselAds = ({
       "/upload/",
       "/upload/f_auto,q_auto/"
     );
-  
+
     if (optimizedUrl) {
       setLocalLargeImage(optimizedUrl);
       setLocalInputField((prevField: any) => {
@@ -43,85 +57,98 @@ const UploadNextToCarouselAds = ({
       setLocalLoadingImages(true);
     }
   };
-  
-
 
   return (
-    <div className="upload-NextToCarouselAds">
-      <h1 className="text-3xl font-semibold mb-4">
-        Publicités a coter de carousel
-      </h1>
-
-      <div className="flex items-center  mb-4 gap-2">
-        <h4 className="text-lg font-medium text-gray-600  list-item">
+    <div className="w-full">
+      <div className="flex items-center mb-4 gap-2">
+        <h4 className="text-lg font-medium text-gray-700">
           {title}
         </h4>
-        <p className="text-gray-400">455PX / 230px</p>
+        <span className="text-sm text-gray-500">(Recommended size: 455px × 230px)</span>
       </div>
 
-      <div className="w-full mb-4 flex justify-center">
+      <div className="w-full mb-6 flex justify-center">
         {localLargeImage ? (
-          <div className="w-[455px] h-[230px] relative  border-2">
+          <div className="w-[455px] h-[230px] relative border rounded-md overflow-hidden">
             <Image
               src={localLargeImage}
-              alt="image de carrousel"
+              alt="Advertisement preview"
               layout="fill"
               objectFit="contain"
+              className="transition-opacity duration-300"
               onLoadingComplete={() => setLocalLoadingImages(false)}
               onError={() => setLocalLoadingImages(false)}
             />
             {localLoadingImages && <LoaderSpiner />}
           </div>
         ) : (
-          <div className="uppercase shadow-xl flex-col border-dashed text-sm w-[455px] h-[230px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors">
-            <span>455px / 230px</span>
-            <span>png / jpg / gif</span>
+          <div className="flex flex-col items-center justify-center w-[455px] h-[230px] border border-dashed rounded-md bg-gray-100">
+            <IoImageOutline className="h-8 w-8 text-gray-400 mb-2" />
+            <p className="text-gray-500 text-sm">No image selected</p>
+            <p className="text-gray-400 text-xs mt-1">Recommended: 455px × 230px (PNG, JPG, GIF)</p>
           </div>
         )}
       </div>
 
-      <div className="add-new-carousel-image flex flex-col justify-between mt-4">
-        <div className="flex items-center w-full py-2 justify-between mb-2">
-          <div className="flex items-center justify-between gap-2">
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-2">
+          <label htmlFor="image-upload" className="text-sm font-medium text-gray-700">
+            Advertisement Image
+          </label>
+          <div className="flex items-center gap-4">
             <CldUploadWidget
               uploadPreset="ita-luxury"
-
               onSuccess={(result, { widget }) => {
                 handleSuccess(result);
+                widget.close();
               }}
             >
               {({ open }) => (
                 <button
                   type="button"
-                  className="uppercase shadow-xl flex-col border-dashed text-sm h-[50px] w-[100px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50 transition-colors"
                   onClick={() => open()}
                 >
-                  <IoImageOutline />
+                  <IoImageOutline /> Upload Image
                 </button>
               )}
             </CldUploadWidget>
-            <input
-              type="text"
-              className="outline-none border px-2 py-3 w-[500px]"
-              placeholder="Lien vers votre site"
-              value={localInputField.link}
-              onChange={handleLocalInputChange}
-            />
+
             {localInputField?.images.length > 0 && (
-              <div className="relative h-[50px] w-[100px] border overflow-hidden rounded-md cursor-pointer">
+              <div className="relative h-[50px] w-[100px] border rounded-md overflow-hidden">
                 {localLoadingImages && <LoaderSpiner />}
                 <Image
                   src={localInputField.images[0]}
-                  alt="image téléchargée"
+                  alt="Uploaded thumbnail"
                   layout="fill"
-                  className={`${!localLoadingImages ? "visible" : "invisible"}`}
-                  objectFit="contain"
+                  objectFit="cover"
+                  className={`transition-opacity duration-300 ${!localLoadingImages ? "opacity-100" : "opacity-0"}`}
                   onLoadingComplete={() => setLocalLoadingImages(false)}
                   onError={() => setLocalLoadingImages(false)}
                 />
               </div>
             )}
           </div>
+        </div>
+
+        <div className="flex flex-col space-y-2">
+          <label htmlFor="link-input" className="text-sm font-medium text-gray-700">
+            Destination URL
+          </label>
+          <div className="relative">
+            <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              id="link-input"
+              type="url"
+              className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="https://example.com/product"
+              value={localInputField.link}
+              onChange={handleLocalInputChange}
+            />
+          </div>
+          <p className="text-sm text-gray-500">
+            Enter the URL where users will be directed when they click on the advertisement
+          </p>
         </div>
       </div>
     </div>

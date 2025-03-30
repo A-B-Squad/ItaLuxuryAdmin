@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS } from "@/app/graph/mutations";
 import BackUp from "@/app/(mainApp)/components/BackUp";
-
 import { useToast } from "@/components/ui/use-toast";
 import NextToCarouselAds1 from "./@NextToCarouselAds1/NextToCarouselAds1";
 import NextToCarouselAds2 from "./@NextToCarouselAds2/NextToCarouselAds2";
@@ -33,7 +32,7 @@ const SideAdvertisingPage = () => {
     });
 
   // Mutation hook
-  const [createAdvertisement] = useMutation(
+  const [createAdvertisement, { loading: isSaving }] = useMutation(
     CREATE_NEXT_TO_CAROUSEL_ADVERTISEMENT_MUTATIONS,
   );
 
@@ -51,24 +50,25 @@ const SideAdvertisingPage = () => {
 
     if (isEmpty) {
       toast({
-        title: "Erreur de saisie",
-        description: "Veuillez remplir tous les champs.",
-        className: "bg-red-800 text-white",
+        title: "Validation Error",
+        description: "Please fill in all fields for both advertisements.",
+        variant: "destructive",
       });
     } else {
       try {
         await createAdvertisement({ variables: { input } });
         toast({
-          title: "Succès",
-          description: "Publicité créée avec succès.",
+          title: "Success",
+          description: "Advertisements created successfully.",
           className: "bg-green-600 text-white",
         });
+        setShowBackUp(false);
       } catch (error) {
         console.error("Error while saving:", error);
         toast({
-          title: "Erreur",
-          description: "Impossible de créer la publicité.",
-          className: "bg-red-800 text-white",
+          title: "Error",
+          description: "Failed to create advertisements. Please try again.",
+          variant: "destructive",
         });
       }
     }
@@ -94,19 +94,33 @@ const SideAdvertisingPage = () => {
     InputFieldOfNextToCarouselAds2.images,
     InputFieldOfNextToCarouselAds2.link,
   ]);
+  
   return (
-    <div className="advertising">
-      <div className="container flex flex-col gap-8  pb-32 h-full relative divide-y">
-        <NextToCarouselAds1
-          setInputField={setInputFieldOfNextToCarouselAds1}
-          inputField={InputFieldOfNextToCarouselAds1}
-        />
-        <NextToCarouselAds2
-          setInputField={setInputFieldOfNextToCarouselAds2}
-          inputField={InputFieldOfNextToCarouselAds2}
-        />
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Side Advertisements</h1>
+        <p className="text-gray-500 mt-1">Manage the advertisements displayed next to the carousel</p>
       </div>
-      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
+
+      <div className="space-y-8">
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h2 className="text-xl font-semibold mb-6">Advertisement 1</h2>
+          <NextToCarouselAds1
+            setInputField={setInputFieldOfNextToCarouselAds1}
+            inputField={InputFieldOfNextToCarouselAds1}
+          />
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h2 className="text-xl font-semibold mb-6">Advertisement 2</h2>
+          <NextToCarouselAds2
+            setInputField={setInputFieldOfNextToCarouselAds2}
+            inputField={InputFieldOfNextToCarouselAds2}
+          />
+        </div>
+      </div>
+      
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} isSaving={isSaving} />}
     </div>
   );
 };

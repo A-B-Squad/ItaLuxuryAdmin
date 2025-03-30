@@ -5,7 +5,8 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { ADVERTISSMENT_QUERY } from "@/app/graph/queries";
 import { IoImageOutline } from "react-icons/io5";
-import { CiCirclePlus } from "react-icons/ci";
+import { FiLink, FiPlus } from "react-icons/fi";
+import { MdOutlineDelete } from "react-icons/md";
 import BackUp from "@/app/(mainApp)/components/BackUp";
 import { CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS } from "@/app/graph/mutations";
 import {
@@ -15,8 +16,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { MdOutlineDelete } from "react-icons/md";
 import { useToast } from "@/components/ui/use-toast";
+
 
 // Define types for the state
 interface ImageData {
@@ -46,44 +47,45 @@ const CarouselAdvertisingPage = () => {
     useQuery(ADVERTISSMENT_QUERY, {
       variables: { position: "slider" },
     });
-  const [createAdvertisement] = useMutation(
+  const [createAdvertisement, { loading: isSaving }] = useMutation(
     CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS,
   );
 
   const handleSave = async () => {
     try {
-      const input = inputFields.map((field) => ({
+      // Filter out empty fields
+      const validInputFields = inputFields.filter(
+        field => field.urlImage && field.linkImage
+      );
+      
+      if (validInputFields.length === 0) {
+        toast({
+          title: "Validation Error",
+          description: "Please add at least one image with a link.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const input = validInputFields.map((field) => ({
         images: [field.urlImage],
         link: field.linkImage,
         position: "slider",
       }));
 
-      // Check if any input field is empty
-      const hasEmptyFields = input.some(
-        (field) => !field.link || field.images.length === 0,
-      );
-
-      if (hasEmptyFields) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs pour chaque image.",
-          className: "bg-red-800 text-white",
-        });
-        return;
-      }
-
       await createAdvertisement({ variables: { input } });
       toast({
-        title: "Succès",
-        description: "Publicité créée avec succès.",
+        title: "Success",
+        description: "Carousel advertisements created successfully.",
         className: "bg-green-600 text-white",
       });
+      setShowBackUp(false);
     } catch (error) {
       console.error("Error while saving:", error);
       toast({
-        title: "Erreur",
-        description: "Impossible de créer la publicité.",
-        className: "bg-red-800 text-white",
+        title: "Error",
+        description: "Failed to create advertisements. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -99,7 +101,12 @@ const CarouselAdvertisingPage = () => {
             })),
         );
       setImagesSlider(allImages);
-      setInputFields(allImages);
+      setInputFields(allImages.length > 0 ? allImages : [{ urlImage: "", linkImage: "" }]);
+      
+      // Set the first image as preview if available
+      if (allImages.length > 0) {
+        setLargeImageTest(allImages[0].urlImage);
+      }
     }
   }, [centerCarouselAds]);
 
@@ -122,6 +129,11 @@ const CarouselAdvertisingPage = () => {
         ...prev,
         [optimizedUrl]: true,
       }));
+      
+      // Set as preview image if none is selected
+      if (!largeImageTest) {
+        setLargeImageTest(optimizedUrl);
+      }
     }
   };
 
@@ -151,25 +163,40 @@ const CarouselAdvertisingPage = () => {
 
   const handleDeleteImage = (indexToDelete: number) => {
     setInputFields((prevFields) => {
-      return prevFields.filter((_, index) => index !== indexToDelete);
+      const newFields = prevFields.filter((_, index) => index !== indexToDelete);
+      // Ensure there's always at least one input field
+      return newFields.length > 0 ? newFields : [{ urlImage: "", linkImage: "" }];
     });
+    setShowBackUp(true);
   };
 
   return (
-    <div className="advertising">
-      <div className="container  pb-32 h-full relative">
-        <div className="flex items-center mb-4 gap-2">
-          <h1 className="text-3xl font-semibold ">Publicités en Carrousel</h1>
-          <p className="text-gray-400">400PX / 1140PX </p>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Carousel Advertisements</h1>
+        <p className="text-gray-500 mt-1">Manage the carousel advertisements displayed on your website</p>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border mb-8">
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">Advertisement Preview</h2>
+              <span className="text-sm font-normal text-gray-500">(Recommended size: 500px × 1140px)</span>
+            </div>
+          </div>
         </div>
-        <div className="w-full mb-4">
-          {largeImageTest ? (
-            <div className="h-[500px] w-[1140px] relative border-2">
+        <div className="p-6">
+          {loadingCenterCarouselAds ? (
+            <div className="h-[500px] w-full max-w-[1140px] mx-auto rounded-md bg-gray-200 animate-pulse"></div>
+          ) : largeImageTest ? (
+            <div className="relative h-[500px] w-full max-w-[1140px] mx-auto border rounded-md overflow-hidden">
               <Image
                 src={largeImageTest}
-                alt="image de carrousel"
+                alt="Carousel advertisement preview"
                 layout="fill"
                 objectFit="contain"
+                className="transition-opacity duration-300"
                 onLoadingComplete={() =>
                   setLoadingImages((prev) => ({
                     ...prev,
@@ -180,100 +207,127 @@ const CarouselAdvertisingPage = () => {
               {loadingImages[largeImageTest] && <Loader />}
             </div>
           ) : (
-            <div className="uppercase shadow-xl flex-col border-dashed text-sm h-[500px] w-[1140px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors">
-              <span>500px / 1140px</span>
-              <span>png / jpg / gif</span>
+            <div className="flex flex-col items-center justify-center h-[500px] w-full max-w-[1140px] mx-auto border border-dashed rounded-md bg-gray-100">
+              <IoImageOutline className="h-12 w-12 text-gray-400 mb-2" />
+              <p className="text-gray-500 text-sm">No image selected</p>
+              <p className="text-gray-400 text-xs mt-1">Recommended: 500px × 1140px (PNG, JPG, GIF)</p>
             </div>
           )}
         </div>
-        <div className="AllImages flex justify-center space-x-4 mt-10 w-full">
-          <Carousel className="w-full max-w-4xl">
-            <CarouselContent className="">
-              {imagesSlider.map((img, index) => (
-                <CarouselItem
-                  key={index}
-                  className="basis-1/3 border-2 w-full h-32"
-                  onClick={() => handleImageClick(img.urlImage, img.linkImage)}
-                >
-                  <div className="flex items-center gap-3 cursor-grab	 caret-fuchsia-800 justify-center h-full  p-6 relative">
-                    <Image
-                      src={img.urlImage}
-                      alt={`image de carrousel ${index}`}
-                      layout="fill"
-                      objectFit="contain"
-                      onLoadingComplete={() =>
-                        setLoadingImages((prev) => ({
-                          ...prev,
-                          [img.urlImage]: false,
-                        }))
-                      }
-                    />
-                    {loadingImages[img.urlImage] && <Loader />}
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-        <div className="AddNewCarouselImage flex flex-col justify-between mt-4">
-          <div className="addField flex items-center justify-between mb-2">
-            <p className="tracking-wider">Ajouter une Nouvelle Image</p>
-            <CiCirclePlus
-              size={35}
-              onClick={handleAddInputField}
-              className="cursor-pointer"
-            />
+      </div>
+
+      {imagesSlider.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border mb-8">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold">Current Carousel Images</h2>
           </div>
+          <div className="p-6">
+            <Carousel className="w-full max-w-4xl mx-auto">
+              <CarouselContent>
+                {imagesSlider.map((img, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="basis-1/3 md:basis-1/4"
+                  >
+                    <div 
+                      className="relative h-32 border rounded-md overflow-hidden cursor-pointer hover:border-blue-500 transition-colors"
+                      onClick={() => handleImageClick(img.urlImage, img.linkImage)}
+                    >
+                      <Image
+                        src={img.urlImage}
+                        alt={`Carousel image ${index + 1}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className={`transition-opacity duration-300 ${loadingImages[img.urlImage] ? 'opacity-50' : 'opacity-100'}`}
+                        onLoadingComplete={() =>
+                          setLoadingImages((prev) => ({
+                            ...prev,
+                            [img.urlImage]: false,
+                          }))
+                        }
+                      />
+                      {loadingImages[img.urlImage] && <Loader />}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-0" />
+              <CarouselNext className="right-0" />
+            </Carousel>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Manage Carousel Images</h2>
+            <button 
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50"
+              onClick={handleAddInputField}
+            >
+              <FiPlus size={16} /> Add Image
+            </button>
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
           {inputFields.map((field, index) => (
             <div
               key={index}
-              className="flex items-center w-full border-b py-2 justify-between mb-2"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-md relative"
             >
-              <div className="flex items-center justify-between gap-2">
-                <CldUploadWidget
-                  uploadPreset="ita-luxury"
-                  onSuccess={(result, { widget }) => {
-                    handleSuccessUpload(result, index);
-                    widget.close();
-
-                  }}
-                >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      className="uppercase shadow-xl flex-col border-dashed text-sm h-[50px] w-[100px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors cursor-pointer"
-                      onClick={() => open()}
+              <div className="flex flex-col w-full gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  <div className="w-full sm:w-auto">
+                    <label htmlFor={`image-upload-${index}`} className="mb-2 block text-sm font-medium">Image</label>
+                    <CldUploadWidget
+                      uploadPreset="ita-luxury"
+                      onSuccess={(result, { widget }) => {
+                        handleSuccessUpload(result, index);
+                        widget.close();
+                      }}
                     >
-                      <IoImageOutline />
-                    </button>
-                  )}
-                </CldUploadWidget>
-                <input
-                  type="text"
-                  className="outline-none border px-2 py-3 w-[500px]"
-                  placeholder="Lien vers votre site"
-                  value={field.linkImage}
-                  onChange={(e) =>
-                    handleInputChange(index, "linkImage", e.target.value)
-                  }
-                />
+                      {({ open }) => (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50"
+                          onClick={() => open()}
+                        >
+                          <IoImageOutline /> Upload
+                        </button>
+                      )}
+                    </CldUploadWidget>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <label htmlFor={`link-${index}`} className="mb-2 block text-sm font-medium">Destination URL</label>
+                    <div className="relative">
+                      <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        id={`link-${index}`}
+                        type="url"
+                        placeholder="https://example.com/product"
+                        className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={field.linkImage}
+                        onChange={(e) =>
+                          handleInputChange(index, "linkImage", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+                
                 {field.urlImage && (
-                  <div
-                    className="relative h-[50px] w-[100px] border overflow-hidden rounded-md cursor-pointer"
-                    onClick={() =>
-                      handleImageClick(field.urlImage, field.linkImage)
-                    }
+                  <div 
+                    className="relative h-20 w-32 border rounded-md overflow-hidden cursor-pointer mx-auto sm:mx-0"
+                    onClick={() => handleImageClick(field.urlImage, field.linkImage)}
                   >
-                    {loadingImages[field.urlImage] && <Loader />}
                     <Image
                       src={field.urlImage}
-                      alt={`image téléchargée ${index}`}
+                      alt={`Uploaded image ${index + 1}`}
                       layout="fill"
-                      className={`${!loadingImages[field.urlImage] ? "visible" : "invisible"
-                        }`}
-                      objectFit="contain"
+                      objectFit="cover"
+                      className={`transition-opacity duration-300 ${loadingImages[field.urlImage] ? 'opacity-50' : 'opacity-100'}`}
                       onLoadingComplete={() =>
                         setLoadingImages((prev) => ({
                           ...prev,
@@ -281,20 +335,23 @@ const CarouselAdvertisingPage = () => {
                         }))
                       }
                     />
+                    {loadingImages[field.urlImage] && <Loader />}
                   </div>
                 )}
               </div>
-              <MdOutlineDelete
-                color="white"
-                size={35}
+              
+              <button
+                className="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
                 onClick={() => handleDeleteImage(index)}
-                className="border cursor-pointer hover:bg-red-400 bg-red-500 rounded-full p-2"
-              />
+              >
+                <MdOutlineDelete size={20} />
+              </button>
             </div>
           ))}
         </div>
       </div>
-      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} />}
+
+      {showBackUp && <BackUp onSave={handleSave} showBackUp={showBackUp} isSaving={isSaving} />}
     </div>
   );
 };
