@@ -489,8 +489,16 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
                     </button>
                     <button
                       onClick={() => {
-                        Cookies.remove("AdminToken");
-                        window.location.reload();
+                        // Remove the cookie with the same path and domain settings
+                        Cookies.remove("AdminToken", { 
+                          path: '/',
+                          domain: window.location.hostname
+                        });
+                        
+                        // Add a small delay before redirecting to ensure cookie is removed
+                        setTimeout(() => {
+                          router.push('/signin');
+                        }, 100);
                       }}
                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
