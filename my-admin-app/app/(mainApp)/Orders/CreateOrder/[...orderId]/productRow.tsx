@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { MdDeleteOutline } from "react-icons/md";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Console } from "console";
 
 interface ProductRowProps {
   item: any;
@@ -22,12 +21,15 @@ const ProductRow: React.FC<ProductRowProps> = ({
   );
   const [total, setTotal] = useState(0);
 
-  const price = existingProductInCheckout.price;
-  const discountedPrice = existingProductInCheckout.discountedPrice;
+  const price = existingProductInCheckout.price || 0;
+  const discountedPrice = existingProductInCheckout.discountedPrice || null;
 
   useEffect(() => {
-    
-    const currentPrice = discountedPrice || price;
+    // Use discounted price if available and less than regular price, otherwise use regular price
+    const currentPrice = (discountedPrice && discountedPrice < price) 
+      ? discountedPrice 
+      : price;
+      
     setTotal(parseFloat((currentPrice * quantity).toFixed(3)));
   }, [quantity, price, discountedPrice]);
 
@@ -51,12 +53,12 @@ const ProductRow: React.FC<ProductRowProps> = ({
             <Image
               className="w-full h-full rounded-full"
               src={
-                item.product.images[0] ||
+                item.product.images?.[0] ||
                 "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
               }
               layout="fill"
               objectFit="contain"
-              alt=""
+              alt={item.product.name || "Product image"}
               loading="lazy"
             />
             <div

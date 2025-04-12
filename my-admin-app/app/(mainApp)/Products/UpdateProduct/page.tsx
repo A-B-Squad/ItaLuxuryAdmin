@@ -21,211 +21,224 @@ interface Attribute {
   value: string;
 }
 
-const UpdateProduct = ({ searchParams }: any) => {
-  const { toast } = useToast();
-  const productId = searchParams.productId;
-  const [attributes, setAttributes] = useState<Attribute[]>([
-    { name: "", value: "" },
-  ]);
+// Add import for useRouter at the top of the file
+  import { useRouter } from "next/navigation";
 
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [stock, setStock] = useState<number>(0);
-  const [reference, setReference] = useState<string>("");
-  const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
-  const [originalPrice, setOriginalPrice] = useState<number>(0);
-  const [purchasePrice, setPurchasePrice] = useState<number>(0);
-  const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
+  const UpdateProduct = ({ searchParams }: any) => {
+    const { toast } = useToast();
+    const router = useRouter(); // Add router
+    const productId = searchParams.productId;
+    const [attributes, setAttributes] = useState<Attribute[]>([
+      { name: "", value: "" },
+    ]);
 
-  const [dateOfStartDiscount, setDateOfStartDiscount] = useState<
-    string | Date | null
-  >(null);
-  const [dateOfEndDiscount, setDateOfEndDiscount] = useState<
-    string | Date | null
-  >(null);
+    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+    const [title, setTitle] = useState<string>("");
+    const [description, setDescription] = useState<string>("");
+    const [stock, setStock] = useState<number>(0);
+    const [reference, setReference] = useState<string>("");
+    const [manualDiscountPrice, setManualDiscountPrice] = useState<number>(0);
+    const [originalPrice, setOriginalPrice] = useState<number>(0);
+    const [purchasePrice, setPurchasePrice] = useState<number>(0);
+    const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [visibility, setVisibility] = useState<boolean>(true);
-  const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
+    const [dateOfStartDiscount, setDateOfStartDiscount] = useState<
+      string | Date | null
+    >(null);
+    const [dateOfEndDiscount, setDateOfEndDiscount] = useState<
+      string | Date | null
+    >(null);
 
-  const [selectedIds, setSelectedIds] = useState({
-    categoryId: "",
-    subcategoryId: "",
-    subSubcategoryId: "",
-  });
-  const [brandId, setBrand] = useState<string | null>(null);
-  const [updateProductMutation] = useMutation(UPDATE_PRODUCT_MUTATIONS);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [visibility, setVisibility] = useState<boolean>(true);
+    const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
 
-  const {
-    data: productDataById,
-    loading,
-    error,
-  } = useQuery(PRODUCT_BY_ID_QUERY, {
-    variables: { productByIdId: productId },
-  });
+    const [selectedIds, setSelectedIds] = useState({
+      categoryId: "",
+      subcategoryId: "",
+      subSubcategoryId: "",
+    });
+    const [brandId, setBrand] = useState<string | null>(null);
+    const [updateProductMutation] = useMutation(UPDATE_PRODUCT_MUTATIONS);
 
-  useEffect(() => {
-    if (!loading && !error && productDataById && productDataById.productById) {
-      const product = productDataById.productById;
+    const {
+      data: productDataById,
+      loading,
+      error,
+    } = useQuery(PRODUCT_BY_ID_QUERY, {
+      variables: { productByIdId: productId },
+    });
 
-      setTitle((prev) => (prev !== product.name ? product.name : prev));
-      setDescription((prev) =>
-        prev !== product.description ? product.description : prev,
-      );
-      setStock((prev) =>
-        prev !== product.inventory ? product.inventory : prev,
-      );
-      setReference((prev) =>
-        prev !== product.reference ? product.reference : prev,
-      );
-      setUploadedImages((prev) =>
-        prev !== product.images ? product.images : prev,
-      );
-      setOriginalPrice((prev) =>
-        prev !== product.price ? product.price : prev,
-      );
-      setPurchasePrice((prev) =>
-        prev !== product.purchasePrice ? product.purchasePrice : prev,
-      );
-      setVisibility((prev) =>
-        prev !== product.isVisible ? product.isVisible : prev,
-      );
-      setSelectedColor((prev) =>
-        prev !== product.Colors?.id ? product.Colors?.id : prev,
-      );
-      setBrand((prev) =>
-        prev !== product.Brand?.id ? product.Brand?.id : prev,
-      );
+    useEffect(() => {
+      if (!loading && !error && productDataById && productDataById.productById) {
+        const product = productDataById.productById;
 
-      // Update attributes only if necessary
+        setTitle((prev) => (prev !== product.name ? product.name : prev));
+        setDescription((prev) =>
+          prev !== product.description ? product.description : prev,
+        );
+        setStock((prev) =>
+          prev !== product.inventory ? product.inventory : prev,
+        );
+        setReference((prev) =>
+          prev !== product.reference ? product.reference : prev,
+        );
+        setUploadedImages((prev) =>
+          prev !== product.images ? product.images : prev,
+        );
+        setOriginalPrice((prev) =>
+          prev !== product.price ? product.price : prev,
+        );
+        setPurchasePrice((prev) =>
+          prev !== product.purchasePrice ? product.purchasePrice : prev,
+        );
+        setVisibility((prev) =>
+          prev !== product.isVisible ? product.isVisible : prev,
+        );
+        setSelectedColor((prev) =>
+          prev !== product.Colors?.id ? product.Colors?.id : prev,
+        );
+        setBrand((prev) =>
+          prev !== product.Brand?.id ? product.Brand?.id : prev,
+        );
 
-      const rawAttributes = product.attributes || [];
-      const newAttributes =
-        rawAttributes
-          .map((attr: any) => ({
-            name: attr.name?.trim() || "",
-            value: attr.value?.trim() || "",
-          }))
-          .filter((attr: { name: any; value: any; }) => attr.name && attr.value)
-        ;
-      // Update attributes state only if necessary
-      if (JSON.stringify(attributes) !== JSON.stringify(newAttributes)) {
-        setAttributes(newAttributes);
+        // Update attributes only if necessary
+
+        const rawAttributes = product.attributes || [];
+        const newAttributes =
+          rawAttributes
+            .map((attr: any) => ({
+              name: attr.name?.trim() || "",
+              value: attr.value?.trim() || "",
+            }))
+            .filter((attr: { name: any; value: any; }) => attr.name && attr.value)
+          ;
+        // Update attributes state only if necessary
+        if (JSON.stringify(attributes) !== JSON.stringify(newAttributes)) {
+          setAttributes(newAttributes);
+        }
+
+        if (product.categories.length > 0) {
+          const category = product.categories;
+          setSelectedIds((prev) => {
+            const newSelectedIds = {
+              categoryId: category[0].id,
+              subcategoryId:
+                Object.keys(category[1]).length > 0
+                  ? category[1].id
+                  : "",
+              subSubcategoryId:
+                Object.keys(category[2]).length > 0
+                  ? category[2].id
+                  : "",
+            };
+            return JSON.stringify(prev) !== JSON.stringify(newSelectedIds)
+              ? newSelectedIds
+              : prev;
+          });
+        }
+
+        if (product.productDiscounts && product.productDiscounts.length > 0) {
+          const discount = product.productDiscounts[0];
+          setIsDiscountEnabled(true);
+          setManualDiscountPrice(discount.price - discount.newPrice)
+
+          const startDate = formatDate(discount.dateOfStart);
+          const endDate = formatDate(discount.dateOfEnd);
+          setDateOfStartDiscount(startDate);
+          setDateOfEndDiscount(endDate);
+        } else {
+          setIsDiscountEnabled(false);
+
+        }
       }
-
-      if (product.categories.length > 0) {
-        const category = product.categories;
-        setSelectedIds((prev) => {
-          const newSelectedIds = {
-            categoryId: category[0].id,
-            subcategoryId:
-              Object.keys(category[1]).length > 0
-                ? category[1].id
-                : "",
-            subSubcategoryId:
-              Object.keys(category[2]).length > 0
-                ? category[2].id
-                : "",
-          };
-          return JSON.stringify(prev) !== JSON.stringify(newSelectedIds)
-            ? newSelectedIds
-            : prev;
-        });
-      }
-
-      if (product.productDiscounts && product.productDiscounts.length > 0) {
-        const discount = product.productDiscounts[0];
-        setIsDiscountEnabled(true);
-        setManualDiscountPrice(discount.price - discount.newPrice)
-
-        const startDate = formatDate(discount.dateOfStart);
-        const endDate = formatDate(discount.dateOfEnd);
-        setDateOfStartDiscount(startDate);
-        setDateOfEndDiscount(endDate);
-      } else {
-        setIsDiscountEnabled(false);
-
-      }
-    }
-  }, [productDataById, loading, error]);
+    }, [productDataById, loading, error]);
 
 
 
 
-  const handleUpdateProduct = () => {
+    // Add isSubmitting state
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    if (
-      !title ||
-      !description ||
-      !uploadedImages.length ||
-      !selectedIds.categoryId
-    ) {
-      toast({
-        title: "Erreur de mise à jour",
-        variant: "destructive",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        duration: 5000,
-      });
-      return;
-    }
+    const handleUpdateProduct = () => {
+      // Prevent multiple submissions
+      if (isSubmitting) return;
 
-    const hasDiscount = isDiscountEnabled;
+      // Set submitting state to true
+      setIsSubmitting(true);
 
-    if (hasDiscount) {
-      if (!dateOfEndDiscount || !dateOfStartDiscount) {
+      if (
+        !title ||
+        !description ||
+        !uploadedImages.length ||
+        !selectedIds.categoryId
+      ) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
-          description:
-            "Veuillez remplir les dates de début et de fin de remise.",
+          description: "Veuillez remplir tous les champs obligatoires.",
+          duration: 5000,
+        });
+        setIsSubmitting(false); // Reset submitting state
+        return;
+      }
+
+      const hasDiscount = isDiscountEnabled;
+
+      if (hasDiscount) {
+        if (!dateOfEndDiscount || !dateOfStartDiscount) {
+          toast({
+            title: "Erreur de mise à jour",
+            variant: "destructive",
+            description:
+              "Veuillez remplir les dates de début et de fin de remise.",
+            duration: 5000,
+          });
+          return;
+        }
+        if (!manualDiscountPrice) {
+          toast({
+            title: "Erreur de mise à jour",
+            variant: "destructive",
+            description: "Veuillez fournir un prix de remise manuel.",
+            duration: 5000,
+          });
+          return;
+        }
+
+      }
+
+      if (!originalPrice && !hasDiscount) {
+        toast({
+          title: "Erreur de mise à jour",
+          variant: "destructive",
+          description: "Veuillez fournir un prix ou une remise.",
           duration: 5000,
         });
         return;
       }
-      if (!manualDiscountPrice) {
-        toast({
-          title: "Erreur de mise à jour",
-          variant: "destructive",
-          description: "Veuillez fournir un prix de remise manuel.",
-          duration: 5000,
-        });
-        return;
-      }
 
-    }
-
-    if (!originalPrice && !hasDiscount) {
-      toast({
-        title: "Erreur de mise à jour",
-        variant: "destructive",
-        description: "Veuillez fournir un prix ou une remise.",
-        duration: 5000,
-      });
-      return;
-    }
-
-    const productData = {
-      productId: productId,
-      input: {
-        attributeInputs: attributes,
-        brandId: brandId !== "empty" ? brandId : null,
-        categories: [
-          selectedIds.categoryId,
-          selectedIds.subcategoryId,
-          selectedIds.subSubcategoryId,
-        ].filter(Boolean),
-        description,
-        name: title,
-        images: uploadedImages,
-        inventory: stock,
-        isVisible: visibility,
-        price: originalPrice,
-        purchasePrice,
-        colorsId: selectedColor,
-        reference,
-        ...(hasDiscount &&
-          isDiscountEnabled && {
+      const productData = {
+        productId: productId,
+        input: {
+          attributeInputs: attributes,
+          brandId: brandId !== "empty" ? brandId : null,
+          categories: [
+            selectedIds.categoryId,
+            selectedIds.subcategoryId,
+            selectedIds.subSubcategoryId,
+          ].filter(Boolean),
+          description,
+          name: title,
+          images: uploadedImages,
+          inventory: stock,
+          isVisible: visibility,
+          price: originalPrice,
+          purchasePrice,
+          colorsId: selectedColor,
+          reference,
+          ...(hasDiscount &&
+            isDiscountEnabled && {
           discount: [
             {
               newPrice: finalDiscountPrice,
@@ -251,17 +264,22 @@ const UpdateProduct = ({ searchParams }: any) => {
           description: "Le produit a été mis à jour avec succès.",
           duration: 5000,
         });
+        setIsSubmitting(false); // Reset submitting state on success
+        
+        // Navigate back to products page after successful update
+        setTimeout(() => {
+          router.push('/Products');
+        }, 1000);
       },
-
       onError(err) {
-
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
           description: `${err.message}`,
           duration: 5000,
         });
-        return
+        setIsSubmitting(false); // Reset submitting state on error
+        return;
       }
     });
   };
@@ -360,9 +378,13 @@ const UpdateProduct = ({ searchParams }: any) => {
       <div className="w-full my-5 py-2">
         <button
           onClick={handleUpdateProduct}
-          className="py-2 w-full flex items-center justify-center gap-3 rounded-lg text-center bg-mainColorAdminDash text-white"
+          disabled={isSubmitting}
+          className={`py-2 w-full flex items-center justify-center gap-3 rounded-lg text-center ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-mainColorAdminDash hover:bg-opacity-90'
+            } text-white transition-all`}
         >
-          <span className="font-semibold text-lg">Mettre à jour</span>
+          <span className="font-semibold text-lg">
+            {isSubmitting ? "Mise à jour en cours..." : "Mettre à jour"}
+          </span>
         </button>
       </div>
     </div>

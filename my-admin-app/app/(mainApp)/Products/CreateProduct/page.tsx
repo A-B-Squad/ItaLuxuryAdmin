@@ -20,6 +20,8 @@ interface Attribute {
 
 const CreateProductPage = () => {
   const { toast } = useToast();
+  // Add a loading state to track submission status
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [attributes, setAttributes] = useState<Attribute[]>([
     { name: "", value: "" },
@@ -55,6 +57,12 @@ const CreateProductPage = () => {
   const [createProductMutation] = useMutation(CREATE_PRODUCT_MUTATIONS);
 
   const handleSubmit = () => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
+    // Set submitting state to true
+    setIsSubmitting(true);
+
     if (
       !title ||
       !description ||
@@ -67,6 +75,7 @@ const CreateProductPage = () => {
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
+      setIsSubmitting(false); // Reset submitting state
       return;
     }
 
@@ -167,15 +176,17 @@ const CreateProductPage = () => {
           description: "Le produit a été créé avec succès.",
           duration: 5000,
         });
-      }, onError(err) {
-
+        // No need to reset isSubmitting as we're reloading the page
+      }, 
+      onError(err) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
           description: `${err.message}`,
           duration: 5000,
         });
-        return
+        setIsSubmitting(false); // Reset submitting state on error
+        return;
       }
     });
   };
@@ -260,10 +271,15 @@ const CreateProductPage = () => {
       </div>
       <button
         type="button"
-        className="w-full py-3 mt-6 hover:opacity-90 transition-all bg-mainColorAdminDash text-white rounded-md shadow-sm hover:bg-mainColorAdminDash-dark"
+        className={`w-full py-3 mt-6 transition-all bg-mainColorAdminDash text-white rounded-md shadow-sm ${
+          isSubmitting 
+            ? "opacity-70 cursor-not-allowed" 
+            : "hover:opacity-90 hover:bg-mainColorAdminDash-dark"
+        }`}
         onClick={handleSubmit}
+        disabled={isSubmitting}
       >
-        Créer le produit
+        {isSubmitting ? "Création en cours..." : "Créer le produit"}
       </button>
     </div>
   );

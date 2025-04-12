@@ -180,7 +180,18 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
                         {product.name}
                       </p>
                       <p className="text-xs text-gray-500 line-clamp-1">
-                        Réf: {product.reference} | Prix: {product.price.toFixed(3)} TND
+                        Réf: {product.reference} | Prix: {
+                          product.productDiscounts && 
+                          product.productDiscounts.length > 0 && 
+                          product.productDiscounts[0].newPrice < product.price ? (
+                            <>
+                              <span className="line-through">{product.price.toFixed(3)}</span>
+                              <span className="text-red-500 ml-1">{product.productDiscounts[0].newPrice.toFixed(3)}</span>
+                            </>
+                          ) : (
+                            product.price.toFixed(3)
+                          )
+                        } TND
                       </p>
                     </div>
                   </div>

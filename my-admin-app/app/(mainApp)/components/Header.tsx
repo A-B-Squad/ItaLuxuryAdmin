@@ -70,10 +70,17 @@ const Header = ({ onMenuClick, showMenuButton }: HeaderProps) => {
 
   // Register service worker for push notifications
   useEffect(() => {
+    // Track if registration has already been logged
+    let hasLogged = false;
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope);
+          // Only log once
+          if (!hasLogged) {
+            console.log('Service Worker registered with scope:', registration.scope);
+            hasLogged = true;
+          }
 
           // Listen for messages from service worker
           navigator.serviceWorker.addEventListener('message', (event) => {
