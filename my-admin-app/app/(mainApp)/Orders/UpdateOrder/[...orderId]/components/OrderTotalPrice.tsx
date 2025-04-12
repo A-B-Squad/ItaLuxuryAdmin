@@ -37,7 +37,7 @@ const OrderTotalPrice: React.FC<OrderTotalPriceProps> = ({
     const couponDiscount = (subtotal * couponPercentage) / 100;
     const manualDiscount = order.Checkout.manualDiscount || 0;
     const shippingCost = freeDelivery ? 0.0 : deliveryPrice;
-    console.log(freeDelivery, "################");
+    // Removed console.log statement
 
     const totalWithDiscount =
       subtotal - couponDiscount - manualDiscount + shippingCost;

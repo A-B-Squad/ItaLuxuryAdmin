@@ -24,10 +24,7 @@ interface AddPriceProps {
   setIsDiscountEnabled: (type: boolean) => void;
 }
 
-interface DiscountOption {
-  id: string;
-  percentage: number;
-}
+
 
 const AddPrice: React.FC<AddPriceProps> = ({
 
@@ -173,14 +170,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
     setPurchasePrice(price);
   };
 
-  // Calculate manual discounted price
-  const calculateManualDiscountedPrice = (
-    price: number,
-    discountPrice: number,
-  ) => {
-    const finalPrice = price - discountPrice;
-    updateFinalPrice(finalPrice);
-  };
+
 
   // Toggle calendar visibility
   const toggleCalendar = () => setShowCalendar(!showCalendar);
@@ -197,12 +187,6 @@ const AddPrice: React.FC<AddPriceProps> = ({
 
 
 
-  // Helper function to update final price
-  const updateFinalPrice = (finalPrice: number) => {
-    setManualDiscountPrice(finalPrice);
-    setDiscountedPrice(finalPrice.toFixed(2));
-    setFinalDiscountPrice(finalPrice);
-  };
 
   // Helper function to reset discount values
   const resetDiscountValues = () => {

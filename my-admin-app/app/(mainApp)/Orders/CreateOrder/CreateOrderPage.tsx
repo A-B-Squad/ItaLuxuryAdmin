@@ -333,6 +333,11 @@ const CreateOrderPage = ({ searchParams }: any) => {
     (selectedProduct: any) => {
       setShowBackUp(true);
       setPackageData((prevPackage: any) => {
+        // Get the discounted price if available
+        const discountedPrice = selectedProduct?.productDiscounts?.length > 0 
+          ? selectedProduct.productDiscounts[0].newPrice 
+          : null;
+        
         if (!prevPackage) {
           return {
             id: "",
@@ -355,19 +360,19 @@ const CreateOrderPage = ({ searchParams }: any) => {
                 {
                   productQuantity: 1,
                   price: selectedProduct.price,
-                  discountedPrice: selectedProduct?.productDiscounts[0]?.newPrice || selectedProduct.price,
+                  discountedPrice: discountedPrice || selectedProduct.price,
                   product: selectedProduct,
                 },
               ],
             },
           };
         }
-
+    
         const existingProductIndex =
           prevPackage.Checkout.productInCheckout.findIndex(
             (item: any) => item.product.id === selectedProduct.id,
           );
-
+    
         let updatedProductInCheckout;
         if (existingProductIndex !== -1) {
           updatedProductInCheckout = [
@@ -383,8 +388,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
           const newProduct = {
             productQuantity: 1,
             price: selectedProduct.price,
-            discountedPrice:
-              selectedProduct?.productDiscounts[0]?.newPrice || selectedProduct.price,
+            discountedPrice: discountedPrice || selectedProduct.price,
             product: selectedProduct,
           };
           updatedProductInCheckout = [
@@ -392,7 +396,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
             newProduct,
           ];
         }
-
+    
         return {
           ...prevPackage,
           Checkout: {

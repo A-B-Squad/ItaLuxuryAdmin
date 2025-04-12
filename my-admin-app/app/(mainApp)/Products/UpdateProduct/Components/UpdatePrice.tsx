@@ -165,7 +165,6 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
       calculateManualDiscountedPrice(originalPrice, manualDiscountPrice);
     }
 
-    setIsDiscountEnabled(true);
     // Set initial dates
     const startDate = parseAndFormatDate(dateOfStartDiscount);
     const endDate = parseAndFormatDate(dateOfEndDiscount);

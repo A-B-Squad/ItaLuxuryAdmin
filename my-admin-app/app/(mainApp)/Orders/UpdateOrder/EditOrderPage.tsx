@@ -14,7 +14,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { CiSaveDown2 } from "react-icons/ci";
-import { useRouter } from "next/navigation";
 import SmallSpinner from "../../components/SmallSpinner";
 import CancelModal from "./[...orderId]/components/CancelModal";
 import Comments from "./[...orderId]/components/Comments";
@@ -23,6 +22,7 @@ import OrderDetails from "./[...orderId]/components/OrderDetails";
 import OrderReference from "./[...orderId]/components/OrderReference";
 import OrderTotalPrice from "./[...orderId]/components/OrderTotalPrice";
 import RefundModal from "./[...orderId]/components/RefundModal";
+import { useRouter } from "next/navigation";
 
 const EditOrderPage = ({ searchParams }: any) => {
   const { toast } = useToast();
@@ -194,9 +194,38 @@ const EditOrderPage = ({ searchParams }: any) => {
     }
   };
 
+
+  // Add this at the top of your component
+  const [jaxGovernorates, setJaxGovernorates] = useState<{ [key: string]: number }>({});
+
+  // Add this useEffect to fetch JAX governorates when component mounts
+  useEffect(() => {
+    const fetchJaxGovernorates = async () => {
+      try {
+        const response = await fetch('/api/jax-delivery/governorates');
+        if (response.ok) {
+          const data = await response.json();
+          // Create a mapping from governorate name to JAX ID
+          const govMapping: { [key: string]: number } = {};
+          data.forEach((gov: { id: number, nom: string }) => {
+            govMapping[gov.nom.toLowerCase()] = gov.id;
+          });
+          setJaxGovernorates(govMapping);
+        } else {
+          console.error('Failed to fetch JAX governorates');
+        }
+      } catch (error) {
+        console.error('Error fetching JAX governorates:', error);
+      }
+    };
+
+    fetchJaxGovernorates();
+  }, []);
+
   const handleConfirmedOrder = async () => {
     setIsSubmitting(true);
     try {
+      // First update the order status in your system
       await payedOrConfirmedOrInTransitPackage({
         variables: {
           packageId: orderId,
@@ -204,19 +233,109 @@ const EditOrderPage = ({ searchParams }: any) => {
           status: "CONFIRMED",
         },
       });
+
+      // Then create the delivery in JAX system
+      if (order?.Checkout?.address) {
+        try {
+          // Handle both registered users and guest users
+          const userName = order.Checkout.userName || "Client";
+          const phone = order.Checkout.phone || [];
+          const address = order.Checkout.address;
+
+          // Get governorate name from your system
+          const govName = order.Checkout.Governorate?.name || '';
+
+          // Find matching JAX governorate ID with better error handling
+          let jaxGovId = '';
+          if (govName) {
+            // Try to find by name (case insensitive)
+            const matchedId = jaxGovernorates[govName.toLowerCase().trim()];
+            if (matchedId) {
+              jaxGovId = matchedId.toString();
+            } else {
+              // If no match found, use a default (Tunis = 4)
+              console.warn(`No JAX governorate match found for: ${govName}, using default`);
+              jaxGovId = '4';
+            }
+          } else {
+            // If no governorate name, use a default
+            jaxGovId = '4';
+          }
+
+          const jaxResponse = await fetch('/api/jax-delivery/create-colis', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              // Use product references instead of order ID
+              referenceExterne: order.Checkout.productInCheckout.map((item: any) =>
+                item.product.reference
+              ).join(', ').substring(0, 100),
+              // Use userName for guest users since User might be null
+              nomContact: userName,
+              // Handle phone numbers as array - use first number for primary contact
+              tel: Array.isArray(phone) && phone.length > 0 ? phone[0] : (phone || ''),
+              // Use second phone number if available, otherwise use the first one
+              tel2: Array.isArray(phone) && phone.length > 1 ? phone[1] : "",
+              adresseLivraison: address || '',
+              governorat: jaxGovId,
+              delegation: order.Checkout.city || 'Non spécifié',
+              description: `Commande #${order.customId} - ${order.Checkout.productInCheckout.length} produits: ${order.Checkout.productInCheckout.map((item: any) =>
+                item.product.name
+              ).join(', ').substring(0, 150)}`,
+              cod: order.Checkout.paymentMethod === 'CASH_ON_DELIVERY' ?
+                (order.Checkout.total).toString() : '0',
+              echange: 0
+            })
+          });
+
+          // Improved error handling for JAX response
+          if (!jaxResponse.ok) {
+            let errorMessage = 'Unknown error';
+            try {
+              const errorData = await jaxResponse.json();
+              errorMessage = errorData.error || errorData.message || `Status ${jaxResponse.status}`;
+            } catch (e) {
+              errorMessage = `Status ${jaxResponse.status}`;
+            }
+
+            console.error('JAX API error:', errorMessage);
+            toast({
+              title: "Commande confirmée",
+              description: `La commande a été confirmée, mais l'envoi à JAX a échoué: ${errorMessage}`,
+              variant: "destructive",
+            });
+          } else {
+            // Success - both our system and JAX updated
+            toast({
+              title: "Commande confirmée",
+              description: "La commande a été confirmée et envoyée à JAX Delivery.",
+              className: "bg-green-50 border-green-200",
+            });
+          }
+        } catch (jaxError) {
+          console.error("Error creating JAX delivery:", jaxError);
+          toast({
+            title: "Commande confirmée",
+            description: "La commande a été confirmée, mais l'envoi à JAX a échoué.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Commande confirmée",
+          description: "La commande a été confirmée pour livraison avec succès.",
+          className: "bg-green-50 border-green-200",
+        });
+      }
+
       await refetch();
-      toast({
-        title: "Commande confirmée",
-        description:
-          "La commande a été confirmée pour livraison avec succès.",
-        className: "bg-green-50 border-green-200",
-      });
     } catch (error) {
       console.error("Error updating package status:", error);
       toast({
         title: "Erreur",
-        description:
-          "Une erreur est survenue lors de la confirmation de la commande.",
+        description: "Une erreur est survenue lors de la confirmation de la commande.",
         variant: "destructive",
       });
     } finally {

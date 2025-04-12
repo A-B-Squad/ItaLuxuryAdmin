@@ -150,59 +150,64 @@ const UpdateCategory = () => {
   };
 
   const renderCategoryOptions = (categories: Category[] | undefined) => {
+    // Filter out the current category to prevent self-selection as parent
+    const filteredCategories = categories?.filter(cat => cat.id !== categoryId);
+    
     return (
       <>
         <SelectTrigger className="w-full p-2 border border-gray-300 rounded h-12 outline-none mt-1">
           <SelectValue placeholder="Sélectionner une catégorie" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[300px] overflow-y-auto">
           <SelectGroup>
-            <SelectLabel>Catégories</SelectLabel>
-            {categories?.map((cat) => (
+            <SelectLabel className="text-lg font-semibold sticky top-0 bg-white p-2 border-b z-10">
+              Catégories
+            </SelectLabel>
+            {filteredCategories?.map((cat) => (
               <React.Fragment key={cat.id}>
                 <SelectItem
                   value={cat.id}
-                  className="flex items-center font-semibold tracking-wide cursor-pointer"
+                  className="flex items-center font-semibold tracking-wide cursor-pointer p-2 hover:bg-gray-100"
                 >
-                  <Image
-                    src={
-                      cat.smallImage ||
-                      "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                    }
-                    alt={
-                      cat.name ||
-                      "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                    }
-                    width={30}
-                    height={30}
-                    className="inline-block h-10 w-10 mr-2"
-                  />
-                  {cat.name}
+                  <div className="flex items-center w-full">
+                    <Image
+                      src={
+                        cat.smallImage ||
+                        "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
+                      }
+                      alt={cat.name}
+                      width={30}
+                      height={30}
+                      className="inline-block h-8 w-8 mr-2 object-cover rounded-sm"
+                    />
+                    <span className="truncate">{cat.name}</span>
+                  </div>
                 </SelectItem>
-                {cat.subcategories && (
-                  <SelectGroup className="ml-10">
-                    {cat.subcategories.map((subcat) => (
-                      <SelectItem
-                        key={subcat.id}
-                        value={subcat.id}
-                        className="flex items-center font-semisemibold cursor-pointer"
-                      >
-                        <Image
-                          src={
-                            subcat.smallImage ||
-                            "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                          }
-                          alt={
-                            subcat.name ||
-                            "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
-                          }
-                          width={30}
-                          height={30}
-                          className="inline-block h-10 w-10 mr-2"
-                        />
-                        {subcat.name}
-                      </SelectItem>
-                    ))}
+                {cat.subcategories && cat.subcategories.length > 0 && (
+                  <SelectGroup className="ml-6 border-l-2 border-gray-200 pl-2">
+                    {cat.subcategories
+                      .filter(subcat => subcat.id !== categoryId)
+                      .map((subcat) => (
+                        <SelectItem
+                          key={subcat.id}
+                          value={subcat.id}
+                          className="flex items-center font-normal cursor-pointer p-2 hover:bg-gray-100"
+                        >
+                          <div className="flex items-center w-full">
+                            <Image
+                              src={
+                                subcat.smallImage ||
+                                "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
+                              }
+                              alt={subcat.name}
+                              width={24}
+                              height={24}
+                              className="inline-block h-6 w-6 mr-2 object-cover rounded-sm"
+                            />
+                            <span className="truncate">{subcat.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 )}
               </React.Fragment>
