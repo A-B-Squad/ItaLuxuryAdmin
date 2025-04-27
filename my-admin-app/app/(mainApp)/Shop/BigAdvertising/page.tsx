@@ -83,14 +83,15 @@ const BigAdvertisingPage = () => {
 
   const handleSuccessUpload = (result: any) => {
     setShowBackUp(true);
-    const optimizedUrl = result.info.secure_url.replace(
+    // Transform the URL to WebP format with quality optimization
+    const webpUrl = result.info.secure_url.replace(
       "/upload/",
-      "/upload/f_auto,q_auto,w_700,h_450/"
+      "/upload/f_webp,q_auto:good,w_700,h_450/"
     );
-    if (optimizedUrl) {
-      // Apply transformations to optimize the image (resize, quality)
-      setImage({ urlImage: optimizedUrl, linkImage: image.linkImage });
-      setLoadingImages((prev) => ({ ...prev, [optimizedUrl]: true }));
+    
+    if (webpUrl) {
+      setImage({ urlImage: webpUrl, linkImage: image.linkImage });
+      setLoadingImages((prev) => ({ ...prev, [webpUrl]: true }));
     }
   };
 

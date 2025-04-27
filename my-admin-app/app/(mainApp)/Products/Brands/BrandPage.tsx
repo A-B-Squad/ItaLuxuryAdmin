@@ -121,7 +121,11 @@ const BrandPage = () => {
   };
 
   const handleUploadSuccess = (result: UploadResult) => {
-    setNewBrandLogo(result.info.secure_url);
+    // Transform the URL to WebP format while preserving original dimensions
+    const originalUrl = result.info.secure_url;
+    const webpUrl = originalUrl.replace("/upload/", "/upload/f_webp,q_auto:good/");
+    
+    setNewBrandLogo(webpUrl);
     toast({
       title: "Succès",
       description: "Image téléchargée avec succès",

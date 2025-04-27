@@ -29,19 +29,18 @@ const UploadBannerAds = ({
   const handleSuccess = (result: any) => {
     const file = result.info.secure_url;
     if (file) {
-      // Apply Cloudinary optimizations for format and quality
-      const optimizedUrl = result.info.secure_url.replace(
+      // Transform the URL to WebP format with quality optimization
+      const webpUrl = result.info.secure_url.replace(
         "/upload/",
-        "/upload/f_auto,q_auto/"
+        "/upload/f_webp,q_auto:good/"
       );
 
-      // Set the optimized URL for large image and input field
-
-      if (optimizedUrl) {
-        setLocalLargeImage(optimizedUrl);
+      // Set the WebP URL for large image and input field
+      if (webpUrl) {
+        setLocalLargeImage(webpUrl);
         setLocalInputField((prevField: any) => ({
           ...prevField,
-          images: [optimizedUrl],
+          images: [webpUrl],
         }));
 
         setLocalLoadingImages(true);
