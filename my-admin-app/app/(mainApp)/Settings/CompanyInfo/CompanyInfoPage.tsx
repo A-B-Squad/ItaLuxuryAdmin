@@ -143,9 +143,15 @@ const CompanyInfopage = () => {
 
     const file = result.info;
     if (file) {
+      // Transform the URL to WebP format with quality optimization
+      const webpUrl = file.url.replace(
+        "/upload/",
+        "/upload/f_webp,q_auto:good/"
+      );
+      
       setCompanyInfo((prev) => ({
         ...prev,
-        logo: file.url,
+        logo: webpUrl,
       }));
     }
   }, []);

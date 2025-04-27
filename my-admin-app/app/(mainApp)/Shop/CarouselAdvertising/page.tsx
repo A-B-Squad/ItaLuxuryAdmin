@@ -111,28 +111,29 @@ const CarouselAdvertisingPage = () => {
   }, [centerCarouselAds]);
 
   const handleSuccessUpload = (result: any, index: number) => {
-    const optimizedUrl = result.info.secure_url.replace(
+    // Transform the URL to WebP format with quality optimization
+    const webpUrl = result.info.secure_url.replace(
       "/upload/",
-      "/upload/f_auto,q_auto/"
+      "/upload/f_webp,q_auto:good/"
     );
 
     setShowBackUp(true);
 
-    if (optimizedUrl) {
+    if (webpUrl) {
       setInputFields((prevFields) => {
         const newFields = [...prevFields];
-        newFields[index].urlImage = optimizedUrl;
+        newFields[index].urlImage = webpUrl;
         return newFields;
       });
 
       setLoadingImages((prev) => ({
         ...prev,
-        [optimizedUrl]: true,
+        [webpUrl]: true,
       }));
       
       // Set as preview image if none is selected
       if (!largeImageTest) {
-        setLargeImageTest(optimizedUrl);
+        setLargeImageTest(webpUrl);
       }
     }
   };

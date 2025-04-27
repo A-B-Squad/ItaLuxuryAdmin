@@ -141,9 +141,13 @@ const UpdateCategory = () => {
   };
 
   const handleImageUpload = (result: any, position: string) => {
+    // Transform the URL to WebP format
+    const originalUrl = result.info.secure_url;
+    const webpUrl = originalUrl.replace("/upload/", "/upload/f_webp,q_auto:good/");
+    
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [position]: result.info.secure_url,
+      [position]: webpUrl,
     }));
 
     setUploadingImage((prev) => ({ ...prev, [`${position}Load`]: false }));

@@ -30,16 +30,18 @@ const UploadِClientService = ({
 
 
   const handleSuccess = (result: any, { widget }: any) => {
-    const optimizedUrl = result.info.secure_url.replace(
+    // Transform the URL to WebP format with quality optimization
+    const webpUrl = result.info.secure_url.replace(
       "/upload/",
-      "/upload/f_auto,q_auto/"
+      "/upload/f_webp,q_auto:good/"
     );
-    if (optimizedUrl) {
-      setLocalLargeImage(optimizedUrl);
+    
+    if (webpUrl) {
+      setLocalLargeImage(webpUrl);
       setLocalInputField((prevField: any) => {
         return {
           ...prevField,
-          images: [optimizedUrl],
+          images: [webpUrl],
         };
       });
       widget.close();
