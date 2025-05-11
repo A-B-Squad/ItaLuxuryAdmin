@@ -192,6 +192,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
     const input = {
       checkoutId: packageData.Checkout.id,
       total: total,
+      ...(packageData.status === "CONFIRMED" && { orderStatus: "CONFIRMED" }),
       productInCheckout: packageData.Checkout.productInCheckout.map((item) => ({
         productId: item.product.id,
         productQuantity: item.productQuantity,

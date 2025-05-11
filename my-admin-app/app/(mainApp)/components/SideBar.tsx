@@ -13,7 +13,8 @@ import { TiMessages } from "react-icons/ti";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import { PACKAGES_QUERY } from "../../graph/queries";
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { da } from "date-fns/locale";
 
 const DecorativeShapes = React.memo(() => (
   <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none overflow-hidden">
@@ -34,14 +35,20 @@ DecorativeShapes.displayName = 'DecorativeShapes';
 
 const SideBar = () => {
   const pathname = usePathname();
-  const { data, loading } = useQuery(PACKAGES_QUERY, {
+  const { data } = useQuery(PACKAGES_QUERY, {
+    
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first'
   });
 
   // Memoize the processing orders check to avoid recalculation on every render
   const hasProcessingOrders = useMemo(() => {
-    return data?.getAllPackages.some(
+    // Check if data exists and has the expected structure
+    if (!data?.getAllPackages?.packages || !Array.isArray(data.getAllPackages.packages)) {
+      return false;
+    }
+    
+    return data.getAllPackages.packages.some(
       (order: { status: string }) =>
         order.status === "PROCESSING" || order.status === "PAYED_NOT_DELIVERED",
     );
@@ -84,6 +91,7 @@ const SideBar = () => {
         { text: "Categoriés", href: "/Products/Categories/" },
         { text: "Inventaire", href: "/Products/Inventory" },
         { text: "Commentaires", href: "/Products/Reviews" },
+        { text: "Ajouter un avis", href: "/Products/Reviews/AddReviews" },
         { text: "Creation de Marques", href: "/Products/Brands" },
         { text: "Creation de Color", href: "/Products/Colors" },
       ],

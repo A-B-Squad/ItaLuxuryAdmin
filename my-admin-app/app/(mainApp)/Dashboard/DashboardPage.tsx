@@ -5,12 +5,12 @@ import { LuPackage2 } from "react-icons/lu";
 import { MdOutlineAttachMoney } from "react-icons/md";
 import moment from "moment-timezone";
 import { useQuery } from "@apollo/client";
-import { GET_PACKAGES_QUERY } from "../../graph/queries";
+import {  PACKAGES_QUERY } from "../../graph/queries";
 import Stats from "./components/stats";
 import SmallSpinner from "../components/SmallSpinner";
 import { useToast } from "@/components/ui/use-toast";
 import { calculateSimpleStats } from "../Helpers/DashboardStats/_calculateSimpleStats";
-import { Package, PackageData } from "@/app/types";
+import {  PackageData } from "@/app/types";
 
 const DEFAULT_TIMEZONE = "Africa/Tunis";
 
@@ -24,7 +24,7 @@ const DELIVERY_PRICE = 8;
 const DashboardPage: React.FC = () => {
   const { toast } = useToast();
 
-  const { loading, error, data } = useQuery<PackageData>(GET_PACKAGES_QUERY, {
+  const { loading, error, data } = useQuery<PackageData>(PACKAGES_QUERY, {
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
       console.error(error);
@@ -37,30 +37,38 @@ const DashboardPage: React.FC = () => {
     },
   });
 
-  const packageData = useMemo(() => data?.getAllPackages || [], [data]);
+  // Update to use the new data structure with packages inside getAllPackages
+  const packageData = useMemo(() => {
+    if (!data?.getAllPackages?.packages) return [];
+    return data.getAllPackages.packages;
+  }, [data]);
+
+  // Filter packages to only include orders from the current year
+  const currentYearPackages = useMemo(() => {
+    const currentYear = moment().year();
+    return packageData.filter(pkg => 
+      moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE).year() === currentYear
+    );
+  }, [packageData]);
 
   const stats = useMemo(() => {
-    if (!packageData.length) {
+    if (!currentYearPackages.length) {
       return {
         orders: [0, 0, 0, 0, 0],
         earnings: [0, 0, 0, 0, 0],
       };
     }
-    return calculateSimpleStats(packageData);
-  }, [packageData]);
+    return calculateSimpleStats(currentYearPackages);
+  }, [currentYearPackages]);
 
   const { totalPayedPackagesCount, totalEarningsDelivered } = useMemo(() => {
-    const currentYear = moment().year();
-    const payedCount = packageData.filter(
-      (pkg) =>
-        pkg.status === "PAYED_AND_DELIVERED" &&
-        moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE).year() === currentYear
+    const payedCount = currentYearPackages.filter(
+      (pkg) => pkg.status === "PAYED_AND_DELIVERED"
     ).length;
 
-    const earnings = packageData.reduce(
+    const earnings = currentYearPackages.reduce(
       (total, pkg) => {
-        const packageDate = moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE);
-        return pkg.status === "PAYED_AND_DELIVERED" && packageDate.year() === currentYear
+        return pkg.status === "PAYED_AND_DELIVERED"
           ? (pkg.Checkout.freeDelivery
             ? total + pkg.Checkout.total
             : total + pkg.Checkout.total - DELIVERY_PRICE)
@@ -70,11 +78,11 @@ const DashboardPage: React.FC = () => {
     );
 
     return { totalPayedPackagesCount: payedCount, totalEarningsDelivered: earnings };
-  }, [packageData]);
+  }, [currentYearPackages]);
 
   return (
     <div className="w-full py-10 lg:p-8 relative">
-      <Stats />
+      <Stats packageData={currentYearPackages}  />
       
       {error && (
         <div className="w-full p-4 mb-6 bg-red-50 border border-red-200 rounded-md text-red-600">

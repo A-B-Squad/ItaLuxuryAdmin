@@ -32,6 +32,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               <th className="px-4 py-3 text-center">SKU</th>
               <th className="px-4 py-3 text-center">Prix d'achat</th>
               <th className="px-4 py-3 text-center">Casse</th>
+              <th className="px-4 py-3 text-center">Combien de vente</th>
               <th className="px-4 py-3 text-center">Inventaire</th>
               <th className="px-4 py-3 text-center">
                 Ajouter à la quantité disponible
@@ -50,7 +51,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({
               ))
             ) : (
               <tr>
-                <td className="py-5 text-center">Aucun produit disponible</td>
+                <td colSpan={7} className="py-5 text-center">Aucun produit disponible</td>
               </tr>
             )}
           </tbody>

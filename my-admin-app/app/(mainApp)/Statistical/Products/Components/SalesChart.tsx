@@ -1,47 +1,40 @@
 "use client";
-import React, { useRef, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Chart, registerables, ChartOptions } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import "chartjs-adapter-date-fns";
+import { Packages } from "@/app/types";
 
 Chart.register(...registerables);
 
-interface Product {
-  name: string;
-  price: number;
-  reference: string;
+
+interface Pagination {
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  totalPages: number;
 }
 
-interface ProductInCheckout {
-  product: Product;
-  productQuantity: number;
-  price: number;
-}
-
-interface Checkout {
-  productInCheckout: ProductInCheckout[];
-  createdAt: string;
-}
-
-interface Package {
-  Checkout: Checkout;
-  createdAt: string;
+interface PackagesResponse {
+  packages: Packages[];
+  pagination: Pagination;
 }
 
 interface Data {
-  getAllPackages: Package[];
+  getAllPackages: PackagesResponse;
 }
 
 const SalesChart: React.FC<{
   data: Data;
   dateRange: DateRange | undefined;
 }> = ({ data, dateRange }) => {
-  const chartRef = useRef<Chart | null>(null);
 
   const processData = (data: Data) => {
-    const packages = data.getAllPackages;
+    // Access the packages array from the nested structure
+    const packages = data.getAllPackages?.packages || [];
+
     const productSales: {
       [date: string]: {
         [productName: string]: {
@@ -51,6 +44,7 @@ const SalesChart: React.FC<{
         };
       };
     } = {};
+
     const productQuantities: { [productName: string]: number } = {};
 
     packages.forEach((pkg) => {
@@ -97,6 +91,7 @@ const SalesChart: React.FC<{
     }
     return entries.reduce((a, b) => (a[1] > b[1] ? a : b))[0];
   }, [productQuantities]);
+
   const chartData = useMemo(() => {
     const labels = Object.keys(productSales)
       .sort()
@@ -260,6 +255,7 @@ const SalesChart: React.FC<{
       </div>
     </div>
   );
+
 };
 
 export default SalesChart;

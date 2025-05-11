@@ -1,5 +1,12 @@
 import ReviewsRow from "./ReviewsRow";
 
+interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  userName?: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -8,7 +15,8 @@ interface Product {
   inventory: number;
   images: string[];
   categories: any[];
-  reviews: { rating: number }[];
+  reviews: Review[];
+
 }
 interface InventoryTableProps {
   products: Product[];

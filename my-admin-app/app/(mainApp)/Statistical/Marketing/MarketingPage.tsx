@@ -1,24 +1,25 @@
 "use client"
 import { PACKAGES_QUERY } from "@/app/graph/queries";
+import { Packages } from "@/app/types";
+import DateRangePicker from "@/components/ui/date-range-picker";
 import { useQuery } from "@apollo/client";
-import React, { useMemo, useState } from "react";
-import { Bar } from "react-chartjs-2";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
   Title,
   Tooltip,
-  Legend,
 } from "chart.js";
+import { subDays } from "date-fns";
 import moment from "moment";
+import { useMemo, useState } from "react";
+import { Bar } from "react-chartjs-2";
 import { DateRange } from "react-day-picker";
+import { FaChartBar } from "react-icons/fa";
 import { translateStatus } from "../../Helpers/_translateStatus";
 import Loading from "../loading";
-import { FaChartBar } from "react-icons/fa";
-import DateRangePicker from "@/components/ui/date-range-picker";
-import { subDays } from "date-fns";
 
 ChartJS.register(
   CategoryScale,
@@ -28,16 +29,6 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
-
-interface Package {
-  id: string;
-  customId: string;
-  Checkout: {
-    total: number;
-  };
-  createdAt: string;
-  status: string;
-}
 
 
 
@@ -49,18 +40,22 @@ const MarketingPage = () => {
   });
 
   const { loading, error, data } = useQuery(PACKAGES_QUERY, {
+    variables: {
+      dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+    },
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: true
   });
 
   const chartData = useMemo(() => {
-    if (!data || !data.getAllPackages)
+    if (!data || !data.getAllPackages.packages)
       return {
         byDate: { labels: [], datasets: [] },
         byStatus: { labels: [], datasets: [] },
       };
 
-    const packageData: Package[] = data.getAllPackages;
+    const packageData: Packages[] = data.getAllPackages.packages;
 
     // Filter packages based on date range
     const filteredPackages = packageData.filter((pkg) => {
@@ -338,7 +333,7 @@ const MarketingPage = () => {
                 />
               </div>
             </div>
-            
+
             <div className="bg-white p-3 md:p-4 rounded-lg shadow-md border border-dashboard-neutral-200">
               <div className="flex items-center justify-between mb-3 md:mb-4">
                 <h2 className="text-base md:text-lg font-semibold text-dashboard-neutral-800 flex items-center">

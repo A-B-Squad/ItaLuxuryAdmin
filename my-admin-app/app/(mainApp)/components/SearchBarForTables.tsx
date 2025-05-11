@@ -19,6 +19,7 @@ interface SearchBarProps {
   | "Products/Categories"
   | "Products/Inventory"
   | "Products/Reviews"
+  | "Products/Reviews/AddReviews"
   | "Products"
   | "Coupons"
   | "TopDeals";

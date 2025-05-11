@@ -1,26 +1,26 @@
 "use client"
-import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { PACKAGES_QUERY } from "@/app/graph/queries";
+import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@apollo/client";
-import { Bar } from "react-chartjs-2";
-import moment from "moment-timezone";
 import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
     BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend,
+    LinearScale,
     Title,
-    Tooltip,
-    Legend
+    Tooltip
 } from 'chart.js';
-import { GET_PACKAGES_QUERY } from "@/app/graph/queries";
-import Loading from "../loading";
+import { format, subDays } from "date-fns";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx-js-style";
-import { useToast } from "@/components/ui/use-toast";
+import moment from "moment-timezone";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bar } from "react-chartjs-2";
 import { DateRange } from "react-day-picker";
-import { format, subDays } from "date-fns";
+import * as XLSX from "xlsx-js-style";
+import Loading from "../loading";
 
 import DateRangePicker from "@/components/ui/date-range-picker";
 
@@ -33,37 +33,24 @@ ChartJS.register(
     Legend
 );
 
-interface Package {
-    id: string;
-    status: string;
-    createdAt: string;
-    Checkout: {
-        total: number;
-        freeDelivery: boolean;
-    };
-}
+
 
 const DELIVERY_PRICE = 8;
 const DEFAULT_TIMEZONE = "Africa/Tunis";
 
 const STATUS_COLORS = {
-    PAYED_AND_DELIVERED: 'rgba(16, 185, 129, 0.7)',  // dashboard-success
-    PROCESSING: 'rgba(59, 130, 246, 0.7)',           // dashboard-primary
-    PAYMENT_REFUSED: 'rgba(239, 68, 68, 0.7)',       // dashboard-danger
-    TRANSFER_TO_DELIVERY_COMPANY: 'rgba(245, 158, 11, 0.7)', // dashboard-warning
-    CONFIRMED: 'rgba(99, 102, 241, 0.7)',            // dashboard-secondary
-    BACK: 'rgba(6, 182, 212, 0.7)',                  // dashboard-info
-    REFUNDED: 'rgba(100, 116, 139, 0.7)',            // dashboard-neutral-500
-    CANCELLED: 'rgba(71, 85, 105, 0.7)',             // dashboard-neutral-600
-    PAYED_NOT_DELIVERED: 'rgba(16, 185, 129, 0.5)'   // dashboard-success (lighter)
+    PAYED_AND_DELIVERED: 'rgba(16, 185, 129, 0.7)',
+    PROCESSING: 'rgba(59, 130, 246, 0.7)',
+    PAYMENT_REFUSED: 'rgba(239, 68, 68, 0.7)',
+    TRANSFER_TO_DELIVERY_COMPANY: 'rgba(245, 158, 11, 0.7)',
+    CONFIRMED: 'rgba(99, 102, 241, 0.7)',
+    BACK: 'rgba(6, 182, 212, 0.7)',
+    REFUNDED: 'rgba(100, 116, 139, 0.7)',
+    CANCELLED: 'rgba(71, 85, 105, 0.7)',
+    PAYED_NOT_DELIVERED: 'rgba(16, 185, 129, 0.5)'
 };
 
 const YearlyTurnoverPage: React.FC = () => {
-    const { loading, data } = useQuery<{ getAllPackages: Package[] }>(GET_PACKAGES_QUERY, {
-        fetchPolicy: 'cache-and-network',
-        notifyOnNetworkStatusChange: true
-    });
-
     const { toast } = useToast();
     const chartRef = useRef(null);
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -71,6 +58,15 @@ const YearlyTurnoverPage: React.FC = () => {
         to: new Date(),
     });
     const [formattedDateRange, setFormattedDateRange] = useState<string>("");
+
+    const { loading, data } = useQuery(PACKAGES_QUERY, {
+        variables: {
+            dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+            dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+        },
+        fetchPolicy: 'cache-and-network',
+        notifyOnNetworkStatusChange: true
+    });
 
     // Format date range whenever it changes
     useEffect(() => {
@@ -87,7 +83,7 @@ const YearlyTurnoverPage: React.FC = () => {
 
     // Process data with memoization for better performance
     const processedData = useMemo(() => {
-        if (!data?.getAllPackages?.length) return {
+        if (!data?.getAllPackages?.packages) return {
             turnoverByYearAndStatus: {},
             orderCountByYearAndStatus: {},
             sortedYears: [],
@@ -101,13 +97,15 @@ const YearlyTurnoverPage: React.FC = () => {
         let totalOrders = 0;
 
         // Use a single loop for better performance
-        data.getAllPackages.forEach(pkg => {
-            const pkgDate = moment.tz(parseInt(pkg.createdAt), DEFAULT_TIMEZONE);
+        data.getAllPackages.packages.forEach((pkg: any) => {
+            const createdAt = parseInt(pkg.createdAt);
+            const pkgDate = moment.tz(createdAt, DEFAULT_TIMEZONE);
+            const pkgDateObj = pkgDate.toDate();
 
             // Skip if outside date range
             if (
                 dateRange?.from && dateRange?.to &&
-                (pkgDate.isBefore(dateRange.from) || pkgDate.isAfter(dateRange.to))
+                (pkgDateObj < dateRange.from || pkgDateObj > dateRange.to)
             ) {
                 return;
             }
@@ -350,7 +348,7 @@ const YearlyTurnoverPage: React.FC = () => {
 
     // Export functions with useCallback for better performance
     const exportToPDF = useCallback(() => {
-        if (!data?.getAllPackages?.length) {
+        if (!data?.getAllPackages.packages?.length) {
             toast({
                 title: "Aucune donnée à exporter",
                 variant: "destructive",
@@ -429,7 +427,7 @@ const YearlyTurnoverPage: React.FC = () => {
     }, [data, formattedDateRange, processedData, toast]);
 
     const exportToExcel = useCallback(() => {
-        if (!data?.getAllPackages?.length) {
+        if (!data?.getAllPackages.packages?.length) {
             toast({
                 title: "Aucune donnée à exporter",
                 variant: "destructive",

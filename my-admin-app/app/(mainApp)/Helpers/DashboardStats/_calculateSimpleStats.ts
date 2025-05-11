@@ -1,11 +1,11 @@
-import { Package, SimpleStats } from "@/app/types";
+import { Packages, SimpleStats } from "@/app/types";
 import moment from "moment-timezone";
 
 const DEFAULT_TIMEZONE = "Africa/Tunis";
 const DELIVERY_PRICE = 8;
 const EXCLUDED_STATUSES = ['REFUNDED', 'BACK', 'CANCELLED'];
 
-export const calculateSimpleStats = (packages: Package[]): SimpleStats => {
+export const calculateSimpleStats = (packages: Packages[]): SimpleStats => {
     const stats: SimpleStats = {
         orders: [0, 0, 0, 0, 0],
         earnings: [0, 0, 0, 0, 0],

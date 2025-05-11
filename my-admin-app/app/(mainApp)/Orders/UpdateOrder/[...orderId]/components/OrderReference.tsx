@@ -9,12 +9,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
+import { FiCopy, FiCheck } from "react-icons/fi";
 
 const OrderReference = ({ order, OrderStatus }: any) => {
+  const { copied, copyToClipboard } = useCopyToClipboard();
+  console.log(OrderStatus)
   return (
     <div className="orderRef bg-white shadow-sm border rounded-lg mb-6">
       <h2 className="text-lg border-b font-semibold mb-4 p-6 py-3">
         Réf de commande {order?.customId}
+        {order?.deliveryReference && (
+          <button
+            onClick={() => copyToClipboard(order.deliveryReference)}
+            className="ml-2 text-sm text-gray-600 flex items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer group"
+            title="Cliquer pour copier"
+          >
+            (Réf livraison: {order.deliveryReference})
+            {copied ? (
+              <FiCheck className="text-green-500" size={14} />
+            ) : (
+              <FiCopy className="opacity-0 group-hover:opacity-100 transition-opacity" size={14} />
+            )}
+          </button>
+        )}
       </h2>
       <div className="p-6">
         <Table className="border">
@@ -63,12 +81,8 @@ const OrderReference = ({ order, OrderStatus }: any) => {
             ))}
           </TableBody>
         </Table>
-        {OrderStatus !== "CANCELLED" &&
-          OrderStatus !== "BACK" &&
-          OrderStatus !== "TRANSFER_TO_DELIVERY_COMPANY" &&
-          OrderStatus !== "PAYED_AND_DELIVERED" &&
-          OrderStatus !== "PAYMENT_REFUSED" &&
-          OrderStatus !== "REFUNDED" && (
+        {(OrderStatus === "CONFIRMED" ||
+          OrderStatus === "PROCESSING") && (
             <div className="w-full flex justify-end">
               <Link
                 href={{

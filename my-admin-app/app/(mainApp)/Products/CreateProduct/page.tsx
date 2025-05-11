@@ -3,7 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation } from "@apollo/client";
 import { useState } from "react";
 import { CREATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
-import AddAttribute from "./Components/AddAttributes";
+import TechnicalDetails from "./Components/AddTechnicalDetails";
 import AddDescription from "./Components/AddDescription";
 import AddPrice from "./Components/AddPrice";
 import AddReference from "./Components/AddRef";
@@ -13,19 +13,14 @@ import ChoiceCategory from "./Components/ChoiceCategory";
 import ChoiseColors from "./Components/ChoiseColors";
 import UploadImage from "./Components/UploadImages";
 
-interface Attribute {
-  name: string;
-  value: string;
-}
+
 
 const CreateProductPage = () => {
   const { toast } = useToast();
   // Add a loading state to track submission status
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const [attributes, setAttributes] = useState<Attribute[]>([
-    { name: "", value: "" },
-  ]);
+  const [technicalDetails, setTechnicalDetails] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -59,7 +54,7 @@ const CreateProductPage = () => {
   const handleSubmit = () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
-    
+
     // Set submitting state to true
     setIsSubmitting(true);
 
@@ -92,7 +87,7 @@ const CreateProductPage = () => {
         });
         return;
       }
-      if ( !manualDiscountPrice) {
+      if (!manualDiscountPrice) {
         toast({
           title: "Erreur de mise à jour",
           variant: "destructive",
@@ -101,7 +96,7 @@ const CreateProductPage = () => {
         });
         return;
       }
- 
+
     }
 
     if (!originalPrice && !hasDiscount) {
@@ -116,9 +111,7 @@ const CreateProductPage = () => {
 
     const productData = {
       input: {
-        attributeInputs: attributes.filter(
-          (attr) => attr.name.trim() !== "" && attr.value.trim() !== "",
-        ),
+        technicalDetails: technicalDetails,
         brandId: brand,
         categories: [
           selectedIds.categoryId,
@@ -150,7 +143,7 @@ const CreateProductPage = () => {
       variables: productData,
       onCompleted() {
         // Reset all inputs
-        setAttributes([{ name: "", value: "" }]);
+        setTechnicalDetails("");
         setUploadedImages([]);
         setTitle("");
         setDescription("");
@@ -177,7 +170,7 @@ const CreateProductPage = () => {
           duration: 5000,
         });
         // No need to reset isSubmitting as we're reloading the page
-      }, 
+      },
       onError(err) {
         toast({
           title: "Erreur de mise à jour",
@@ -216,7 +209,7 @@ const CreateProductPage = () => {
           <AddPrice
             isDiscountEnabled={isDiscountEnabled}
             setIsDiscountEnabled={setIsDiscountEnabled}
-      
+
             manualDiscountPrice={manualDiscountPrice}
             setManualDiscountPrice={setManualDiscountPrice}
             originalPrice={originalPrice}
@@ -227,7 +220,7 @@ const CreateProductPage = () => {
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}
             setDateOfStartDiscount={setDateOfStartDiscount}
-    
+
             setFinalDiscountPrice={setFinalDiscountPrice}
           />
 
@@ -236,7 +229,7 @@ const CreateProductPage = () => {
             setUploadedImages={setUploadedImages}
           />
 
-          <AddAttribute attributes={attributes} setAttributes={setAttributes} />
+          <TechnicalDetails technicalDetails={technicalDetails} setTechnicalDetails={setTechnicalDetails} />
         </div>
 
         <div className="moreDetails w-full   lg:w-1/4 flex flex-col gap-3">
@@ -271,11 +264,10 @@ const CreateProductPage = () => {
       </div>
       <button
         type="button"
-        className={`w-full py-3 mt-6 transition-all bg-mainColorAdminDash text-white rounded-md shadow-sm ${
-          isSubmitting 
-            ? "opacity-70 cursor-not-allowed" 
+        className={`w-full py-3 mt-6 transition-all bg-mainColorAdminDash text-white rounded-md shadow-sm ${isSubmitting
+            ? "opacity-70 cursor-not-allowed"
             : "hover:opacity-90 hover:bg-mainColorAdminDash-dark"
-        }`}
+          }`}
         onClick={handleSubmit}
         disabled={isSubmitting}
       >

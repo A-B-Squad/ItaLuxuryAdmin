@@ -20,8 +20,13 @@ export async function GET(request: NextRequest) {
         // Updated to use the correct endpoint from the documentation
         const response = await fetch(`${JAX_API_BASE_URL}/user/colis/getstatubyean/${referenceId}?token=${JAX_DELIVERY_TOKEN}`, {
             headers: {
-                'Authorization': `Bearer ${JAX_DELIVERY_TOKEN}`
-            }
+                'Authorization': `Bearer ${JAX_DELIVERY_TOKEN}`,
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            cache: 'no-store',
+            next: { revalidate: 0 }
         });
 
         if (!response.ok) {
@@ -32,7 +37,13 @@ export async function GET(request: NextRequest) {
         }
 
         const data = await response.json();
-        return NextResponse.json(data);
+        return NextResponse.json(data, {
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
     } catch (error) {
         console.error('Error checking JAX delivery status:', error);
         return NextResponse.json(
