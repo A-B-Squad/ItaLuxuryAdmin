@@ -5,14 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 
 import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "@/app/graph/queries";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   BarElement,
   CategoryScale,
@@ -22,17 +14,16 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import { format, startOfDay, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import moment from "moment";
 import { DateRange } from "react-day-picker";
 import {
   FaBox,
   FaBoxOpen,
-  FaCalendarAlt,
   FaMoneyBillWave,
   FaRegMoneyBillAlt,
   FaTruck,
-  FaWarehouse,
+  FaWarehouse
 } from "react-icons/fa";
 
 ChartJS.register(
@@ -44,11 +35,11 @@ ChartJS.register(
   Legend,
 );
 
+import DateRangePicker from "@/components/ui/date-range-picker";
 import { IoTrendingDown, IoTrendingUp } from "react-icons/io5";
 import { translateStatus } from "../../Helpers/_translateStatus";
 import AnimatedCounter from "../../Hook/AnimatedCounter";
 import Loading from "../loading";
-import DateRangePicker from "@/components/ui/date-range-picker";
 
 type Status =
   | "RETOUR"
@@ -84,7 +75,14 @@ interface StatusCardData {
 }
 
 const DeliveryPage: React.FC = () => {
-  const { loading, error, data } = useQuery(PACKAGES_QUERY, {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 28),
+    to: new Date(),
+  }); const { loading, error, data } = useQuery(PACKAGES_QUERY, {
+    variables: {
+      dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+    },
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: true
   });
@@ -97,10 +95,7 @@ const DeliveryPage: React.FC = () => {
   });
   const [averageDeliveryTime, setAverageDeliveryTime] = useState(0);
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 28),
-    to: new Date(),
-  });
+
 
   useQuery(COMPANY_INFO_QUERY, {
     onCompleted: (companyData) => {
@@ -112,8 +107,8 @@ const DeliveryPage: React.FC = () => {
 
   // Process data when it changes
   useEffect(() => {
-    if (data && data.getAllPackages) {
-      processData(data.getAllPackages);
+    if (data && data.getAllPackages.packages) {
+      processData(data.getAllPackages.packages);
     }
   }, [data, translateStatus, dateRange]);
 

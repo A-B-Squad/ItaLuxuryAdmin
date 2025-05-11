@@ -1,25 +1,6 @@
 import { gql } from "@apollo/client";
 
-export const GET_PACKAGES_QUERY = gql`
-  query GetAllPackages {
-    getAllPackages {
-      id
-      checkoutId
-      status
-      createdAt
-      Checkout {
-        freeDelivery
-        Governorate {
-          id
-          name
-        }
-        id
-        total
-        paymentMethod
-      }
-    }
-  }
-`;
+
 export const GET_CATEGORY_BY_ID = gql`
   query CategoryById($categoryId: String!) {
     categoryById(categoryId: $categoryId) {
@@ -92,7 +73,10 @@ export const SEARCH_PRODUCTS_QUERY = gql`
           solde
           broken
           reviews {
+            id
             rating
+            comment 
+            userName
           }
           categories {
             id
@@ -209,10 +193,12 @@ export const BEST_SELLS_QUERY = gql`
   }
 `;
 export const PACKAGES_QUERY = gql`
-  query GetAllPackages {
-    getAllPackages {
-      id
+   query GetAllPackages($page: Int, $pageSize: Int,$dateFrom: String, $dateTo: String) {
+    getAllPackages(page: $page, pageSize: $pageSize, dateFrom: $dateFrom, dateTo: $dateTo) {
+      packages {
+          id
       customId
+      deliveryReference
       Checkout {
         userName
         userId
@@ -249,8 +235,16 @@ export const PACKAGES_QUERY = gql`
       delivredAt
       inTransitAt
       returnedAt
+      }
+      pagination {
+        currentPage
+        hasNextPage
+        hasPreviousPage
+        totalPages
+      }
     }
   }
+
 `;
 export const GET_GOVERMENT_INFO = gql`
   query AllGovernorate {
@@ -327,6 +321,20 @@ export const ALL_CONTACTS = gql`
   }
 `;
 
+export const GET_REVIEW_QUERY = gql`
+   query ProductReview($productId: ID!) {
+    productReview(productId: $productId) {
+      id
+      rating
+      comment
+      userId
+      user {
+        fullName
+      }
+      userName
+    }
+  }
+`;
 export const FETCH_ALL_USERS = gql`
   query FetchAllUsers {
     fetchAllUsers {
@@ -367,6 +375,7 @@ export const PACKAGE_BY_ID_QUERY = gql`
       createdAt
       customId
       status
+      deliveryReference
       Checkout {
         id
         userName
@@ -511,11 +520,7 @@ export const PRODUCT_BY_ID_QUERY = gql`
         name
         logo
       }
-      attributes {
-        id
-        name
-        value
-      }
+      technicalDetails
     }
   }
 `;

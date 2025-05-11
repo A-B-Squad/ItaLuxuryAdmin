@@ -30,6 +30,7 @@ export interface ProductInCheckout {
   product: {
     id: string;
     name: string;
+    price: number;
     reference: string;
     images: string[];
     productDiscounts?: any[];
@@ -67,30 +68,32 @@ export interface Order {
 
 
 
-export interface Package {
-  id: string;
-  checkoutId: string;
-  status: string;
-  createdAt: string;
+export interface Packages {
   Checkout: Checkout;
+  createdAt: string;
+  id: string;
+  customId: string;
+  deliveryReference: string;
+  status: string;
+  delivredAt: string | null;
+  inTransitAt: string | null;
+  returnedAt: string | null;
 }
 
-
-export interface StatsPeriod {
-  count: number;
-  total: number;
-}
-
-export interface DetailedStats {
-  today: StatsPeriod;
-  thisWeek: StatsPeriod;
-  thisMonth: StatsPeriod;
-  thisYear: StatsPeriod;
-  byStatus: Record<string, number>;
+export interface PaginationInfo {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 export interface PackageData {
-  getAllPackages: Package[];
+  getAllPackages: {
+    packages: Packages[];
+    pagination: PaginationInfo;
+  };
 }
 
 export interface StatsPeriod {

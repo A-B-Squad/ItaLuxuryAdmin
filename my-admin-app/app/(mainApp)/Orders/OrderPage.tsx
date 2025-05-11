@@ -1,8 +1,10 @@
 "use client";
-import { Calendar } from "@/components/ui/calendar";
-import { useQuery } from "@apollo/client";
+import { PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS } from "@/app/graph/mutations";
+import { Packages } from "@/app/types";
+import DateRangePicker from "@/components/ui/date-range-picker";
+import { useMutation, useQuery } from "@apollo/client";
 import Link from "next/link";
-import React, { useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "../../graph/queries";
 import Pagination from "../components/Paginations";
@@ -15,13 +17,32 @@ import { translateStatus } from "../Helpers/_translateStatus";
 import OrderTable from "./components/OrderTable";
 import Loading from "./loading";
 
-const OrdersPage: React.FC = () => {
+// Constants to avoid magic strings
+const STATUS = {
+  CONFIRMED: "CONFIRMED",
+  TRANSFER_TO_DELIVERY_COMPANY: "TRANSFER_TO_DELIVERY_COMPANY",
+  PAYED_AND_DELIVERED: "PAYED_AND_DELIVERED"
+};
+
+const DELIVERY_STATUS = {
+  RECEIVED: "Reçu à l'entrepôt",
+  PREPARING_TRANSFER: "En cours de préparation au transfert vers une autre agence",
+  DELIVERED: "Livré"
+};
+
+const OrdersPage = () => {
+  // Basic state
   const [searchCommande, setSearchCommande] = useState("");
   const [filter, setFilter] = useState("Toute");
   const [page, setPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showCalendar, setShowCalendar] = useState(false);
   const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+  // Using a single set to track checked references with their status
+  const checkedReferencesRef = useRef(new Map<string, string>());
+
   const ordersPerPage = 15;
 
   // Company info query with error handling
@@ -31,58 +52,78 @@ const OrdersPage: React.FC = () => {
     },
     onError: (error) => {
       console.error("Error fetching company info:", error);
-      // Continue with default delivery price
     }
   });
 
-  // Main query with better error handling
+  // Main query with better error handling and pagination
   const { loading, error, data, refetch } = useQuery(PACKAGES_QUERY, {
+    variables: {
+      page: (searchCommande || (dateRange?.from && dateRange?.to)) ? undefined : page,
+      pageSize: (searchCommande || (dateRange?.from && dateRange?.to)) ? undefined : ordersPerPage,
+      searchTerm: searchCommande || undefined,
+      dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+    },
+    onCompleted(data) {
+      if (!searchCommande && !dateRange?.from && !dateRange?.to) {
+        setPage(data.getAllPackages.pagination.currentPage);
+      }
+    },
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
   });
 
-  // Memoized filter function for better performance
+  // Update pagination to use server response
+  const { totalPages, currentPage } = useMemo(() => ({
+    totalPages: (searchCommande || (dateRange?.from && dateRange?.to)) ? 1 : (data?.getAllPackages?.pagination.totalPages || 0),
+    currentPage: (searchCommande || (dateRange?.from && dateRange?.to)) ? 1 : (data?.getAllPackages?.pagination.currentPage || page)
+  }), [data, page, searchCommande, dateRange]);
+
+  // Get orders from paginated response
+  const orders = useMemo(() =>
+    data?.getAllPackages?.packages || [],
+    [data]);
+
+  // Memoized search term for better performance
+  const searchLower = useMemo(() =>
+    (searchCommande || "").toLowerCase(),
+    [searchCommande]);
+
   const filteredOrders = useMemo(() => {
-    if (!data?.getAllPackages) return [];
+    if (!orders.length) return [];
 
-    return data.getAllPackages.filter((order: any) => {
-      const userId = order.Checkout?.userId || "";
-      const userName = order.Checkout?.userName || "";
+    return orders.filter((order: Packages) => {
+      const userId = (order.Checkout?.userId || "").toLowerCase();
+      const userName = (order.Checkout?.userName || "").toLowerCase();
+      const deliveryRef = (order.deliveryReference || "").toLowerCase();
+      const customId = order.customId.toLowerCase();
       const orderDate = new Date(parseInt(order.createdAt));
-      const searchLower = (searchCommande || "").toLowerCase();
 
+      // Check search criteria first - most likely to filter out items
       const matchesSearch =
-        order.customId.toLowerCase().includes(searchLower) ||
-        userId.toLowerCase().includes(searchLower) ||
-        userName.toLowerCase().includes(searchLower) ||
+        deliveryRef.includes(searchLower) ||
+        customId.includes(searchLower) ||
+        userId.includes(searchLower) ||
+        userName.includes(searchLower) ||
         (order.Checkout?.phone || []).some((phone: string) =>
           phone.toLowerCase().includes(searchLower)
         );
 
+      if (!matchesSearch) return false;
+
       const matchesFilter =
         filter === "Toute" || translateStatus(order.status) === filter;
 
-      const matchesDateRange =
-        !dateRange ||
-        !dateRange.from ||
-        !dateRange.to ||
-        (orderDate >= dateRange.from && orderDate <= dateRange.to);
+      if (!matchesFilter) return false;
 
-      return matchesSearch && matchesFilter && matchesDateRange;
+      // Finally check date range - most expensive operation
+      if (!dateRange || !dateRange.from || !dateRange.to) return true;
+
+      return orderDate >= dateRange.from && orderDate <= dateRange.to;
     });
-  }, [data, searchCommande, filter, dateRange]);
+  }, [orders, searchLower, filter, dateRange]);
 
-  // Memoized pagination calculations
-  const { currentOrders, totalPages } = useMemo(() => {
-    const indexOfLastOrder = page * ordersPerPage;
-    const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-    const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
-    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
-
-    return { currentOrders, totalPages };
-  }, [filteredOrders, page]);
-
-  // Callbacks for actions to prevent unnecessary re-renders
+  // Export functions with stable dependencies
   const handleExportPDF = useCallback(() => {
     exportToPDFAllPackageList(filteredOrders, dateRange, deliveryPrice);
   }, [filteredOrders, dateRange, deliveryPrice]);
@@ -93,6 +134,7 @@ const OrdersPage: React.FC = () => {
 
   const handleRefresh = useCallback(() => {
     refetch();
+    checkAllDeliveryStatuses(true);
   }, [refetch]);
 
   const handleClearFilters = useCallback(() => {
@@ -100,16 +142,203 @@ const OrdersPage: React.FC = () => {
     setFilter("Toute");
     setDateRange(undefined);
     setShowCalendar(false);
-    setPage(1); // Reset to first page when filters change
+    setPage(1);
   }, []);
 
   const handleDateSelect = useCallback((range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.to) setShowCalendar(false);
-    setPage(1); // Reset to first page when date changes
+    setPage(1);
   }, []);
 
-  // Handle loading and error states with better UX
+  // Mutation for updating package status
+  const [updatePackageStatus] = useMutation(PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS);
+
+  // Consolidated function to check delivery status with the agency API
+  const checkDeliveryStatusWithAgency = useCallback(async (deliveryReference: string) => {
+    // Step 1: Make API request to check status
+    try {
+      console.log(`[Step 1] Checking delivery status for reference: ${deliveryReference}`);
+      const response = await fetch(`/api/jax-delivery/check-status?referenceId=${deliveryReference}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      // Step 2: Handle API response
+      if (!response.ok) {
+        console.error(`[Step 2] Error checking delivery status: ${response.status}`);
+        return null;
+      }
+
+      const result = await response.json();
+      console.log(`[Step 2] Status for ${deliveryReference}:`, result);
+      return result.status;
+    } catch (error) {
+      console.error('[Step 2] Error checking with delivery agency:', error);
+      return null;
+    }
+  }, []);
+
+  // Update package status based on delivery status
+  const updatePackageBasedOnStatus = useCallback(async (order: Packages, currentStatus: string) => {
+    const { id, deliveryReference, customId, Checkout, status: orderStatus } = order;
+
+    // Step 3: Validate order data
+    if (!deliveryReference) {
+      console.log(`[Step 3] Order ${customId} has no delivery reference, skipping`);
+      return null;
+    }
+
+    // Step 4: Check if status has changed
+    const prevStatus = checkedReferencesRef.current.get(deliveryReference);
+    console.log(`[Step 4] Order ${customId} - Previous status: ${prevStatus || 'none'}, Current status: ${currentStatus}, Order status: ${orderStatus}`);
+
+    if (prevStatus === currentStatus) {
+      console.log(`[Step 4] Status unchanged for ${customId}, skipping update`);
+      return null;
+    }
+
+    // Step 5: Determine if status update is needed
+    let newStatus = null;
+
+    if ((currentStatus === DELIVERY_STATUS.RECEIVED ||
+      currentStatus === DELIVERY_STATUS.PREPARING_TRANSFER) &&
+      orderStatus === STATUS.CONFIRMED) {
+      newStatus = STATUS.TRANSFER_TO_DELIVERY_COMPANY;
+      console.log(`[Step 5] Order ${customId} qualifies for TRANSFER_TO_DELIVERY_COMPANY update`);
+    } else if (currentStatus === DELIVERY_STATUS.DELIVERED &&
+      orderStatus === STATUS.TRANSFER_TO_DELIVERY_COMPANY) {
+      newStatus = STATUS.PAYED_AND_DELIVERED;
+      console.log(`[Step 5] Order ${customId} qualifies for PAYED_AND_DELIVERED update`);
+    } else {
+      console.log(`[Step 5] Order ${customId} does not qualify for status update. Current order status: ${orderStatus}, Delivery status: ${currentStatus}`);
+    }
+
+    // Step 6: Update the package status if needed
+    if (newStatus) {
+      try {
+        console.log(`[Step 6] Attempting to update order ${customId} to ${newStatus}`);
+        const result = await updatePackageStatus({
+          variables: {
+            packageId: id,
+            paymentMethod: Checkout?.paymentMethod,
+            status: newStatus,
+          }
+        });
+
+        // Step 7: Record the updated status
+        checkedReferencesRef.current.set(deliveryReference, currentStatus);
+        console.log(`[Step 7] Successfully updated order ${customId} to ${newStatus}`);
+        return result;
+      } catch (err) {
+        console.error(`[Step 6] Error updating status for order ${customId}:`, err);
+      }
+    }
+
+    // Step 7: Record the checked status even if we didn't update
+    checkedReferencesRef.current.set(deliveryReference, currentStatus || prevStatus || '');
+    return null;
+  }, [updatePackageStatus]);
+
+
+  // Effect to check delivery statuses when data changes
+  useEffect(() => {
+    // Only run the check when data is loaded for the first time or explicitly refreshed
+    if (data?.getAllPackages && !isCheckingStatus) {
+      // Use a debounce to prevent multiple rapid checks
+      const timer = setTimeout(() => {
+        checkAllDeliveryStatuses();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [data?.getAllPackages?.packages?.length, isCheckingStatus]);
+
+  // Modify the checkAllDeliveryStatuses function to add a check for recent executions
+  const lastCheckRef = useRef<number>(0);
+
+  const checkAllDeliveryStatuses = useCallback(async (forceCheck = false) => {
+    // Step 0: Initial validation
+    if (!data?.getAllPackages?.packages) {
+      console.log("[Step 0] No package data available to check statuses");
+      return;
+    }
+
+    if (isCheckingStatus) {
+      console.log("[Step 0] Status check already in progress, skipping");
+      return;
+    }
+
+    // Prevent frequent checks unless forced
+    const now = Date.now();
+    if (!forceCheck && now - lastCheckRef.current < 30000) { // 30 seconds cooldown
+      console.log("[Step 0] Status check performed recently, skipping");
+      return;
+    }
+
+    lastCheckRef.current = now;
+    console.log(`[Step 0] Starting status check for all orders (force check: ${forceCheck})`);
+    setIsCheckingStatus(true);
+
+    // Rest of the function remains the same
+    try {
+      // Step 1: Filter orders that need checking
+      const relevantOrders = data.getAllPackages.packages.filter(
+        (order: Packages) => {
+          const shouldCheck = (order.status === STATUS.CONFIRMED || order.status === STATUS.TRANSFER_TO_DELIVERY_COMPANY) &&
+            order.deliveryReference &&
+            (forceCheck || !checkedReferencesRef.current.has(order.deliveryReference));
+
+          if (shouldCheck) {
+            console.log(`[Step 1] Will check order: ${order.customId}, status: ${order.status}, ref: ${order.deliveryReference}`);
+          }
+          return shouldCheck;
+        }
+      );
+
+      console.log(`[Step 1] Found ${relevantOrders.length} orders to check`);
+
+      if (relevantOrders.length === 0) {
+        console.log("[Step 1] No relevant orders to check, exiting");
+        return;
+      }
+
+      // Step 2: Process orders in parallel
+      console.log("[Step 2] Starting parallel processing of orders");
+      const updatePromises = relevantOrders.map(async (order: Packages) => {
+        if (!order.deliveryReference) return null;
+
+        // Steps 3-4: Check delivery status and update if needed
+        const currentStatus = await checkDeliveryStatusWithAgency(order.deliveryReference);
+        if (currentStatus) {
+          return updatePackageBasedOnStatus(order, currentStatus);
+        }
+        console.log(`[Step 4] Could not get status for ${order.customId}`);
+        return null;
+      });
+
+      // Step 5: Collect results and refresh if needed
+      const results = await Promise.all(updatePromises);
+      const updatedCount = results.filter(Boolean).length;
+
+      console.log(`[Step 5] Status check complete. Updated ${updatedCount} out of ${relevantOrders.length} orders`);
+
+      if (updatedCount > 0) {
+        console.log("[Step 6] Refreshing data after updates");
+        await refetch();
+      }
+    } catch (error) {
+      console.error("[Error] Error in checkAllDeliveryStatuses:", error);
+    } finally {
+      setIsCheckingStatus(false);
+      console.log("[Complete] Status check process finished");
+    }
+  }, [data, updatePackageBasedOnStatus, checkDeliveryStatusWithAgency, refetch, isCheckingStatus]);
+
+  // Display loading state
   if (loading && !data) return <Loading />;
 
   return (
@@ -162,7 +391,7 @@ const OrdersPage: React.FC = () => {
                 value={searchCommande}
                 onChange={(e) => {
                   setSearchCommande(e.target.value);
-                  setPage(1); // Reset to first page when search changes
+                  setPage(1);
                 }}
               />
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-3 text-dashboard-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -178,7 +407,7 @@ const OrdersPage: React.FC = () => {
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);
-                setPage(1); // Reset to first page when filter changes
+                setPage(1);
               }}
             >
               <option>Toute</option>
@@ -194,36 +423,10 @@ const OrdersPage: React.FC = () => {
 
           {/* Calendar Section */}
           <div className="relative w-full sm:w-auto">
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="w-full sm:w-auto border border-dashboard-neutral-300 p-2 rounded-md flex items-center justify-center gap-2 hover:bg-dashboard-neutral-100 transition-colors"
-              aria-label="Sélectionner dates"
-              aria-expanded={showCalendar}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {dateRange && dateRange.from && dateRange.to
-                ? `${formatDate(dateRange.from.getTime().toString())} - ${formatDate(dateRange.to.getTime().toString())}`
-                : "Sélectionner dates"}
-            </button>
-            {showCalendar && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowCalendar(false)}
-                  aria-hidden="true"
-                ></div>
-                <div className="absolute z-20 left-0 sm:left-auto right-0 sm:right-auto mt-2 shadow-lg">
-                  <Calendar
-                    mode="range"
-                    selected={dateRange}
-                    onSelect={handleDateSelect}
-                    className="rounded-md border bg-white"
-                  />
-                </div>
-              </>
-            )}
+            <DateRangePicker
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+            />
           </div>
 
           {/* Clear and Reload Buttons */}
@@ -239,9 +442,9 @@ const OrdersPage: React.FC = () => {
               onClick={handleRefresh}
               className="flex-1 sm:flex-none border border-dashboard-neutral-300 px-4 py-2 rounded-md hover:bg-dashboard-neutral-100 transition-colors"
               aria-label="Rafraîchir les données"
-              disabled={loading}
+              disabled={loading || isCheckingStatus}
             >
-              {loading ? (
+              {loading || isCheckingStatus ? (
                 <SmallSpinner />
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -270,7 +473,7 @@ const OrdersPage: React.FC = () => {
         ) : (
           <div className="overflow-x-auto">
             <OrderTable
-              orders={currentOrders}
+              orders={filteredOrders}
               formatDate={formatDate}
               translateStatus={translateStatus}
               generateInvoice={generateInvoice}
@@ -283,7 +486,7 @@ const OrdersPage: React.FC = () => {
         {filteredOrders.length > 0 && (
           <div className="p-4 border-t border-dashboard-neutral-200">
             <Pagination
-              currentPage={page}
+              currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setPage}
             />
@@ -292,12 +495,12 @@ const OrdersPage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 md:relative md:mt-4 bg-white md:bg-transparent border-t md:border-0 border-dashboard-neutral-200 p-4 md:p-0 shadow-lg md:shadow-none z-10">
+      <div className="relative bottom-0 left-0 right-0 md:relative md:mt-4 bg-white md:bg-transparent border-t md:border-0 border-dashboard-neutral-200 p-4 md:p-0 shadow-lg md:shadow-none z-10">
         <div className="flex flex-col sm:flex-row gap-3 max-w-screen-xl mx-auto">
           <button
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${filteredOrders.length === 0
-                ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
-                : "bg-dashboard-secondary text-white hover:bg-dashboard-secondary/90 transition-colors"
+              ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
+              : "bg-dashboard-secondary text-white hover:bg-dashboard-secondary/90 transition-colors"
               }`}
             onClick={handleExportPDF}
             disabled={filteredOrders.length === 0}
@@ -309,8 +512,8 @@ const OrdersPage: React.FC = () => {
           </button>
           <button
             className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${filteredOrders.length === 0
-                ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
-                : "bg-dashboard-accent text-white hover:bg-dashboard-accent/90 transition-colors"
+              ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
+              : "bg-dashboard-accent text-white hover:bg-dashboard-accent/90 transition-colors"
               }`}
             onClick={handleExportEXCEL}
             disabled={filteredOrders.length === 0}

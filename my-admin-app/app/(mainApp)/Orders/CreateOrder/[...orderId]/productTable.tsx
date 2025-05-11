@@ -4,7 +4,6 @@ import SearchProduct from "@/app/(mainApp)/components/searchProduct";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,

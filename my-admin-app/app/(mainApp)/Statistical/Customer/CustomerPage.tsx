@@ -1,34 +1,14 @@
 "use client";
-import { GET_PACKAGES_QUERY } from "@/app/graph/queries";
-import { useQuery } from "@apollo/client";
-import React, { useState } from "react";
-import Loading from "../loading";
+import { PACKAGES_QUERY } from "@/app/graph/queries";
+import { PackageData } from "@/app/types";
 import DateRangePicker from "@/components/ui/date-range-picker";
-import { DateRange } from "react-day-picker";
+import { useQuery } from "@apollo/client";
 import { subDays } from "date-fns";
+import React, { useState } from "react";
+import { DateRange } from "react-day-picker";
+import Loading from "../loading";
 
 // Define types for the GraphQL response
-interface Governorate {
-  name: string;
-}
-
-interface Checkout {
-  Governorate: Governorate;
-  total: number;
-  paymentMethod: string;
-}
-
-interface Package {
-  id: string;
-  checkoutId: string;
-  status: string;
-  createdAt: string;
-  Checkout: Checkout;
-}
-
-interface GetAllPackagesData {
-  getAllPackages: Package[];
-}
 
 interface GovernorateStats {
   name: string;
@@ -37,14 +17,22 @@ interface GovernorateStats {
 }
 
 const GovernorateStats: React.FC = () => {
-  const { data, loading, error } =
-    useQuery<GetAllPackagesData>(GET_PACKAGES_QUERY);
-
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 28),
     to: new Date(),
   });
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  const { data, loading, error } = useQuery<PackageData>(PACKAGES_QUERY, {
+    variables: {
+      dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+
+
+
   const [hoveredGovernorate, setHoveredGovernorate] =
     useState<GovernorateStats | null>(null);
 
@@ -73,14 +61,14 @@ const GovernorateStats: React.FC = () => {
   ];
 
   // Calculate percentages
-  const totalClients = data?.getAllPackages.length ?? 0;
+  const totalClients = data?.getAllPackages.packages.length ?? 0;
   const governorateCounts =
-    data?.getAllPackages.reduce(
-      (acc: { [key: string]: number }, packageData: Package) => {
+    data?.getAllPackages.packages.reduce(
+      (acc: { [key: string]: number }, packageData: any) => {
         const governorateName =
-          packageData.Checkout.Governorate.name.toLowerCase().trim();
+          packageData.Checkout?.Governorate?.name?.toLowerCase().trim() || '';
         if (governorateName) {
-          acc[governorateName.toLowerCase().trim()] = (acc[governorateName.toLowerCase().trim()] || 0) + 1;
+          acc[governorateName] = (acc[governorateName] || 0) + 1;
         }
         return acc;
       },
@@ -95,12 +83,6 @@ const GovernorateStats: React.FC = () => {
     };
   }).sort((a, b) => b.orderNumber - a.orderNumber);
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    setMousePosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-  };
 
   const handleMouseEnter = (govName: string) => {
     const orderCount = governorateCounts[govName.toLowerCase().trim()] || 0;
@@ -136,7 +118,6 @@ const GovernorateStats: React.FC = () => {
 
           <div
             className="container mx-auto flex flex-col md:flex-row justify-center items-start gap-6 relative"
-            onMouseMove={handleMouseMove}
           >
             {/* Governorate Grid */}
             <div className="w-full md:w-1/2 p-4 bg-dashboard-neutral-50 rounded-lg">

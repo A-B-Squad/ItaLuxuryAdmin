@@ -91,7 +91,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
           <Link
             target="_blank"
             href={
-              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}}`
+              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}`
             }
             className="p-2 w-10 hover:opacity-40 transition-opacity shadow-md h-10 rounded-full border-2"
           >

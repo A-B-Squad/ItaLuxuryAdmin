@@ -8,7 +8,6 @@ import Image from "next/image";
 import Link from "next/link";
 import SearchBarForTables from "@/app/(mainApp)/components/SearchBarForTables";
 import AddCategories from "../components/AddCategoriesButton";
-import prepRoute from "@/app/(mainApp)/Helpers/_prepRoute";
 import Loading from "@/app/loading";
 import { useToast } from "@/components/ui/use-toast";
 import { DELETE_CATEGORIES_MUTATIONS } from "../../../../graph/mutations";

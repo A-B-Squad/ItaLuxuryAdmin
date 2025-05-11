@@ -63,6 +63,9 @@ const CreateCoupons = () => {
     } else if (Number(percentage) < 0 || Number(percentage) > 100) {
       errors.percentage = "Le pourcentage doit être entre 0 et 100";
       isValid = false;
+    } else if (isNaN(Number(percentage))) {
+      errors.percentage = "Le pourcentage doit être un nombre valide";
+      isValid = false;
     }
 
     setFormErrors(errors);
@@ -83,13 +86,12 @@ const CreateCoupons = () => {
     }
 
     setIsSubmitting(true);
-
     try {
       await createCoupons({
         variables: {
           input: {
             code: couponCode,
-            discount: Number(percentage),
+            discount: parseFloat(Number(percentage).toFixed(4)), 
           },
         },
       });
@@ -105,10 +107,6 @@ const CreateCoupons = () => {
         description: "Le coupon a été créé avec succès.",
         duration: 5000,
       });
-      
-      // Optionally navigate to coupons list
-      // router.push("/Coupons");
-      
     } catch (error: any) {
       toast({
         title: "Erreur de création",
@@ -123,7 +121,15 @@ const CreateCoupons = () => {
 
   const handlePercentageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setPercentage(value ? Number(value) : "");
+    
+    // Allow decimal values
+    if (value === "") {
+      setPercentage("");
+    } else {
+      // Convert to number but allow decimal places
+      const numValue = Number(value);
+      setPercentage(isNaN(numValue) ? "" : numValue);
+    }
     
     // Clear error when user types
     setFormErrors(prev => ({
@@ -199,7 +205,7 @@ const CreateCoupons = () => {
                   onChange={handlePercentageChange}
                   min="0"
                   max="100"
-                  step="1"
+                  step="any" 
                   className={`block w-full py-2 px-3 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 ${
                     formErrors.percentage ? "border-red-500" : "border-gray-300"
                   }`}
@@ -212,7 +218,7 @@ const CreateCoupons = () => {
                 <p className="mt-1 text-sm text-red-500">{formErrors.percentage}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Entrez un pourcentage entre 0 et 100 qui sera appliqué comme réduction sur le total de la commande.
+                Entrez un pourcentage entre 0 et 100 qui sera appliqué comme réduction sur le total de la commande. Les valeurs décimales sont acceptées.
               </p>
             </div>
           </div>

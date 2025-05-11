@@ -2,13 +2,19 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
-import { gql } from "@apollo/client";
 
 import SearchBarForTables from "@/app/(mainApp)/components/SearchBarForTables";
 import SmallSpinner from "../../components/SmallSpinner";
 import Pagination from "../../components/Paginations";
 import ReviewsTable from "./components/ReviewsTable";
 import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
+
+interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  userName?: string;
+}
 
 interface Product {
   id: string;
@@ -18,17 +24,18 @@ interface Product {
   inventory: number;
   images: string[];
   categories: any[];
-  reviews: { rating: number }[];
+  reviews: Review[];
 }
 
-interface InventoryProps {
+
+interface ReviewsProps {
   searchParams: {
     q?: string;
     order?: "ASC" | "DESC";
   };
 }
 
-const Reviews: React.FC<InventoryProps> = ({ searchParams }) => {
+const Reviews: React.FC<ReviewsProps> = ({ searchParams }) => {
   const { q: query, order } = searchParams;
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -93,7 +100,7 @@ const Reviews: React.FC<InventoryProps> = ({ searchParams }) => {
               <SmallSpinner />
             </div>
           ) : (
-            <ReviewsTable products={products} />
+            <ReviewsTable products={products}  />
           )}
           {products.length > 0 && (
             <Pagination

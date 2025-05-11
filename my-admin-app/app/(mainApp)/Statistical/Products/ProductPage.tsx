@@ -55,8 +55,8 @@ const ProductPage = () => {
               <SalesChart data={data} dateRange={dateRange} />
             </div>
           </div>
-          
-        
+
+
         </div>
       </div>
     </div>

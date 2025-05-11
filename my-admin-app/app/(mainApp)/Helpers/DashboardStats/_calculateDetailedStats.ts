@@ -1,11 +1,11 @@
-import { DetailedStats, Package } from "@/app/types";
+import { DetailedStats, Packages } from "@/app/types";
 import moment from "moment-timezone";
 
 
 const DEFAULT_TIMEZONE = "Africa/Tunis";
 const EXCLUDED_STATUSES = ['REFUNDED', 'BACK', 'CANCELLED'];
 
-export const calculateDetailedStats = (packages: Package[]): DetailedStats => {
+export const calculateDetailedStats = (packages: Packages[]): DetailedStats => {
     const now = moment().tz(DEFAULT_TIMEZONE);
     const startOfDay = now.clone().startOf("day");
     const startOfWeek = now.clone().startOf("week");

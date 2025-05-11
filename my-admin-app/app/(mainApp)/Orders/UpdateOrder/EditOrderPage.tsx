@@ -225,16 +225,9 @@ const EditOrderPage = ({ searchParams }: any) => {
   const handleConfirmedOrder = async () => {
     setIsSubmitting(true);
     try {
-      // First update the order status in your system
-      await payedOrConfirmedOrInTransitPackage({
-        variables: {
-          packageId: orderId,
-          paymentMethod: order?.Checkout.paymentMethod,
-          status: "CONFIRMED",
-        },
-      });
+      // First create the delivery in JAX system to get the reference
+      let deliveryReference = null;
 
-      // Then create the delivery in JAX system
       if (order?.Checkout?.address) {
         try {
           // Handle both registered users and guest users
@@ -290,8 +283,14 @@ const EditOrderPage = ({ searchParams }: any) => {
             })
           });
 
-          // Improved error handling for JAX response
-          if (!jaxResponse.ok) {
+          // Get the delivery reference from JAX response
+          if (jaxResponse.ok) {
+            const jaxData = await jaxResponse.json();
+
+            if (jaxData && jaxData.code) {
+              deliveryReference = jaxData.code;
+            }
+          } else {
             let errorMessage = 'Unknown error';
             try {
               const errorData = await jaxResponse.json();
@@ -299,29 +298,32 @@ const EditOrderPage = ({ searchParams }: any) => {
             } catch (e) {
               errorMessage = `Status ${jaxResponse.status}`;
             }
-
             console.error('JAX API error:', errorMessage);
-            toast({
-              title: "Commande confirmée",
-              description: `La commande a été confirmée, mais l'envoi à JAX a échoué: ${errorMessage}`,
-              variant: "destructive",
-            });
-          } else {
-            // Success - both our system and JAX updated
-            toast({
-              title: "Commande confirmée",
-              description: "La commande a été confirmée et envoyée à JAX Delivery.",
-              className: "bg-green-50 border-green-200",
-            });
           }
         } catch (jaxError) {
           console.error("Error creating JAX delivery:", jaxError);
-          toast({
-            title: "Commande confirmée",
-            description: "La commande a été confirmée, mais l'envoi à JAX a échoué.",
-            variant: "destructive",
-          });
         }
+      }
+
+      // Then update the order status in your system with the delivery reference
+
+      await payedOrConfirmedOrInTransitPackage({
+        variables: {
+          packageId: orderId,
+          paymentMethod: order?.Checkout.paymentMethod,
+          status: "CONFIRMED",
+          deliveryReference: deliveryReference
+        },
+      });
+
+      await refetch();
+
+      if (deliveryReference) {
+        toast({
+          title: "Commande confirmée",
+          description: `La commande a été confirmée et envoyée à JAX Delivery (Référence: ${deliveryReference}).`,
+          className: "bg-green-50 border-green-200",
+        });
       } else {
         toast({
           title: "Commande confirmée",
@@ -329,8 +331,6 @@ const EditOrderPage = ({ searchParams }: any) => {
           className: "bg-green-50 border-green-200",
         });
       }
-
-      await refetch();
     } catch (error) {
       console.error("Error updating package status:", error);
       toast({

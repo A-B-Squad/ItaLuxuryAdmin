@@ -1,6 +1,4 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Select,
@@ -9,10 +7,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { FaCalendarAlt } from "react-icons/fa";
-import { DateRange } from "react-day-picker";
 import { format, subDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import React, { useEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
+import { FaCalendarAlt } from "react-icons/fa";
 
 interface DateRangePickerProps {
     dateRange: DateRange | undefined;
@@ -28,6 +26,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const [selectedPreset, setSelectedPreset] = useState("last28");
     const [formattedDateRange, setFormattedDateRange] = useState<string>("");
     const [showCalendar, setShowCalendar] = useState(false);
+    // Add a temporary state to hold the selected date range before applying
+    const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(dateRange);
 
     // Format date range whenever it changes
     useEffect(() => {
@@ -38,89 +38,91 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         } else {
             setFormattedDateRange("");
         }
+
+        // Update temp date range when parent date range changes
+        setTempDateRange(dateRange);
     }, [dateRange]);
 
     // Handle preset selection
     const handlePresetChange = (value: string) => {
         setSelectedPreset(value);
         const today = new Date();
+        let newRange: DateRange | undefined;
 
         switch (value) {
             case "today":
-                setDateRange({
+                newRange = {
                     from: today,
                     to: today,
-                });
+                };
                 break;
             case "last7":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 7),
                     to: today,
-                });
+                };
                 break;
             case "last14":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 14),
                     to: today,
-                });
+                };
                 break;
             case "last28":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 28),
                     to: today,
-                });
+                };
                 break;
             case "last30":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 30),
                     to: today,
-                });
+                };
                 break;
             case "last90":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 90),
                     to: today,
-                });
+                };
                 break;
             case "last365":
-                setDateRange({
+                newRange = {
                     from: subDays(today, 365),
                     to: today,
-                });
+                };
                 break;
             case "allYears":
                 // Set to a very old date to include all data
-                setDateRange({
+                newRange = {
                     from: new Date(2000, 0, 1),
                     to: today,
-                });
+                };
                 break;
             default:
                 break;
         }
+
+        // Only update the temporary date range
+        setTempDateRange(newRange);
+    };
+
+    // Apply the selected date range
+    const handleApply = () => {
+        setDateRange(tempDateRange);
+        setShowCalendar(false);
     };
 
     return (
         <div className={`${className} w-full`}>
             <div className="flex flex-col w-full md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                <div className="flex items-center mb-4 md:mb-0">
-                    <div className="bg-dashboard-primary text-white p-2 rounded-md mr-3">
-                        <FaCalendarAlt size={20} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-dashboard-neutral-600">Période sélectionnée:</p>
-                        <p className="text-base font-semibold text-dashboard-neutral-800">
-                            {formattedDateRange || "Aucune période sélectionnée"}
-                        </p>
-                    </div>
-                </div>
                 <div className="relative">
                     <button
                         onClick={() => setShowCalendar(!showCalendar)}
                         className="flex items-center border p-2 rounded-md bg-white text-dashboard-neutral-700 hover:bg-dashboard-neutral-100 transition duration-300 shadow-sm"
                     >
                         <FaCalendarAlt className="mr-2 text-dashboard-primary" />
-                        {showCalendar ? "Masquer Calendrier" : "Afficher Calendrier"}
+                        {formattedDateRange || "Sélectionner une date"}
                     </button>
                     {showCalendar && (
                         <div className="absolute right-0 mt-2 bg-white p-4 rounded-md shadow-lg z-10 border border-dashboard-neutral-200 max-w-[calc(100vw-2rem)] overflow-auto">
@@ -146,15 +148,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                                 <p className="text-sm font-medium mb-2 text-dashboard-neutral-600">Ou sélectionnez une période personnalisée:</p>
                                 <Calendar
                                     mode="range"
-                                    selected={dateRange}
-                                    onSelect={(range) => setDateRange(range)}
+                                    selected={tempDateRange}
+                                    onSelect={(range) => setTempDateRange(range)}
                                     numberOfMonths={window.innerWidth < 640 ? 1 : 2}
-                                    defaultMonth={dateRange?.from}
+                                    defaultMonth={tempDateRange?.from}
                                     className="rounded-md border"
                                 />
                             </div>
                             <button
-                                onClick={() => setShowCalendar(false)}
+                                onClick={handleApply}
                                 className="w-full mt-4 bg-dashboard-primary text-white py-2 rounded-md hover:bg-dashboard-primary-dark transition-all"
                             >
                                 Appliquer

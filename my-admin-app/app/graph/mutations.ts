@@ -133,18 +133,42 @@ export const DELETE_COUPONS_MUTATIONS = gql`
     deleteCoupons(couponsId: $couponsId)
   }
 `;
+
+
+export const DELETE_REVIEW_MUTATION = gql`
+  mutation DeleteReview($reviewId: ID!) {
+    deleteReview(reviewId: $reviewId)
+  }
+`;
+
+export const ADD_REVIEWS_MUTATION = gql`
+  mutation AddReview($productId: ID!, $userId: ID, $rating: Int!, $comment: String, $userName: String) {
+    AddReview(input: {
+      productId: $productId, 
+      userId: $userId, 
+      rating: $rating,
+      comment: $comment,
+      userName: $userName
+    })
+  }
+`;
 export const PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS = gql`
   mutation PayedOrConfirmedOrInTransitPackage(
-    $packageId: ID!
-    $status: String!
-    $paymentMethod: PaymentMethod!
-  ) {
-    payedOrConfirmedOrInTransitPackage(
-      packageId: $packageId
-      status: $status
-      paymentMethod: $paymentMethod
-    )
-  }
+  $packageId: ID!
+  $paymentMethod: PaymentMethod!
+  $status: String!
+  $deliveryReference: String
+) {
+  payedOrConfirmedOrInTransitPackage(
+    packageId: $packageId
+    paymentMethod: $paymentMethod
+    status: $status
+    deliveryReference: $deliveryReference
+  )
+}
+
+
+
 `;
 export const CREATE_COUPONS_MUTATIONS = gql`
   mutation CreateCoupons($input: CreateCouponInput!) {
