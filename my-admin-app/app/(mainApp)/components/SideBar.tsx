@@ -125,6 +125,7 @@ const SideBar = () => {
       text: "Statistiques",
       href: "/Statistics",
       subItems: [
+        { text: "Analyse ADS", href: "/Statistical/AdsAnalysis" },
         { text: "Chiffre D'affaire", href: "/Statistical/YearlyTurnover" },
         { text: "Livraison", href: "/Statistical/Delivery" },
         { text: "Clients", href: "/Statistical/Customer" },

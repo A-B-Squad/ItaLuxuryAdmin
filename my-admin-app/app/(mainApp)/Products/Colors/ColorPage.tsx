@@ -24,6 +24,10 @@ const ColorPage = () => {
     setColorName(names.ntc[0].name);
   }, [newColor]);
 
+  const handleColorNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColorName(e.target.value);
+  };
+
   const handleAddColor = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     try {
@@ -114,8 +118,8 @@ const ColorPage = () => {
                     type="text"
                     id="colorName"
                     value={colorName}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={handleColorNameChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <button

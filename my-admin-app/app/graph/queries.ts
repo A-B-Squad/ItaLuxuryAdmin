@@ -193,8 +193,8 @@ export const BEST_SELLS_QUERY = gql`
   }
 `;
 export const PACKAGES_QUERY = gql`
-   query GetAllPackages($page: Int, $pageSize: Int,$dateFrom: String, $dateTo: String) {
-    getAllPackages(page: $page, pageSize: $pageSize, dateFrom: $dateFrom, dateTo: $dateTo) {
+   query GetAllPackages($page: Int, $pageSize: Int,$dateFrom: String, $dateTo: String,$statusFilter:[String]) {
+    getAllPackages(page: $page, pageSize: $pageSize, dateFrom: $dateFrom, dateTo: $dateTo,statusFilter:$statusFilter) {
       packages {
           id
       customId
