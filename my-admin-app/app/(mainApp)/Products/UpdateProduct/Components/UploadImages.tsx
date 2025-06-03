@@ -11,15 +11,15 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
 
 
   const handleSuccessUpload = (result: any) => {
-    // Transform the URL to WebP format with quality optimization
-    const webpUrl = result.info.secure_url.replace(
+    // Transform the URL to WebP format with quality optimization and resize to fit within 800x800
+    const transformedUrl = result.info.secure_url.replace(
       "/upload/",
-      "/upload/f_webp,q_auto:good/"
+      "/upload/c_limit,w_800,h_800,f_webp,q_auto:good/"
     );
-  
+
     setUploadedImages((prevImages: any) => [
       ...prevImages,
-      webpUrl,
+      transformedUrl,
     ]);
   };
 

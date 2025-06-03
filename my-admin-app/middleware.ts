@@ -15,6 +15,9 @@ const ALLOWED_ORIGINS: string[] = [
 // Define public routes that don't require authentication
 const PUBLIC_ROUTES = ["/signin", "/signup"];
 
+// Define API routes that should bypass authentication
+const BYPASS_AUTH_ROUTES = ["/api/cron/"];
+
 // Define error messages for better debugging
 const ERROR_MESSAGES = {
   NO_TOKEN: "No authentication token found",
@@ -58,6 +61,11 @@ export async function middleware(req: NextRequest) {
     res.headers.set("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
     res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     res.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Check if the route should bypass authentication (cron jobs)
+  if (BYPASS_AUTH_ROUTES.some(route => url.startsWith(route))) {
+    return res;
   }
 
   // Handle public routes

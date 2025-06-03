@@ -17,26 +17,50 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        console.log(`Checking JAX status for reference: ${referenceId}`);
+
         // Updated to use the correct endpoint from the documentation
+        // Removed the conflicting cache options
         const response = await fetch(`${JAX_API_BASE_URL}/user/colis/getstatubyean/${referenceId}?token=${JAX_DELIVERY_TOKEN}`, {
             headers: {
                 'Authorization': `Bearer ${JAX_DELIVERY_TOKEN}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0'
-            },
-            cache: 'no-store',
-            next: { revalidate: 0 }
+            }
         });
 
         if (!response.ok) {
+            console.error(`JAX API error for ${referenceId}: ${response.status} ${response.statusText}`);
             return NextResponse.json(
-                { error: `JAX API error: ${response.status} ${response.statusText}` },
+                { error: `JAX API error: ${response.status} ${response.statusText}`, status: 'ERROR' },
                 { status: response.status }
             );
         }
 
+        // Check content type to avoid parsing HTML as JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error(`Invalid content type from JAX API for ${referenceId}: ${contentType}`);
+
+            // Try to get the response text for debugging
+            const text = await response.text();
+            console.log(`Response text (first 100 chars): ${text.substring(0, 100)}...`);
+
+            return NextResponse.json(
+                {
+                    error: `Invalid response format from JAX API: ${contentType}`,
+                    status: 'ERROR'
+                },
+                { status: 500 }
+            );
+        }
+
         const data = await response.json();
+        console.log(`Successfully retrieved status for ${referenceId}: ${data.status || 'No status'}`);
+
         return NextResponse.json(data, {
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -45,9 +69,9 @@ export async function GET(request: NextRequest) {
             }
         });
     } catch (error) {
-        console.error('Error checking JAX delivery status:', error);
+        console.error(`Error checking JAX delivery status for ${request.url}:`, error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', status: 'ERROR' },
             { status: 500 }
         );
     }
