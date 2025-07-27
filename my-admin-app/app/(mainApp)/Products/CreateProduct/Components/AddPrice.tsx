@@ -225,7 +225,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
           value={purchasePrice}
           onChange={handlePurchasePriceChange}
           min="0"
-          step="0.01"
+          step="0.1"
           className="w-full p-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -240,7 +240,7 @@ const AddPrice: React.FC<AddPriceProps> = ({
           value={originalPrice}
           onChange={handleOriginalPriceChange}
           min="0"
-          step="0.01"
+          step="0.1"
           className="w-full p-2 border border-gray-300 rounded-md"
         />
       </div>

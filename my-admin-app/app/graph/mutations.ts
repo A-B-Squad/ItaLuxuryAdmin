@@ -253,3 +253,63 @@ export const DELETE_CATEGORIES_MUTATIONS = gql`
     deleteCategory(id: $deleteCategoryId)
   }
 `;
+
+export const ADD_POINTS_MUTATION = gql`
+mutation AddPointsToUser($userId: ID!, $points: Int!, $PointType: PointType!, $description: String) {
+  addPointsToUser(userId: $userId, points: $points, PointType: $PointType, description: $description)
+}
+`;
+
+
+export const GENERATE_VOUCHER_MUTATION = gql`
+  mutation GenerateVoucher($input: GenerateVoucherInput!) {
+    generateVoucher(input: $input) {
+      id
+      code
+      amount
+      isUsed
+      createdAt
+      expiresAt
+      userId
+    }
+  }
+`;
+
+export const USE_VOUCHER_MUTATION = gql`
+  mutation UseVoucher($input: UseVoucherInput!) {
+    useVoucher(input: $input) {
+      success
+      message
+      voucher {
+        id
+        code
+        amount
+        isUsed
+        usedAt
+      }
+    }
+  }
+`;
+
+
+
+
+export const DELETE_TRANSACTION = gql`
+mutation DeletePointTransaction($transactionId: String!) {
+  deletePointTransaction(transactionId: $transactionId) {
+    message
+  }
+}
+`;
+export const UPDATE_POINT_SETTINGS = gql`
+  mutation UpdatePointSettings($input: PointSettingsInput!) {
+    updatePointSettings(input: $input) {
+      conversionRate
+      redemptionRate
+      minimumPointsToUse
+      loyaltyThreshold
+      loyaltyRewardValue
+      isActive
+    }
+  }
+`;

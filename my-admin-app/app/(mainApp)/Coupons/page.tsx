@@ -17,30 +17,43 @@ interface Coupon {
   id: string;
   code: string;
   available: boolean;
-  checkout: { id: string; createdAt: string }[];
+  discount: number;
+  checkout: {
+    id: string;
+    createdAt: string;
+  }[];
 }
+
+interface FetchAllCouponsData {
+  fetchAllCoupons: {
+    coupons: Coupon[];
+    totalCount: number;
+  };
+}
+
 interface CouponsProps {
   searchParams: {
     q?: string;
-    order?: "USED" | "UNUSED";
+    sortBy?: "USED" | "UNUSED";
     page?: string;
   };
 }
 
 const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
-  const { q, order, page: pageParam } = searchParams;
+  const { q, sortBy, page: pageParam } = searchParams;
   const { toast } = useToast();
   const router = useRouter();
 
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [filteredCoupons, setFilteredCoupons] = useState<Coupon[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(pageParam ? parseInt(pageParam) : 1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [couponsToDelete, setCouponsToDelete] = useState<Coupon | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
   const PAGE_SIZE = 10;
 
-  const [searchCoupons, { loading, error }] = useLazyQuery(COUPONS_QUERY);
+  const [searchCoupons, { loading, error }] = useLazyQuery<FetchAllCouponsData>(COUPONS_QUERY);
   const [deleteCouponsMutation] = useMutation(DELETE_COUPONS_MUTATIONS);
 
   const fetchCoupons = useCallback(async () => {
@@ -52,8 +65,30 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
         },
       });
 
-      let fetchedCoupons = [...(data?.fetchAllCoupons || [])];
-      setCoupons(fetchedCoupons);
+      if (data?.fetchAllCoupons) {
+        let fetchedCoupons = [...(data.fetchAllCoupons.coupons || [])];
+        
+        // Apply client-side filtering for search and sortBy
+        if (q) {
+          fetchedCoupons = fetchedCoupons.filter(
+            (coupon) =>
+              coupon.code.toLowerCase().includes(q.toLowerCase()) ||
+              (coupon.checkout[0]?.id &&
+                coupon.checkout[0].id.toLowerCase().includes(q.toLowerCase()))
+          );
+        }
+
+        if (sortBy) {
+          if (sortBy === "UNUSED") {
+            fetchedCoupons = fetchedCoupons.filter(coupon => coupon.available === true);
+          } else if (sortBy === "USED") {
+            fetchedCoupons = fetchedCoupons.filter(coupon => coupon.available === false);
+          }
+        }
+
+        setCoupons(fetchedCoupons);
+        setTotalCount(data.fetchAllCoupons.totalCount);
+      }
     } catch (error) {
       console.error("Error fetching coupons:", error);
       toast({
@@ -63,20 +98,36 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
         variant: "destructive",
       });
     }
-  }, [page, searchCoupons, toast]);
+  }, [page, q, sortBy, searchCoupons, toast]);
 
   useEffect(() => {
     fetchCoupons();
   }, [fetchCoupons]);
 
   useEffect(() => {
-    // Update URL with current page
+    // Update URL with current page, search, and sortBy
+    const url = new URL(window.location.href);
+    
     if (page !== 1) {
-      const url = new URL(window.location.href);
       url.searchParams.set('page', page.toString());
-      router.replace(url.pathname + url.search);
+    } else {
+      url.searchParams.delete('page');
     }
-  }, [page, router]);
+    
+    if (q) {
+      url.searchParams.set('q', q);
+    } else {
+      url.searchParams.delete('q');
+    }
+    
+    if (sortBy) {
+      url.searchParams.set('sortBy', sortBy);
+    } else {
+      url.searchParams.delete('sortBy');
+    }
+
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [page, q, sortBy, router]);
 
   useEffect(() => {
     if (error) {
@@ -88,33 +139,12 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
     }
   }, [error, toast]);
 
+  // Reset to page 1 when search or filter changes
   useEffect(() => {
-    let result = [...coupons];
-
-    // Apply search filter
-    if (q) {
-      result = result.filter(
-        (coupon) =>
-          coupon.code.toLowerCase().includes(q.toLowerCase()) ||
-          (coupon.checkout[0]?.id &&
-            coupon.checkout[0].id.toLowerCase().includes(q.toLowerCase()))
-      );
+    if (page !== 1 && (q || sortBy)) {
+      setPage(1);
     }
-
-    // Apply order filter
-    if (order) {
-      //  filter based on the order parameter
-      if (order === "UNUSED") {
-        result = result.filter(coupon => coupon.available === true);
-      } else if (order === "USED") {
-        result = result.filter(coupon => coupon.available === false);
-      }
-
-
-    }
-
-    setFilteredCoupons(result);
-  }, [coupons, q, order]);
+  }, [q, sortBy]);
 
   const handleDeleteCoupons = async () => {
     if (!couponsToDelete) return;
@@ -128,11 +158,6 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
         },
       });
 
-      // Update local state instead of reloading the page
-      setCoupons(prevCoupons =>
-        prevCoupons.filter(coupon => coupon.id !== couponsToDelete.id)
-      );
-
       toast({
         title: "Coupon supprimé",
         description: `Le coupon ${couponsToDelete.code} a été supprimé avec succès.`,
@@ -141,6 +166,9 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
 
       setCouponsToDelete(null);
       setShowDeleteModal(false);
+      
+      // Refetch data to update the list and count
+      await fetchCoupons();
     } catch (error: any) {
       console.error("Error deleting coupons:", error);
       toast({
@@ -153,8 +181,18 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
     }
   };
 
-  const totalCount = filteredCoupons.length;
-  const numberOfPages = Math.ceil(totalCount / PAGE_SIZE);
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Calculate total pages based on filtered results
+  const filteredTotalCount = q || sortBy ? coupons.length : totalCount;
+  const numberOfPages = Math.ceil(filteredTotalCount / PAGE_SIZE);
+
+  // For display purposes, show the current page of coupons
+  const displayedCoupons = q || sortBy 
+    ? coupons.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : coupons;
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
@@ -163,7 +201,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
           <h1 className="font-bold text-2xl">
             Coupons{" "}
             <span className="text-gray-600 font-medium text-base">
-              ({totalCount || 0})
+              ({filteredTotalCount || 0})
             </span>
           </h1>
 
@@ -191,10 +229,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
           ) : (
             <>
               <CouponsTable
-                coupons={filteredCoupons.slice(
-                  (page - 1) * PAGE_SIZE,
-                  page * PAGE_SIZE,
-                )}
+                coupons={displayedCoupons}
                 onDeleteClick={(coupon: Coupon) => {
                   setCouponsToDelete(coupon);
                   setShowDeleteModal(true);
@@ -202,17 +237,17 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
                 loading={loading}
               />
 
-              {filteredCoupons.length > 0 && numberOfPages > 1 && (
+              {displayedCoupons.length > 0 && numberOfPages > 1 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={page}
                     totalPages={numberOfPages}
-                    onPageChange={setPage}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               )}
 
-              {filteredCoupons.length === 0 && !loading && (
+              {displayedCoupons.length === 0 && !loading && (
                 <div className="text-center py-12">
                   <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
                     <svg className="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,7 +257,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Aucun coupon trouvé</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {q ? "Essayez de modifier votre recherche ou" : "Commencez par"} créer un nouveau coupon.
+                    {q || sortBy ? "Essayez de modifier votre recherche ou filtres, ou" : "Commencez par"} créer un nouveau coupon.
                   </p>
                   <div className="mt-6">
                     <Link
@@ -241,7 +276,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
           )}
         </div>
       </div>
-
+      
       {showDeleteModal && couponsToDelete && (
         <DeleteModal
           sectionName="Coupons"

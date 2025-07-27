@@ -116,11 +116,53 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
   };
 
 
+
+
+  // Update the useEffect to properly handle discount changes
+  useEffect(() => {
+    if (isDiscountEnabled && originalPrice > 0) {
+      calculateManualDiscountedPrice(originalPrice, manualDiscountPrice);
+    }
+
+    // Set initial dates
+    const startDate = parseAndFormatDate(dateOfStartDiscount);
+    const endDate = parseAndFormatDate(dateOfEndDiscount);
+
+    setDate({
+      from: startDate || undefined,
+      to: endDate || undefined,
+    });
+  }, [
+    originalPrice,
+    dateOfStartDiscount,
+    dateOfEndDiscount,
+    manualDiscountPrice,
+    isDiscountEnabled  
+  ]);
+
+  // Update the calculateManualDiscountedPrice function
+  const calculateManualDiscountedPrice = (
+    price: number,
+    discountPrice: number,
+  ) => {
+    if (price < discountPrice) {
+      // Prevent discount from being larger than price
+      setManualDiscountPrice(price);
+      setDiscountedPrice("0.00");
+      setFinalDiscountPrice(0);
+      return;
+    }
+
+    const finalPrice = Math.max(0, price - discountPrice);
+    setDiscountedPrice(finalPrice.toFixed(2));
+    setFinalDiscountPrice(finalPrice);
+  };
+
+  // Update the handleManualDiscountPriceChange function
   const handleManualDiscountPriceChange = (
     e: ChangeEvent<HTMLInputElement>,
   ) => {
-    const discountPrice = Number(e.target.value) || 0;
-
+    const discountPrice = Math.max(0, Number(e.target.value) || 0);
     setManualDiscountPrice(discountPrice);
     calculateManualDiscountedPrice(originalPrice, discountPrice);
   };
@@ -131,15 +173,7 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
     setPurchasePrice(price);
   };
 
-  const calculateManualDiscountedPrice = (
-    price: number,
-    discountPrice: number,
-  ) => {
-    const finalPrice = price - discountPrice;
-    setManualDiscountPrice(discountPrice);
-    setDiscountedPrice(finalPrice.toFixed(2));
-    setFinalDiscountPrice(finalPrice);
-  };
+
 
   const toggleCalendar = () => {
     setShowCalendar(!showCalendar);
@@ -209,7 +243,7 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
           value={originalPrice}
           onChange={handleOriginalPriceChange}
           min="0"
-          step="0.01"
+          step="0.1"
           className="w-full p-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -241,7 +275,7 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
                 value={manualDiscountPrice}
                 onChange={handleManualDiscountPriceChange}
                 min="0"
-                step="0.01"
+                step="0.1"
               />
             </div>
           </div>

@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@apollo/client";
 import Link from "next/link";
-import { FiPlus, FiFilter, FiDownload } from "react-icons/fi";
+import { FiPlus, FiFilter } from "react-icons/fi";
 import SearchBarForTables from "../components/SearchBarForTables";
 import SmallSpinner from "../components/SmallSpinner";
 import Pagination from "../components/Paginations";
@@ -17,29 +17,39 @@ const PAGE_SIZE = 12;
 interface ProductsProps {
   searchParams: {
     q?: string;
-    order?: "ASC" | "DESC";
+    sortBy?: "createdAt" | "price" | "name" | "isVisible";
     category?: string;
+    sortOrder: "asc" | "desc"
   };
 }
 
 const ProductPage = ({ searchParams }: ProductsProps) => {
-  const { q: query, order } = searchParams;
+  const { q: query, sortBy = "createdAt", sortOrder = "desc" } = searchParams;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [previousQuery, setPreviousQuery] = useState(query);
   const { toast } = useToast();
 
   const {
     limitSearchedProducts,
-    allProducts,
     loading,
     page,
     setPage,
     numberOfPages,
     fetchProducts,
-  } = useProducts(query, order, PAGE_SIZE);
+    totalCount,
+  } = useProducts(query, sortBy, PAGE_SIZE, sortOrder);
+
+  // Reset page to 1 when search query changes or sort parameters change
+  useEffect(() => {
+    if (query !== previousQuery) {
+      setPage(1);
+      setPreviousQuery(query);
+    }
+  }, [query, previousQuery, setPage, sortBy, sortOrder]);
 
   const [deleteProductMutation] = useMutation(DELETE_PRODUCT_MUTATIONS);
 
@@ -71,8 +81,6 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
     }
   };
 
-
-
   return (
     <div className="w-full">
       <div className="lg:container w-full bg-white border shadow-md rounded-lg overflow-hidden">
@@ -80,10 +88,17 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
           <h1 className="font-bold text-2xl text-gray-800">
             Produits{" "}
             <span className="text-gray-500 font-medium text-base ml-2">
-              ({allProducts.length || 0})
+              ({totalCount || 0})
             </span>
           </h1>
-
+          
+          <Link
+            href="/Products/CreateProduct"
+            className="px-4 py-2 bg-mainColorAdminDash text-white rounded-md hover:bg-opacity-90 transition-colors flex items-center"
+          >
+            <FiPlus className="h-4 w-4 mr-2" />
+            Ajouter un produit
+          </Link>
         </div>
 
         <div className="p-6">
@@ -93,12 +108,18 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href={`/Products?order=${order === 'ASC' ? 'DESC' : 'ASC'}${query ? `&q=${query}` : ''}`}
+                href={`/Products?sortBy=${sortBy}&sortOrder=${sortOrder === 'asc' ? 'desc' : 'asc'}${query ? `&q=${query}` : ''}`}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 <FiFilter className="h-4 w-4" />
-                <span>{order === 'DESC' ? 'Prix ↑' : 'Prix ↓'}</span>
+                <span>
+                  {sortBy === "price" && (sortOrder === "asc" ? "Prix ↑" : "Prix ↓")}
+                  {sortBy === "name" && (sortOrder === "asc" ? "Nom A → Z" : "Nom Z → A")}
+                  {sortBy === "createdAt" && (sortOrder === "asc" ? "Anciens d'abord" : "Nouveaux d'abord")}
+                  {sortBy === "isVisible" && (sortOrder === "desc" ? "Visible" : "Non visible")}
+                </span>
               </Link>
+
             </div>
           </div>
 
@@ -130,7 +151,7 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
           )}
 
           <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            {limitSearchedProducts.length > 0 && (
+            {numberOfPages > 1 && (
               <Pagination
                 currentPage={page}
                 totalPages={numberOfPages}
@@ -138,7 +159,7 @@ const ProductPage = ({ searchParams }: ProductsProps) => {
               />
             )}
             <p className="text-sm text-gray-500">
-              Affichage de {limitSearchedProducts.length} sur {allProducts.length} produits
+              Affichage de {limitSearchedProducts.length} sur {totalCount} produits
             </p>
           </div>
         </div>

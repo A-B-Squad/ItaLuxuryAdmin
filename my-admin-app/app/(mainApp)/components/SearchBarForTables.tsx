@@ -37,27 +37,37 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
   }, [searchParams]);
 
   const updateSearchParams = useCallback(
-    (newQuery: string, newOrder: string) => {
+    (newQuery: string, newSortBy: string, newSortOrder?: string) => {
       const params = new URLSearchParams(searchParams);
       if (newQuery) {
         params.set("q", newQuery);
       } else {
         params.delete("q");
       }
-      if (newOrder && newOrder !== "default") {
-        params.set("order", newOrder);
+
+      // For all pages, use sortBy parameter
+      if (newSortBy && newSortBy !== "default") {
+        params.set("sortBy", newSortBy);
       } else {
-        params.delete("order");
+        params.delete("sortBy");
       }
+
+      // For pages other than Coupons, also use sortOrder
+      if (page !== "Coupons" && newSortOrder && newSortOrder !== "default") {
+        params.set("sortOrder", newSortOrder);
+      } else if (page !== "Coupons") {
+        params.delete("sortOrder");
+      }
+
       router.push(`/${page}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, page],
+    [router, searchParams, page]
   );
 
   // Debounce search to improve performance
   const debouncedSearch = useMemo(
     () => debounce((query: string) => {
-      updateSearchParams(query, searchParams.get("order") || "default");
+      updateSearchParams(query, searchParams.get("sortBy") || "default");
     }, 300),
     [updateSearchParams, searchParams]
   );
@@ -73,14 +83,23 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
 
   const handleClearSearch = useCallback(() => {
     setSearchValue("");
-    updateSearchParams("", searchParams.get("order") || "default");
+    updateSearchParams("", searchParams.get("sortBy") || "default");
   }, [updateSearchParams, searchParams]);
 
   const handleFilterChange = useCallback(
     (value: string) => {
-      updateSearchParams(searchValue, value);
+      if (value === "default") {
+        updateSearchParams(searchValue, "", "");
+      } else if (page === "Coupons") {
+        // For Coupons page, the value is directly the order parameter
+        updateSearchParams(searchValue, value, "");
+      } else {
+        // For Products page, the value is in format "sortBy-sortOrder"
+        const [sortByValue, sortOrderValue] = value.split("-");
+        updateSearchParams(searchValue, sortByValue, sortOrderValue);
+      }
     },
-    [updateSearchParams, searchValue],
+    [updateSearchParams, searchValue, page],
   );
 
   const placeholder = useMemo(() => {
@@ -108,12 +127,19 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
     ) {
       return [
         { value: "default", label: "Filtres de recherche", icon: <IoFilter /> },
-        { value: "ASC", label: "Prix : Croissant", icon: <IoArrowUp /> },
-        { value: "DESC", label: "Prix : Décroissant", icon: <IoArrowDown /> },
+        { value: "createdAt-asc", label: "Date : Plus anciens", icon: <IoArrowUp /> },
+        { value: "createdAt-desc", label: "Date : Plus récents", icon: <IoArrowDown /> },
+        { value: "price-asc", label: "Prix : Croissant", icon: <IoArrowUp /> },
+        { value: "price-desc", label: "Prix : Décroissant", icon: <IoArrowDown /> },
+        { value: "name-asc", label: "Nom : A → Z", icon: <IoArrowUp /> },
+        { value: "name-desc", label: "Nom : Z → A", icon: <IoArrowDown /> },
+        { value: "isVisible-desc", label: "Visible", icon: <IoArrowUp /> },
+        { value: "isVisible-asc", label: "Non visible", icon: <IoArrowDown /> },
       ];
     }
     return null;
   }, [page]);
+
 
   const showFilter = useMemo(
     () =>
@@ -123,7 +149,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
     [page],
   );
 
-  const currentOrder = searchParams.get("order") || "default";
+  const currentOrder = searchParams.get("sortBy") || "default";
 
   return (
     <form
@@ -131,7 +157,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
       onSubmit={(e) => {
         e.preventDefault();
         debouncedSearch.cancel();
-        updateSearchParams(searchValue, searchParams.get("order") || "default");
+        updateSearchParams(searchValue, searchParams.get("sortBy") || "default");
       }}
     >
       <div className="relative flex flex-col sm:flex-row gap-3 w-full md:w-[80%]">
@@ -166,9 +192,16 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
         </div>
       </div>
       {showFilter && filterOptions && (
+        // Fix the value selection for the Select component
         <Select
           onValueChange={handleFilterChange}
-          value={currentOrder}
+          value={
+            page === "Coupons" 
+              ? (searchParams.get("sortBy") || "default")
+              : (searchParams.get("sortBy") && searchParams.get("sortOrder")
+                  ? `${searchParams.get("sortBy")}-${searchParams.get("sortOrder")}`
+                  : "default")
+          }
         >
           <SelectTrigger className="w-full md:w-[20%] h-11 border-gray-300 bg-white shadow-sm hover:border-mainColorAdminDash transition-colors">
             <SelectValue placeholder="Filtres de recherche" />

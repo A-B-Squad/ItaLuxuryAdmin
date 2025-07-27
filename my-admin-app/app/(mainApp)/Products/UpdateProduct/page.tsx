@@ -99,19 +99,17 @@ const UpdateProduct = ({ searchParams }: any) => {
       );
 
 
-      if (product.categories.length > 0) {
+      if (product.categories && product.categories.length > 0) {
         const category = product.categories;
         setSelectedIds((prev) => {
           const newSelectedIds = {
-            categoryId: category[0].id,
-            subcategoryId:
-              Object.keys(category[1]).length > 0
-                ? category[1].id
-                : "",
-            subSubcategoryId:
-              Object.keys(category[2]).length > 0
-                ? category[2].id
-                : "",
+            categoryId: category[0]?.id || "",
+            subcategoryId: category[1] && typeof category[1] === 'object' 
+              ? category[1].id || "" 
+              : "",
+            subSubcategoryId: category[2] && typeof category[2] === 'object'
+              ? category[2].id || ""
+              : "",
           };
           return JSON.stringify(prev) !== JSON.stringify(newSelectedIds)
             ? newSelectedIds
@@ -208,7 +206,7 @@ const UpdateProduct = ({ searchParams }: any) => {
           selectedIds.categoryId,
           selectedIds.subcategoryId,
           selectedIds.subSubcategoryId,
-        ].filter(Boolean),
+        ].filter(id => id && id.trim() !== ""),
         description,
         name: title,
         images: uploadedImages,
@@ -231,7 +229,7 @@ const UpdateProduct = ({ searchParams }: any) => {
 
       },
     };
-
+    
     updateProductMutation({
       variables: productData,
     });

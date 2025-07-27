@@ -3,7 +3,9 @@ import ProductPage from "./ProductPage";
 interface ProductsProps {
   searchParams: {
     q?: string;
-    order?: "ASC" | "DESC";
+    sortBy?: "createdAt" | "price" | "name";
+    sortOrder: "asc" | "desc"
+
   };
 }
 const page = ({ searchParams }: ProductsProps) => {

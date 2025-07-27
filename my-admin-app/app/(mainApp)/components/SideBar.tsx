@@ -36,7 +36,7 @@ DecorativeShapes.displayName = 'DecorativeShapes';
 const SideBar = () => {
   const pathname = usePathname();
   const { data } = useQuery(PACKAGES_QUERY, {
-    
+
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first'
   });
@@ -47,7 +47,7 @@ const SideBar = () => {
     if (!data?.getAllPackages?.packages || !Array.isArray(data.getAllPackages.packages)) {
       return false;
     }
-    
+
     return data.getAllPackages.packages.some(
       (order: { status: string }) =>
         order.status === "PROCESSING" || order.status === "PAYED_NOT_DELIVERED",
@@ -166,8 +166,10 @@ const SideBar = () => {
         },
         { text: "Section visibility", href: "/Settings/SectionVisibility" },
         { text: "Integration", href: "/Settings/Integration" },
+        { text: "Paramètres des points", href: "/Settings/PointSettings" }, // ✅ Ajouté ici
       ],
     },
+
   ], [hasProcessingOrders]); // Only re-create when processing orders change
 
   return (
