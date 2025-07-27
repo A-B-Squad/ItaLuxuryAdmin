@@ -35,12 +35,14 @@ interface Product {
 interface InventoryProps {
   searchParams: {
     q?: string;
-    order?: "ASC" | "DESC";
+    sortBy?: "createdAt" | "price" | "name";
+    sortOrder: "asc" | "desc"
+
   };
 }
 
 const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
-  const { q: query, order } = searchParams;
+  const { q: query, sortBy = "createdAt", sortOrder = "desc" } = searchParams;
   const { toast } = useToast();
 
   const [updateInventory] = useMutation(UPDATE_PRODUCT_INVENTORY_MUTATION);
@@ -56,7 +58,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
     setPage,
     numberOfPages,
     fetchProducts,
-  } = useProducts(query, order, PAGE_SIZE);
+  } = useProducts(query, sortBy, PAGE_SIZE, sortOrder);
 
   const exportToPDF = () => {
     const doc = new jsPDF({ orientation: "landscape" });
@@ -134,7 +136,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
           product.broken,
           product.inventory,
         ]),
-        ["Total", "", "", "", "", totalEarnings.toFixed(2),"" ,"", totalInventory],
+        ["Total", "", "", "", "", totalEarnings.toFixed(2), "", "", totalInventory],
       ],
       styles: {
         fontSize: 10, // Cell font size
@@ -207,7 +209,7 @@ const Inventory: React.FC<InventoryProps> = ({ searchParams }) => {
     // Add the total number of products
     const totalProducts = allProducts.length;
     data.push([
-      `Nombre total de produits: ${totalProducts}`, 
+      `Nombre total de produits: ${totalProducts}`,
       "",
       "",
       "",

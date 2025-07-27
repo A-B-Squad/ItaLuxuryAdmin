@@ -135,18 +135,20 @@ export const COLORS_QUERY = gql`
   }
 `;
 export const COUPONS_QUERY = gql`
-  query FetchAllCoupons($page: Int, $pageSize: Int) {
-    fetchAllCoupons(page: $page, pageSize: $pageSize) {
+  query FetchAllCoupons($pageSize: Int, $page: Int) {
+  fetchAllCoupons(pageSize: $pageSize, page: $page) {
+    coupons {
       id
+      discount
       available
       code
-      discount
       checkout {
-        id
         createdAt
       }
     }
+    totalCount
   }
+}
 `;
 export const SECTION_VISIBILITY_QUERY = gql`
   query GetAllSectionVisibility {
@@ -335,35 +337,98 @@ export const GET_REVIEW_QUERY = gql`
     }
   }
 `;
+
+export const USER_POINTS_QUERY = gql`
+  query UserPoints($userId: String!) {
+    userPoints(userId: $userId) {
+      points
+      pointTransactions {
+        id
+        amount
+        type
+        description
+        createdAt
+      }
+    }
+  }
+`;
+
 export const FETCH_ALL_USERS = gql`
-  query FetchAllUsers {
-    fetchAllUsers {
+query FetchAllUsers {
+  fetchAllUsers {
+    id
+    fullName
+    ContactUs {
       id
-      fullName
-      ContactUs {
-        id
-        subject
-        document
-        message
+      subject
+      document
+      message
+    }
+    reviews {
+      productId
+      rating
+      product {
+        name
+        reference
       }
-      reviews {
-        productId
-        rating
+    }
+    checkout {
+      id
+      total
+      productInCheckout {
+        price
+        productQuantity
         product {
-          reference
-        }
-      }
-      checkout {
-        id
-        Governorate {
           name
         }
-        package {
-          id
-          customId
-          status
-        }
       }
+      Governorate {
+        name
+      }
+      package {
+        id
+        customId
+        status
+      }
+    }
+    Voucher {
+      id
+      code
+      amount
+      isUsed
+      createdAt
+      expiresAt
+      usedAt
+      userId
+      checkoutId
+    }
+    email
+    pointTransactions {
+      id
+      amount
+      type
+      description
+      createdAt
+      userId
+      checkoutId
+    }
+    number
+    points
+  }
+}
+
+
+`;
+export const GET_POINT_SETTINGS = gql`
+  query GetPointSettings {
+    getPointSettings {
+      id
+      conversionRate
+      redemptionRate
+      minimumPointsToUse
+      loyaltyThreshold
+      loyaltyRewardValue
+      isActive
     }
   }
 `;

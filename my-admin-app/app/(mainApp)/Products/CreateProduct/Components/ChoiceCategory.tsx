@@ -41,23 +41,28 @@ const ChoiceCategory = ({ selectedIds, setSelectedIds }: any) => {
     }
   }, [AllCategory]);
 
+  // Update the transformCategories function
   const transformCategories = (categoriesData: any) => {
-    return (
-      categoriesData?.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        subcategories:
-          cat?.subcategories?.map((subcat: any) => ({
-            id: subcat.id,
-            name: subcat.name,
-            subSubcategories: subcat?.subcategories?.map((subSubcat: any) => ({
-              id: subSubcat.id,
-              name: subSubcat.name,
-            })),
-          })) || [],
-      })) || []
-    );
+    // Find all root categories (ones without parentId)
+    const rootCategories = categoriesData?.filter((cat: any) => !cat.parentId);
+    if (!rootCategories?.length) return [];
+
+    // Transform all root categories
+    return rootCategories.map((rootCat: any) => ({
+      id: rootCat.id,
+      name: rootCat.name,
+      subcategories: rootCat.subcategories?.map((subcat: any) => ({
+        id: subcat.id,
+        name: subcat.name,
+        subSubcategories: subcat.subcategories?.map((subSubcat: any) => ({
+          id: subSubcat.id,
+          name: subSubcat.name,
+        })) || [],
+      })) || [],
+    }));
   };
+
+
 
   const handleCategoryChange = (value: string) => {
     setSelectedIds({

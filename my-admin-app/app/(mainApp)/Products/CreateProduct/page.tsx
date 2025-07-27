@@ -70,7 +70,7 @@ const CreateProductPage = () => {
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
       return;
     }
 
@@ -85,6 +85,8 @@ const CreateProductPage = () => {
             "Veuillez remplir les dates de début et de fin de remise.",
           duration: 5000,
         });
+        setIsSubmitting(false);
+
         return;
       }
       if (!manualDiscountPrice) {
@@ -94,6 +96,8 @@ const CreateProductPage = () => {
           description: "Veuillez fournir un prix de remise manuel.",
           duration: 5000,
         });
+        setIsSubmitting(false);
+
         return;
       }
 
@@ -106,6 +110,7 @@ const CreateProductPage = () => {
         description: "Veuillez fournir un prix ou une remise.",
         duration: 5000,
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -117,7 +122,7 @@ const CreateProductPage = () => {
           selectedIds.categoryId,
           selectedIds.subcategoryId,
           selectedIds.subSubcategoryId,
-        ].filter(Boolean),
+        ].filter(id => id && id.trim() !== ""),
         description,
         name: title,
         images: uploadedImages,
@@ -178,7 +183,7 @@ const CreateProductPage = () => {
           description: `${err.message}`,
           duration: 5000,
         });
-        setIsSubmitting(false); // Reset submitting state on error
+        setIsSubmitting(false);
         return;
       }
     });
@@ -265,8 +270,8 @@ const CreateProductPage = () => {
       <button
         type="button"
         className={`w-full py-3 mt-6 transition-all bg-mainColorAdminDash text-white rounded-md shadow-sm ${isSubmitting
-            ? "opacity-70 cursor-not-allowed"
-            : "hover:opacity-90 hover:bg-mainColorAdminDash-dark"
+          ? "opacity-70 cursor-not-allowed"
+          : "hover:opacity-90 hover:bg-mainColorAdminDash-dark"
           }`}
         onClick={handleSubmit}
         disabled={isSubmitting}

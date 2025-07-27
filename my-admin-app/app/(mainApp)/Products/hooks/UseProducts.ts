@@ -5,8 +5,9 @@ import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
 
 const useProducts = (
   query: string | undefined,
-  order?: "ASC" | "DESC" | undefined,
+  sortBy?: "createdAt" | "price" | "name" | "isVisible",
   pageSize?: number,
+  sortOrder: "asc" | "desc" = "desc"
 ) => {
   const [limitSearchedProducts, setLimitSearchedProducts] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -25,17 +26,23 @@ const useProducts = (
             query: query || undefined,
             page,
             pageSize,
+            sortBy: sortBy || "createdAt",
+            sortOrder: sortOrder || "desc",
+            visibleProduct: sortBy === "isVisible" ? (sortOrder === "desc" ? true : false) : undefined
           },
         },
         fetchPolicy: "cache-and-network",
       });
       
+      // Fetch all products for total count (without pagination)
       const { data: allSearchedProduct } = await searchProducts({
         variables: {
           input: {
             query: query || undefined,
             page: 1,
-            pageSize: undefined,
+            pageSize: 1000, // Use a large number instead of undefined
+            sortBy: sortBy || "createdAt",
+            sortOrder: sortOrder || "desc",
           },
         },
         fetchPolicy: "cache-and-network",
@@ -44,12 +51,7 @@ const useProducts = (
       let fetchedProducts = [
         ...(searchedProductWithLimit?.searchProducts?.results?.products || []),
       ];
-      if (order === "ASC") {
-        fetchedProducts.sort((a, b) => a.price - b.price);
-      } else if (order === "DESC") {
-        fetchedProducts.sort((a, b) => b.price - a.price);
-      }
-
+  
       setLimitSearchedProducts(fetchedProducts);
       setTotalCount(searchedProductWithLimit?.searchProducts?.totalCount || 0);
       setAllProducts(
@@ -60,16 +62,17 @@ const useProducts = (
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, query, order, searchProducts]);
+  }, [page, pageSize, query, sortBy, sortOrder, searchProducts]);
 
   useEffect(() => {
     fetchProducts();
-  }, [query, page]);
+  }, [query, page, sortBy, sortOrder, fetchProducts]);
 
   const numberOfPages = useMemo(
-    () => Math.ceil(totalCount / (pageSize || 0)),
-    [totalCount],
+    () => Math.max(1, Math.ceil(totalCount / (pageSize || 12))),
+    [totalCount, pageSize],
   );
+  
   return {
     limitSearchedProducts,
     totalCount,

@@ -20,24 +20,24 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
     <tr className="text-gray-700 text-xs  font-semibold">
       <td className="Image px-4 py-3 border">
         <div className="flex items-center ">
-          <div className="relative w-12 h-12 mr-3 rounded-full md:block">
+          <div className="relative w-14 h-14 mr-3  rounded-lg  md:block">
             <Image
-              className=" w-full h-full rounded-full"
+              className=" w-full h-full rounded-lg object-cover"
               src={
                 product.images[0] ||
                 "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
               }
               layout="fill"
-              objectFit="contain"
+              objectFit="cover"
               alt=""
               loading="lazy"
             />
             <div
-              className="absolute inset-0 rounded-full shadow-inner"
+              className="absolute inset-0 rounded-lg shadow-inner"
               aria-hidden="true"
             ></div>
           </div>
-          <div>
+          <div className="flex-1">
             <p className="font-semibold  w-full line-clamp-1 text-black">
               {product.name}
             </p>

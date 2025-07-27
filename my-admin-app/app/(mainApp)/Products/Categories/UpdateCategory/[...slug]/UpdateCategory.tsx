@@ -71,7 +71,6 @@ const UpdateCategory = () => {
     }
   }, [categoryData?.categoryById]);
 
-  if (categoriesLoading || categoryLoading) return <Loading />;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -144,7 +143,7 @@ const UpdateCategory = () => {
     // Transform the URL to WebP format
     const originalUrl = result.info.secure_url;
     const webpUrl = originalUrl.replace("/upload/", "/upload/f_webp,q_auto:good/");
-    
+
     setFormData((prevFormData) => ({
       ...prevFormData,
       [position]: webpUrl,
@@ -156,7 +155,7 @@ const UpdateCategory = () => {
   const renderCategoryOptions = (categories: Category[] | undefined) => {
     // Filter out the current category to prevent self-selection as parent
     const filteredCategories = categories?.filter(cat => cat.id !== categoryId);
-    
+
     return (
       <>
         <SelectTrigger className="w-full p-2 border border-gray-300 rounded h-12 outline-none mt-1">
@@ -221,6 +220,14 @@ const UpdateCategory = () => {
       </>
     );
   };
+  if (categoriesLoading || categoryLoading || !categoryData?.categoryById) {
+    return <Loading />;
+  }
+  const isFormReady = formData.name !== "" || !!formData.parentCategory || !!formData.description;
+
+  if (!isFormReady) {
+    return <Loading />;
+  }
 
   return (
     <div className="container mx-auto py-10 h-full bg-white w-full">
@@ -253,6 +260,7 @@ const UpdateCategory = () => {
                 Catégorie Parentale
               </label>
               <Select
+                key={formData.parentCategory}
                 value={formData.parentCategory}
                 onValueChange={(value) =>
                   setFormData({ ...formData, parentCategory: value })

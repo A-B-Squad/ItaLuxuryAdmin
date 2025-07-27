@@ -3,7 +3,7 @@ import moment from "moment-timezone";
 
 const DEFAULT_TIMEZONE = "Africa/Tunis";
 const DELIVERY_PRICE = 8;
-const EXCLUDED_STATUSES = ['REFUNDED', 'BACK', 'CANCELLED'];
+const EXCLUDED_STATUSES = ['REFUNDED', 'BACK', 'CANCELLED', 'PAYMENT_REFUSED'];
 
 export const calculateSimpleStats = (packages: Packages[]): SimpleStats => {
     const stats: SimpleStats = {
@@ -35,7 +35,7 @@ export const calculateSimpleStats = (packages: Packages[]): SimpleStats => {
             stats.orders[0]++;
             stats.earnings[0] += earningsAfterDelivery;
         }
-        
+
         // Yesterday
         if (packageDate.isBetween(startOfYesterday, endOfYesterday, 'day', '[]')) {
             stats.orders[1]++;

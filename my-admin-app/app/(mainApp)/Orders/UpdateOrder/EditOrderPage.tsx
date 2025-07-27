@@ -263,8 +263,9 @@ const EditOrderPage = ({ searchParams }: any) => {
             body: JSON.stringify({
               // Use product references instead of order ID
               referenceExterne: order.Checkout.productInCheckout.map((item: any) =>
-                item.product.reference
+                `${item.product.reference}*${item.productQuantity > 1 ? item.productQuantity : ''}`
               ).join(', ').substring(0, 100),
+
               // Use userName for guest users since User might be null
               nomContact: userName,
               // Handle phone numbers as array - use first number for primary contact
@@ -274,9 +275,10 @@ const EditOrderPage = ({ searchParams }: any) => {
               adresseLivraison: address || '',
               governorat: jaxGovId,
               delegation: order.Checkout.city || 'Non spécifié',
-              description: `Commande #${order.customId} - ${order.Checkout.productInCheckout.length} produits: ${order.Checkout.productInCheckout.map((item: any) =>
-                item.product.name
+              description: `Commande #${order.customId} - ${order.Checkout.productInCheckout.reduce((acc: number, item: any) => acc + item.productQuantity, 0)} produits: ${order.Checkout.productInCheckout.map((item: any) =>
+                `${item.product.name} x${item.productQuantity}`
               ).join(', ').substring(0, 150)}`,
+
               cod: order.Checkout.paymentMethod === 'CASH_ON_DELIVERY' ?
                 (order.Checkout.total).toString() : '0',
               echange: 0

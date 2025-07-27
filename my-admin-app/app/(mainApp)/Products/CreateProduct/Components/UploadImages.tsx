@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { IoImageOutline } from "react-icons/io5";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
@@ -8,25 +8,71 @@ import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import { FaTrashAlt } from "react-icons/fa";
 
 const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-const handleSuccessUpload = (result: any) => {
-  // Transform the URL to WebP format with quality optimization and resize to fit within 800x800
-  const transformedUrl = result.info.secure_url.replace(
-    "/upload/",
-    "/upload/c_limit,w_800,h_800,f_webp,q_auto:good/"
-  );
+  const handleSuccessUpload = (result: any) => {
+    // Transform the URL to WebP format with quality optimization and resize to fit within 800x800
+    const transformedUrl = result.info.secure_url.replace(
+      "/upload/",
+      "/upload/c_limit,w_800,h_800,f_webp,q_auto:good/"
+    );
 
-  setUploadedImages((prevImages: any) => [
-    ...prevImages,
-    transformedUrl,
-  ]);
-};
-
+    setUploadedImages((prevImages: any) => [
+      ...prevImages,
+      transformedUrl,
+    ]);
+  };
 
   const handleDeleteImage = (index: number) => {
     setUploadedImages((prevImages: any) =>
       prevImages.filter((_: any, i: number) => i !== index),
     );
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newImages = [...uploadedImages];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove the dragged image from its original position
+    newImages.splice(draggedIndex, 1);
+    
+    // Insert it at the new position
+    // Adjust the drop index if we removed an item before it
+    const adjustedDropIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
+    newImages.splice(adjustedDropIndex, 0, draggedImage);
+    
+    setUploadedImages(newImages);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -51,28 +97,48 @@ const handleSuccessUpload = (result: any) => {
       <div className="mt-4 flex items-center border border-gray-200 text-blue-500 border-l-mainColorAdminDash py-2 rounded-md border-l-4 px-2">
         <IoMdAlert />
         <p>
-          Remarque: pour une meilleure apparence visuelle, utilisez l’image du
-          produit avec une taille de 800x800
+          Remarque: pour une meilleure apparence visuelle, utilisez l'image du
+          produit avec une taille de 800x800. Glissez-déposez pour réorganiser l'ordre.
         </p>
       </div>
       <div className="mt-4 flex gap-1 flex-wrap">
         {uploadedImages.map((url: string | StaticImport, index: number) => (
-          <div key={index} className="relative">
+          <div
+            key={index}
+            className={`relative cursor-move transition-all duration-200 ${
+              draggedIndex === index ? 'opacity-50 transform rotate-2' : ''
+            } ${
+              dragOverIndex === index && draggedIndex !== index 
+                ? 'transform scale-105 ring-2 ring-blue-400 ring-opacity-50' 
+                : ''
+            }`}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            title="Drag to reorder"
+          >
             <Image
               width={800}
               height={800}
               src={url}
               objectFit="contain"
               alt={`Uploaded image ${index + 1}`}
-              className="h-32 w-32  rounded-md"
+              className="h-32 w-32 rounded-md pointer-events-none"
             />
             <button
               type="button"
-              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"
+              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 z-10"
               onClick={() => handleDeleteImage(index)}
             >
               <FaTrashAlt className="text-sm" />
             </button>
+            {/* Visual indicator for drag handle */}
+            <div className="absolute top-1 left-1 bg-gray-800 bg-opacity-70 text-white rounded px-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+              ⋮⋮
+            </div>
           </div>
         ))}
       </div>
