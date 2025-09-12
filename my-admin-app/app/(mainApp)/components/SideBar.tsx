@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@apollo/client";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CiSettings } from "react-icons/ci";
@@ -188,13 +188,12 @@ const SideBar = () => {
       <div className="relative h-full flex flex-col">
         <div className="flex justify-center items-center py-4 mb-2 border-b border-opacity-20 border-white">
           <Image
-            src="/LOGO.png"
+            src="/images/LOGO.png"
             alt="Logo"
             className="rounded-md"
             height={60}
             width={120}
             style={{ objectFit: "contain" }}
-
             priority
           />
         </div>

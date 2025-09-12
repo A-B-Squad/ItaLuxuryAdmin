@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       "Inscrivez-vous à ita-luxury pour créer un compte et commencer à faire des achats en ligne.",
     images: [
       {
-        url: "/my-app/app/public/images/LOGO.png",
+        url: "/images/LOGO.png",
         width: 800,
         height: 600,
         alt: "Ita-Luxury",

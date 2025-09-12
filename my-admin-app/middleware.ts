@@ -90,13 +90,13 @@ export async function middleware(req: NextRequest) {
       console.error(ERROR_MESSAGES.NO_SECRET);
       return NextResponse.redirect(new URL("/signin", req.url));
     }
-    
+
     const secretKey = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, secretKey);
-    
+
     // Cast the payload to our interface type
     const userPayload = payload as unknown as JWTPayload;
-    
+
     // Check admin role
     if (userPayload.role !== "ADMIN") {
       console.log(ERROR_MESSAGES.NOT_ADMIN);
@@ -104,11 +104,11 @@ export async function middleware(req: NextRequest) {
         new URL("/Dashboard?unauthorized=true", req.url)
       );
     }
-    
+
     // Add user info to request headers for downstream use if needed
     res.headers.set("X-User-Id", userPayload.userId || "");
     res.headers.set("X-User-Role", userPayload.role || "");
-    
+
   } catch (error) {
     console.error(ERROR_MESSAGES.INVALID_TOKEN, error);
     return NextResponse.redirect(new URL("/signin", req.url));
@@ -118,5 +118,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public/).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.).*)",]
+
 };

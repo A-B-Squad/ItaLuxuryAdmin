@@ -1,6 +1,6 @@
 "use client";
 import "./globals.css";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import React from "react";
 import { Metadata } from "next";
 import { loadDevMessages, loadErrorMessages } from "@apollo/client/dev";
@@ -27,7 +27,6 @@ function NotFound() {
           }
           priority={true}
           style={{ objectFit: "contain" }}
-
           width={400}
           height={400}
           quality={100}

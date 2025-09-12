@@ -176,16 +176,6 @@ export const BEST_SELLS_QUERY = gql`
         categories {
           id
           name
-          subcategories {
-            id
-            name
-            parentId
-            subcategories {
-              id
-              name
-              parentId
-            }
-          }
         }
       }
       Category {

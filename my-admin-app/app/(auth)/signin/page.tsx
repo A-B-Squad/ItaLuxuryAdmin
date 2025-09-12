@@ -20,7 +20,7 @@ export const metadata: Metadata = {
       "Connectez-vous à votre compte ita-luxury pour accéder à votre profil et effectuer des achats en ligne.",
     images: [
       {
-        url: "/my-app/public/images/LOGO.png",
+        url: "/images/LOGO.png",
         width: 800,
         height: 600,
         alt: "Ita-Luxury",
