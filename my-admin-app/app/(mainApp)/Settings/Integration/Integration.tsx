@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { MdOutlineIntegrationInstructions } from "react-icons/md";
-import Image from "next/legacy/image";
+import Image from "next/image";
 
 const Integration = () => {
   const appIntegration = [
