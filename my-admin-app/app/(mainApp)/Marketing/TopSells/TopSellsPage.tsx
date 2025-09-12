@@ -75,14 +75,30 @@ const TopSellsPage = () => {
   const [addProductToBestSells, { loading: addLoading }] = useMutation(ADD_BEST_SELLS_MUTATIONS);
   const [deleteProductFromBestSells, { loading: deleteLoading }] = useMutation(DELETE_BEST_SELLS_MUTATIONS);
 
-  // Memoize categorized products to improve performance
+  // Memoize categorized products to improve performance with null checks
   const categorizedProducts = useMemo<CategorizedProducts>(() => {
-    if (!topSellsData) return {};
-
+    if (!topSellsData?.getBestSells) return {};
     return topSellsData.getBestSells.reduce(
       (acc: CategorizedProducts, item: BestSellItem) => {
+        // Validate that the item and product exist
+        if (!item || !item.Product) {
+          console.warn('Invalid best sell item found:', item);
+          return acc;
+        }
+
+        // Check if product has valid categories
+        if (!item.Product.categories || 
+            !Array.isArray(item.Product.categories) || 
+            item.Product.categories.length === 0 ||
+            !item.Product.categories[0] ||
+            !item.Product.categories[0].id) {
+          console.warn('Product without valid categories:', item.Product);
+          return acc;
+        }
+
         const mainCategory = item.Product.categories[0];
         const categoryId = mainCategory.id;
+        
         if (!acc[categoryId]) {
           acc[categoryId] = {
             name: mainCategory.name,
@@ -126,11 +142,29 @@ const TopSellsPage = () => {
         },
       });
 
-      if (data) {
+      if (data?.searchProducts?.results?.products) {
         const selectedProductIds = getSelectedProducts();
+        
+        // Filter products and ensure they have valid categories
         const filteredProducts = data.searchProducts.results.products.filter(
-          (product) => !selectedProductIds.has(product.id),
+          (product) => {
+            // Basic validation
+            if (!product || !product.id) return false;
+            
+            // Check if already selected
+            if (selectedProductIds.has(product.id)) return false;
+            
+            // Ensure product has valid categories for future operations
+            if (!product.categories || 
+                !Array.isArray(product.categories) || 
+                product.categories.length === 0) {
+              return false;
+            }
+            
+            return true;
+          }
         );
+        
         setSearchResults((prev) => ({
           ...prev,
           [categoryKey]: filteredProducts,
@@ -180,6 +214,16 @@ const TopSellsPage = () => {
     categoryId: string,
     categoryName: string,
   ) => {
+    // Validate inputs
+    if (!productId || !categoryId) {
+      toast({
+        title: "Erreur",
+        description: "Données du produit ou de la catégorie manquantes",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if we already have 3 categories and this is a new one
     const existingCategories = Object.keys(categorizedProducts);
     if (existingCategories.length >= 3 && !existingCategories.includes(categoryId)) {
@@ -209,11 +253,18 @@ const TopSellsPage = () => {
     }
   }, [addProductToBestSells, categorizedProducts, refetch, toast]);
 
-
-
   const handleRemoveFromBestSells = useCallback(async (
     productId: string,
   ) => {
+    if (!productId) {
+      toast({
+        title: "Erreur",
+        description: "ID du produit manquant",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await deleteProductFromBestSells({ variables: { productId } });
       await refetch();
@@ -232,8 +283,22 @@ const TopSellsPage = () => {
     }
   }, [deleteProductFromBestSells, refetch, toast]);
 
+  // Error boundary for render errors
+  if (topSellsLoading === false && topSellsData && !topSellsData.getBestSells) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Erreur de chargement
+          </h2>
+          <p className="text-gray-600">
+            Impossible de charger les données des meilleures ventes
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // In the return statement, use getTopCategories instead of getAllCategories
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -265,7 +330,6 @@ const TopSellsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {getTopCategories.map(([categoryId, category], index) => {
             const categoryKey = `category${index + 1}`;
-            // Ensure category is the correct type
             const categoryData = typeof category === 'string' ? { name: category, products: [] } : category;
 
             return (
