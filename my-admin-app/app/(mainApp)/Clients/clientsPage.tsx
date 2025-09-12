@@ -273,28 +273,28 @@ const ClientsPage: React.FC = () => {
           <div className="bg-[#202939] text-white px-6 py-4 flex justify-between items-center">
             <h2 className="text-2xl font-bold">{selectedUser.fullName}</h2>
             <div className="flex space-x-2">
-  <button
-    onClick={() => setIsPointsModalOpen(true)}
-    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
-  >
-    <FaPlus className="mr-2" />
-    Ajouter des points
-  </button>
-  <button
-    onClick={() => setIsVoucherModalOpen(true)}
-    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
-  >
-    <FaGift className="mr-2" />
-    Créer un bon
-  </button>
-  <button
-    onClick={() => setIsUseVoucherModalOpen(true)}
-    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
-  >
-    <FaTicketAlt className="mr-2" />
-    Utiliser un bon
-  </button>
-</div>
+              <button
+                onClick={() => setIsPointsModalOpen(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
+              >
+                <FaPlus className="mr-2" />
+                Ajouter des points
+              </button>
+              <button
+                onClick={() => setIsVoucherModalOpen(true)}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
+              >
+                <FaGift className="mr-2" />
+                Créer un bon
+              </button>
+              <button
+                onClick={() => setIsUseVoucherModalOpen(true)}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md font-medium flex items-center transition-colors"
+              >
+                <FaTicketAlt className="mr-2" />
+                Utiliser un bon
+              </button>
+            </div>
 
           </div>
           <div className="p-6">

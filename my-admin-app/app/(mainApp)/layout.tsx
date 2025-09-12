@@ -26,14 +26,21 @@ export default function DashboardLayout({
   const [isMobile, setIsMobile] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
 
-  // // Initialize Pusher Beams when the app loads
-  // useEffect(() => {
-  //   initPusherBeams();
-  // }, []);
-
 
 
   useEffect(() => {
+
+    if (typeof window !== 'undefined') {
+      // Initialize Pusher Beams only once when the app loads
+      initPusherBeams()
+        .then(() => {
+          console.log('Pusher Beams initialized successfully in admin dashboard');
+        })
+        .catch((error) => {
+          console.error('Failed to initialize Pusher Beams:', error);
+        });
+    }
+
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
       setShowSidebar(window.innerWidth >= 768);

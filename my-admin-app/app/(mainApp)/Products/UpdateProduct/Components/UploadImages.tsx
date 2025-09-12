@@ -47,7 +47,7 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
@@ -56,15 +56,15 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
 
     const newImages = [...uploadedImages];
     const draggedImage = newImages[draggedIndex];
-    
+
     // Remove the dragged image from its original position
     newImages.splice(draggedIndex, 1);
-    
+
     // Insert it at the new position
     // Adjust the drop index if we removed an item before it
     const adjustedDropIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
     newImages.splice(adjustedDropIndex, 0, draggedImage);
-    
+
     setUploadedImages(newImages);
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -105,13 +105,11 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
         {uploadedImages.map((url: string | StaticImport, index: number) => (
           <div
             key={index}
-            className={`relative cursor-move transition-all duration-200 ${
-              draggedIndex === index ? 'opacity-50 transform rotate-2' : ''
-            } ${
-              dragOverIndex === index && draggedIndex !== index 
-                ? 'transform scale-105 ring-2 ring-blue-400 ring-opacity-50' 
+            className={`relative cursor-move transition-all duration-200 ${draggedIndex === index ? 'opacity-50 transform rotate-2' : ''
+              } ${dragOverIndex === index && draggedIndex !== index
+                ? 'transform scale-105 ring-2 ring-blue-400 ring-opacity-50'
                 : ''
-            }`}
+              }`}
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => handleDragOver(e, index)}
@@ -126,7 +124,8 @@ const UpdateImage = ({ uploadedImages, setUploadedImages }: any) => {
               src={url}
               alt={`Uploaded image ${index + 1}`}
               className="h-full w-32 rounded-md pointer-events-none"
-              objectFit="contain"
+              style={{ objectFit: "contain" }}
+
             />
             <button
               type="button"

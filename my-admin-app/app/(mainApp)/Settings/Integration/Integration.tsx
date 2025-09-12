@@ -26,7 +26,8 @@ const Integration = () => {
                 src="https://res.cloudinary.com/dc1cdbirz/image/upload/v1727337687/ita-luxury/lbjyjdtuxu7dv6olpayw.webp"
                 alt="faceboook"
                 width={200}
-                objectFit="contain"
+                style={{ objectFit: "contain" }}
+
                 height={200}
               />
               <div className="info bg-primary border-t p-4 flex flex-col">

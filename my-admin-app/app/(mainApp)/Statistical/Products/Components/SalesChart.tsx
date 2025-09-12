@@ -1,14 +1,17 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Chart, registerables, ChartOptions } from "chart.js";
-import { Line } from "react-chartjs-2";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import "chartjs-adapter-date-fns";
 import { Packages } from "@/app/types";
 
-Chart.register(...registerables);
+import SearchProduct from "@/app/(mainApp)/components/searchProduct";
+import SelectedProductInfo from "./SelectedProductInfo";
+import ChartsGrid from "./ChartsGrid";
 
+
+Chart.register(...registerables);
 
 interface Pagination {
   currentPage: number;
@@ -26,13 +29,85 @@ interface Data {
   getAllPackages: PackagesResponse;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  userName: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  subcategories?: Subcategory[];
+}
+
+interface Subcategory {
+  id: string;
+  name: string;
+  parentId: string;
+  subcategories?: Subcategory[];
+}
+
+interface Color {
+  id: string;
+  color: string;
+  Hex: string;
+}
+
+interface ProductDiscount {
+  dateOfStart: string;
+  dateOfEnd: string;
+  price: number;
+  newPrice: number;
+}
+
+interface Governorate {
+  name: string;
+}
+
+interface Package {
+  status: string;
+}
+
+interface Checkout {
+  phone: string[];
+  package: Package[];
+  Governorate: Governorate;
+}
+
+interface ProductInCheckout {
+  checkout: Checkout;
+}
+
+// Updated Product interface to match your GraphQL response
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  purchasePrice: number;
+  isVisible: boolean;
+  reference: string;
+  description: string;
+  inventory: number;
+  solde: number;
+  broken: number;
+  images: string[];
+  createdAt: string;
+  reviews: Review[];
+  categories: Category[];
+  Colors: Color[];
+  productDiscounts: ProductDiscount[];
+  ProductInCheckout: ProductInCheckout[];
+}
+
 const SalesChart: React.FC<{
   data: Data;
   dateRange: DateRange | undefined;
 }> = ({ data, dateRange }) => {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const processData = (data: Data) => {
-    // Access the packages array from the nested structure
     const packages = data.getAllPackages?.packages || [];
 
     const productSales: {
@@ -47,9 +122,19 @@ const SalesChart: React.FC<{
 
     const productQuantities: { [productName: string]: number } = {};
 
+    // Governorate analytics
+    const governorateData: {
+      [productName: string]: {
+        [governorate: string]: number;
+      };
+    } = {};
+
+    const totalSalesByGovernorate: { [governorate: string]: number } = {};
+
     packages.forEach((pkg) => {
       const { productInCheckout } = pkg.Checkout;
       const date = format(new Date(parseInt(pkg.createdAt)), "yyyy-MM-dd");
+      const governorate = pkg.Checkout.Governorate?.name || "Non spécifié";
 
       if (dateRange && dateRange.from && dateRange.to) {
         const packageDate = new Date(parseInt(pkg.createdAt));
@@ -61,6 +146,8 @@ const SalesChart: React.FC<{
       productInCheckout.forEach((item) => {
         const { product, productQuantity } = item;
         const { name, price, reference } = product;
+
+        // Time-based sales logic
         if (!productSales[date]) {
           productSales[date] = {};
         }
@@ -73,26 +160,49 @@ const SalesChart: React.FC<{
           productQuantities[name] = 0;
         }
         productQuantities[name] += productQuantity;
+
+        // Governorate analytics
+        if (!governorateData[name]) {
+          governorateData[name] = {};
+        }
+        if (!governorateData[name][governorate]) {
+          governorateData[name][governorate] = 0;
+        }
+        governorateData[name][governorate] += productQuantity;
+
+        if (!totalSalesByGovernorate[governorate]) {
+          totalSalesByGovernorate[governorate] = 0;
+        }
+        totalSalesByGovernorate[governorate] += productQuantity;
       });
     });
 
-    return { productSales, productQuantities };
+    return {
+      productSales,
+      productQuantities,
+      governorateData,
+      totalSalesByGovernorate
+    };
   };
 
-  const { productSales, productQuantities } = useMemo(
-    () => processData(data),
-    [data, dateRange],
-  );
+  const {
+    productSales,
+    productQuantities,
+    governorateData,
+    totalSalesByGovernorate
+  } = useMemo(() => processData(data), [data, dateRange]);
 
-  const mostPurchasedProduct = useMemo(() => {
-    const entries = Object.entries(productQuantities);
-    if (entries.length === 0) {
-      return "No products purchased";
-    }
-    return entries.reduce((a, b) => (a[1] > b[1] ? a : b))[0];
+
+  // Get top 5 products for detailed analysis
+  const topProducts = useMemo(() => {
+    return Object.entries(productQuantities)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name]) => name);
   }, [productQuantities]);
 
-  const chartData = useMemo(() => {
+  // Chart data for time series
+  const timeChartData = useMemo(() => {
     const labels = Object.keys(productSales)
       .sort()
       .map((dateStr) => new Date(dateStr));
@@ -107,8 +217,7 @@ const SalesChart: React.FC<{
         return productSales[dateStr]?.[product]?.quantity || 0;
       }),
       borderColor: `hsl(${(index * 360) / productNames.length}, 70%, 50%)`,
-      backgroundColor: `hsla(${(index * 360) / productNames.length
-        }, 70%, 50%, 0.2)`,
+      backgroundColor: `hsla(${(index * 360) / productNames.length}, 70%, 50%, 0.2)`,
       fill: false,
       tension: 0.4,
     }));
@@ -116,6 +225,26 @@ const SalesChart: React.FC<{
     return { labels, datasets };
   }, [productSales]);
 
+  // Chart data for governorate distribution
+  const governorateChartData = useMemo(() => {
+    const governorates = Object.keys(totalSalesByGovernorate);
+    const values = Object.values(totalSalesByGovernorate);
+
+    return {
+      labels: governorates,
+      datasets: [{
+        data: values,
+        backgroundColor: governorates.map((_, index) =>
+          `hsl(${(index * 360) / governorates.length}, 65%, 60%)`
+        ),
+        borderColor: '#fff',
+        borderWidth: 2,
+      }]
+    };
+  }, [totalSalesByGovernorate]);
+
+
+  // Chart options
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
@@ -124,41 +253,29 @@ const SalesChart: React.FC<{
         position: "top",
         labels: {
           boxWidth: 20,
-          font: {
-            size: 11,
-            family: "'Inter', sans-serif"
-          },
+          font: { size: 11, family: "'Inter', sans-serif" },
           padding: 15
         }
       },
       tooltip: {
         mode: "index",
         intersect: false,
-        backgroundColor: 'rgba(30, 41, 59, 0.9)', // dashboard-neutral-800
-        titleFont: {
-          size: 13,
-          family: "'Inter', sans-serif"
-        },
-        bodyFont: {
-          size: 12,
-          family: "'Inter', sans-serif"
-        },
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+        titleFont: { size: 13, family: "'Inter', sans-serif" },
+        bodyFont: { size: 12, family: "'Inter', sans-serif" },
         padding: 12,
-        cornerRadius: 4,
+        cornerRadius: 8,
         callbacks: {
           label: function (context) {
             const dataIndex = context.dataIndex;
             const datasetIndex = context.datasetIndex;
-            const date = format(
-              chartData.labels[dataIndex] as Date,
-              "yyyy-MM-dd",
-            );
-            const product = chartData.datasets[datasetIndex].label;
+            const date = format(timeChartData.labels[dataIndex] as Date, "yyyy-MM-dd");
+            const product = timeChartData.datasets[datasetIndex].label;
             const productInfo = productSales[date]?.[product];
 
             if (productInfo) {
               const { quantity, price, reference } = productInfo;
-              return `${product} - Qty: ${quantity}, Ref: ${reference}, Price: ${price} TND`;
+              return `${product} - Qté: ${quantity}, Réf: ${reference}, Prix: ${price} TND`;
             }
             return "";
           },
@@ -166,17 +283,10 @@ const SalesChart: React.FC<{
       },
       title: {
         display: true,
-        text: "Quantités de produits vendus",
-        font: {
-          size: 16,
-          family: "'Inter', sans-serif",
-          weight: 'bold',
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        },
-        color: '#1e293b' // dashboard-neutral-800
+        text: "Évolution des ventes par produit",
+        font: { size: 16, family: "'Inter', sans-serif", weight: 'bold' },
+        padding: { top: 10, bottom: 20 },
+        color: '#1e293b'
       },
     },
     scales: {
@@ -185,52 +295,30 @@ const SalesChart: React.FC<{
         time: {
           unit: "day",
           tooltipFormat: "PP",
-          displayFormats: {
-            day: "MMM d",
-          },
+          displayFormats: { day: "MMM d" },
         },
         title: {
           display: true,
           text: "Date",
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif",
-            weight: 'bold'
-          },
-          color: '#64748b' // dashboard-neutral-500
+          font: { size: 12, family: "'Inter', sans-serif", weight: 'bold' },
+          color: '#64748b'
         },
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            size: 11,
-            family: "'Inter', sans-serif"
-          }
-        }
+        grid: { display: false },
+        ticks: { font: { size: 11, family: "'Inter', sans-serif" } }
       },
       y: {
         title: {
           display: true,
           text: "Quantité vendue",
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif",
-            weight: 'bold'
-          },
-          color: '#64748b' // dashboard-neutral-500
+          font: { size: 12, family: "'Inter', sans-serif", weight: 'bold' },
+          color: '#64748b'
         },
         beginAtZero: true,
         ticks: {
           stepSize: 1,
-          font: {
-            size: 11,
-            family: "'Inter', sans-serif"
-          }
+          font: { size: 11, family: "'Inter', sans-serif" }
         },
-        grid: {
-          color: "rgba(0, 0, 0, 0.05)"
-        }
+        grid: { color: "rgba(0, 0, 0, 0.05)" }
       },
     },
     interaction: {
@@ -240,22 +328,87 @@ const SalesChart: React.FC<{
     },
   };
 
+  const doughnutOptions: ChartOptions<"doughnut"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          font: { size: 11, family: "'Inter', sans-serif" },
+          padding: 15,
+          usePointStyle: true,
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+        titleFont: { size: 13, family: "'Inter', sans-serif" },
+        bodyFont: { size: 12, family: "'Inter', sans-serif" },
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          label: function (context) {
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = ((context.parsed / total) * 100).toFixed(1);
+            return `${context.label}: ${context.parsed} (${percentage}%)`;
+          }
+        }
+      },
+      title: {
+        display: true,
+        text: "Répartition par gouvernorat",
+        font: { size: 16, family: "'Inter', sans-serif", weight: 'bold' },
+        padding: { top: 10, bottom: 20 },
+        color: '#1e293b'
+      },
+    },
+  };
+
+
+
+
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProduct(null);
+  };
+
   return (
-    <div className="w-full h-full">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-semibold text-dashboard-neutral-800">Ventes par produit</h2>
-          <p className="text-sm text-dashboard-neutral-600">
-            Produit le plus vendu: <span className="font-semibold text-dashboard-primary">{mostPurchasedProduct}</span>
-          </p>
+    <div className="w-full space-y-6">
+      {/* Search Section */}
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Recherche de Produit</h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Recherchez un produit pour voir sa répartition par gouvernorat
+            </p>
+          </div>
+          <SearchProduct onProductSelect={handleProductSelect} />
         </div>
       </div>
-      <div className="h-[350px]">
-        <Line data={chartData} options={chartOptions} />
-      </div>
+
+      {/* Selected Product Info */}
+      {selectedProduct && (
+        <SelectedProductInfo
+          selectedProduct={selectedProduct}
+          onClearSelection={handleClearSelection}
+        />
+      )}
+
+      {/* Charts Grid */}
+      <ChartsGrid
+        timeChartData={timeChartData}
+        governorateChartData={governorateChartData}
+        chartOptions={chartOptions}
+        doughnutOptions={doughnutOptions}
+      />
+
+
     </div>
   );
-
 };
 
 export default SalesChart;

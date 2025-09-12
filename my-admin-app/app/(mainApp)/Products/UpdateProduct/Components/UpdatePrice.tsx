@@ -95,7 +95,7 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
     // Check if to date is before today
     if (range?.to && isBeforeToday(range.to)) {
       alert("La date de fin ne peut pas être antérieure à aujourd'hui.");
-      return; // Exit the function to prevent state update
+      return; 
     }
 
     setDate(range);
@@ -106,6 +106,7 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
       setDateOfEndDiscount(formatDate(range.to.getTime().toString()));
     }
   };
+
   const handleOriginalPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
     const price = parseFloat(e.target.value) || 0;
 
@@ -116,9 +117,25 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
   };
 
 
+  //  calculateManualDiscountedPrice function
+  const calculateManualDiscountedPrice = (
+    price: number,
+    discountPrice: number,
+  ) => {
+    if (price < discountPrice) {
+      // Prevent discount from being larger than price
+      setManualDiscountPrice(price);
+      setDiscountedPrice("0.00");
+      setFinalDiscountPrice(0);
+      return;
+    }
 
+    const finalPrice = Math.max(0, price - discountPrice);
+    setDiscountedPrice(finalPrice.toFixed(2));
+    setFinalDiscountPrice(finalPrice);
+  };
 
-  // Update the useEffect to properly handle discount changes
+  //  useEffect to properly handle discount changes
   useEffect(() => {
     if (isDiscountEnabled && originalPrice > 0) {
       calculateManualDiscountedPrice(originalPrice, manualDiscountPrice);
@@ -137,28 +154,12 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
     dateOfStartDiscount,
     dateOfEndDiscount,
     manualDiscountPrice,
-    isDiscountEnabled  
+    isDiscountEnabled
   ]);
 
-  // Update the calculateManualDiscountedPrice function
-  const calculateManualDiscountedPrice = (
-    price: number,
-    discountPrice: number,
-  ) => {
-    if (price < discountPrice) {
-      // Prevent discount from being larger than price
-      setManualDiscountPrice(price);
-      setDiscountedPrice("0.00");
-      setFinalDiscountPrice(0);
-      return;
-    }
 
-    const finalPrice = Math.max(0, price - discountPrice);
-    setDiscountedPrice(finalPrice.toFixed(2));
-    setFinalDiscountPrice(finalPrice);
-  };
 
-  // Update the handleManualDiscountPriceChange function
+  //  handleManualDiscountPriceChange function
   const handleManualDiscountPriceChange = (
     e: ChangeEvent<HTMLInputElement>,
   ) => {
@@ -213,6 +214,8 @@ const UpdatePrice: React.FC<UpdatePriceProps> = ({
     dateOfStartDiscount,
     dateOfEndDiscount,
     manualDiscountPrice,
+    isDiscountEnabled,
+    
   ]);
 
 

@@ -23,6 +23,7 @@ import * as XLSX from "xlsx-js-style";
 import Loading from "../loading";
 
 import DateRangePicker from "@/components/ui/date-range-picker";
+import HeaderTitle from "../Components/HeaderTitle";
 
 ChartJS.register(
     CategoryScale,
@@ -515,16 +516,15 @@ const YearlyTurnoverPage: React.FC = () => {
 
     return (
         <div className="w-full bg-dashboard-neutral-50 p-6 rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold text-dashboard-neutral-800 mb-6 border-b pb-3">Analyse du Chiffre d'Affaires Annuel</h1>
+            <HeaderTitle
+                mainTitle={"Analyse du Chiffre d'Affaires Annuel"}
+            />
+            <DateRangePicker
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+            />
 
-            <div className="flex flex-col md:flex-row items-center justify-between mb-6 bg-dashboard-neutral-100 p-4 rounded-lg">
-                <DateRangePicker
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                />
-            </div>
-
-            <div className="flex justify-end space-x-4 mb-6">
+            <div className="flex justify-end space-x-4 my-6">
                 <button
                     onClick={exportToPDF}
                     className="bg-dashboard-primary text-white px-4 py-2 rounded-md text-sm flex items-center hover:bg-dashboard-primary-dark transition-all shadow-sm"

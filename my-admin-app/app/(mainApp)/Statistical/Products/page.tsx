@@ -1,8 +1,8 @@
 import React from "react";
-import ProductPage from "./ProductPage";
+import ProductAnalyticsPage from "./ProductAnalyticsPage";
 
 const productPage = () => {
-  return <ProductPage />;
+  return <ProductAnalyticsPage />;
 };
 
 export default productPage;

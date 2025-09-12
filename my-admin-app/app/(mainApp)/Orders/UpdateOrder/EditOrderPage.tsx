@@ -30,7 +30,7 @@ const EditOrderPage = ({ searchParams }: any) => {
   const orderId = searchParams ? searchParams.orderId : "";
   const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [jaxGovernorates, setJaxGovernorates] = useState<{ [key: string]: number }>({});
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [productStatuses, setProductStatuses] = useState<{
@@ -195,10 +195,7 @@ const EditOrderPage = ({ searchParams }: any) => {
   };
 
 
-  // Add this at the top of your component
-  const [jaxGovernorates, setJaxGovernorates] = useState<{ [key: string]: number }>({});
 
-  // Add this useEffect to fetch JAX governorates when component mounts
   useEffect(() => {
     const fetchJaxGovernorates = async () => {
       try {
@@ -266,11 +263,8 @@ const EditOrderPage = ({ searchParams }: any) => {
                 `${item.product.reference}*${item.productQuantity > 1 ? item.productQuantity : ''}`
               ).join(', ').substring(0, 100),
 
-              // Use userName for guest users since User might be null
               nomContact: userName,
-              // Handle phone numbers as array - use first number for primary contact
               tel: Array.isArray(phone) && phone.length > 0 ? phone[0] : (phone || ''),
-              // Use second phone number if available, otherwise use the first one
               tel2: Array.isArray(phone) && phone.length > 1 ? phone[1] : "",
               adresseLivraison: address || '',
               governorat: jaxGovId,

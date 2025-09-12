@@ -125,7 +125,6 @@ const SideBar = () => {
       text: "Statistiques",
       href: "/Statistics",
       subItems: [
-        { text: "Analyse ADS", href: "/Statistical/AdsAnalysis" },
         { text: "Chiffre D'affaire", href: "/Statistical/YearlyTurnover" },
         { text: "Livraison", href: "/Statistical/Delivery" },
         { text: "Clients", href: "/Statistical/Customer" },
@@ -166,11 +165,11 @@ const SideBar = () => {
         },
         { text: "Section visibility", href: "/Settings/SectionVisibility" },
         { text: "Integration", href: "/Settings/Integration" },
-        { text: "Paramètres des points", href: "/Settings/PointSettings" }, // ✅ Ajouté ici
+        { text: "Paramètres des points", href: "/Settings/PointSettings" },
       ],
     },
 
-  ], [hasProcessingOrders]); // Only re-create when processing orders change
+  ], [hasProcessingOrders]);
 
   return (
     <Sidebar
@@ -194,7 +193,8 @@ const SideBar = () => {
             className="rounded-md"
             height={60}
             width={120}
-            objectFit="contain"
+            style={{ objectFit: "contain" }}
+
             priority
           />
         </div>

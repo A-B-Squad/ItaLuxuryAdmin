@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useMutation } from '@apollo/client';
 import { ADD_REVIEWS_MUTATION } from '@/app/graph/mutations';
 import SearchProduct from '@/app/(mainApp)/components/searchProduct';
+import Image from 'next/image';
 
 // Define proper type for product
 interface Product {
@@ -125,7 +126,9 @@ const AddReviews = () => {
                             <div className="flex items-center">
                                 {selectedProduct.images && selectedProduct.images[0] && (
                                     <div className="w-16 h-16 relative mr-3 flex-shrink-0">
-                                        <img
+                                        <Image
+                                            width={100}
+                                            height={100}
                                             src={selectedProduct.images[0]}
                                             alt={selectedProduct.name}
                                             className="w-full h-full object-contain rounded-md"

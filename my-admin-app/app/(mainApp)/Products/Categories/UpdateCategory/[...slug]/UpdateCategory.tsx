@@ -336,9 +336,12 @@ const UpdateCategory = () => {
                   <Image
                     src={formData.bigImage}
                     alt={formData.name}
-                    layout="fill"
-                    objectFit="contain"
-                    onLoadingComplete={() =>
+                    fill={true}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                    style={{ objectFit: "contain" }}
+
+                    onLoad={() =>
                       setUploadingImage((prev) => ({
                         ...prev,
                         bigImageLoad: false,
@@ -402,8 +405,9 @@ const UpdateCategory = () => {
                   alt={formData.name}
                   width={100}
                   height={100}
-                  objectFit="contain"
-                  onLoadingComplete={() =>
+                  style={{ objectFit: "contain" }}
+
+                  onLoad={() =>
                     setUploadingImage((prev) => ({
                       ...prev,
                       smallImageLoad: false,

@@ -14,9 +14,10 @@ import UpdateInventory from "./Components/UpdateInventory";
 import UpdatePrice from "./Components/UpdatePrice";
 import UpdateReference from "./Components/UpdateReference";
 import UpdateImage from "./Components/UploadImages";
-import Load from "./Load";
+import Load from "./Components/Load";
 
 import { useRouter } from "next/navigation";
+import UpdateVariant from "./Components/UpdateVariant";
 
 const UpdateProduct = ({ searchParams }: any) => {
   const { toast } = useToast();
@@ -24,7 +25,7 @@ const UpdateProduct = ({ searchParams }: any) => {
   const productId = searchParams.productId;
 
   const [technicalDetails, setTechnicalDetails] = useState<string>("");
-
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -34,6 +35,7 @@ const UpdateProduct = ({ searchParams }: any) => {
   const [originalPrice, setOriginalPrice] = useState<number>(0);
   const [purchasePrice, setPurchasePrice] = useState<number>(0);
   const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [dateOfStartDiscount, setDateOfStartDiscount] = useState<
     string | Date | null
@@ -91,6 +93,9 @@ const UpdateProduct = ({ searchParams }: any) => {
       setSelectedColor((prev) =>
         prev !== product.Colors?.id ? product.Colors?.id : prev,
       );
+      setSelectedGroupId((prev) =>
+        prev !== product.GroupProductVariant?.id ? product.GroupProductVariant?.id : prev,
+      );
       setBrand((prev) =>
         prev !== product.Brand?.id ? product.Brand?.id : prev,
       );
@@ -104,8 +109,8 @@ const UpdateProduct = ({ searchParams }: any) => {
         setSelectedIds((prev) => {
           const newSelectedIds = {
             categoryId: category[0]?.id || "",
-            subcategoryId: category[1] && typeof category[1] === 'object' 
-              ? category[1].id || "" 
+            subcategoryId: category[1] && typeof category[1] === 'object'
+              ? category[1].id || ""
               : "",
             subSubcategoryId: category[2] && typeof category[2] === 'object'
               ? category[2].id || ""
@@ -131,19 +136,15 @@ const UpdateProduct = ({ searchParams }: any) => {
 
       }
     }
-  }, [productDataById, loading, error]);
+  }, [productDataById]);
 
 
 
 
-  // Add isSubmitting state
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleUpdateProduct = () => {
-    // Prevent multiple submissions
     if (isSubmitting) return;
 
-    // Set submitting state to true
     setIsSubmitting(true);
 
     if (
@@ -158,7 +159,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         description: "Veuillez remplir tous les champs obligatoires.",
         duration: 5000,
       });
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
       return;
     }
 
@@ -216,6 +217,7 @@ const UpdateProduct = ({ searchParams }: any) => {
         purchasePrice,
         colorsId: selectedColor,
         reference,
+        ...(selectedGroupId && { groupProductVariantId: selectedGroupId }),
         ...(hasDiscount &&
           isDiscountEnabled && {
           discount: [
@@ -229,7 +231,7 @@ const UpdateProduct = ({ searchParams }: any) => {
 
       },
     };
-    
+
     updateProductMutation({
       variables: productData,
     });
@@ -243,7 +245,7 @@ const UpdateProduct = ({ searchParams }: any) => {
           description: "Le produit a été mis à jour avec succès.",
           duration: 5000,
         });
-        setIsSubmitting(false); // Reset submitting state on success
+        setIsSubmitting(false);
 
         // Navigate back to products page after successful update
         setTimeout(() => {
@@ -257,7 +259,7 @@ const UpdateProduct = ({ searchParams }: any) => {
           description: `${err.message}`,
           duration: 5000,
         });
-        setIsSubmitting(false); // Reset submitting state on error
+        setIsSubmitting(false);
         return;
       }
     });
@@ -344,6 +346,10 @@ const UpdateProduct = ({ searchParams }: any) => {
           <ChoiceCategory
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
+          />
+          <UpdateVariant
+            selectedGroupId={selectedGroupId}
+            setSelectedGroupId={setSelectedGroupId}
           />
           <UpdateInventory stock={stock} setStock={setStock} />
           <UpdateReference reference={reference} setReference={setReference} />

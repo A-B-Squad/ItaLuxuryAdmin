@@ -5,6 +5,7 @@ import { ALL_CONTACTS } from "../../graph/queries";
 import { FaEnvelope } from "react-icons/fa";
 import Pagination from "../components/Paginations";
 import SmallSpinner from "../components/SmallSpinner";
+import Image from "next/image";
 
 interface ContactUs {
   id: string;
@@ -93,17 +94,19 @@ const InboxPage = () => {
                           {contactUs.email}
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap">
-                          <img
+                          <Image
                             src={
                               contactUs.document ||
                               "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
                             }
                             alt={contactUs.id}
+                            width={100}
+                            height={100}
                             className="w-16 h-16 object-cover rounded cursor-pointer"
                             onClick={() =>
                               openModal(
                                 contactUs.document ||
-                                  "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png",
+                                "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png",
                               )
                             }
                           />
@@ -129,12 +132,12 @@ const InboxPage = () => {
           onClick={closeModal}
         >
           <div className="relative bg-white p-2 rounded-lg max-w-3xl max-h-3xl">
-            <img
+            <Image
               src={selectedImage}
               alt="Enlarged view"
-              className={`max-w-[600px] max-h-[600px] object-contain transition-transform duration-300 ${
-                isImageZoomed ? "scale-150" : "scale-100"
-              }`}
+              className={`max-w-[600px] max-h-[600px] object-contain transition-transform duration-300 ${isImageZoomed ? "scale-150" : "scale-100"
+                }`}
+              fill={true}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleZoom();

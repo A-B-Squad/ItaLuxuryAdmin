@@ -1,7 +1,6 @@
 "use client";
 import { Editor } from '@tinymce/tinymce-react';
 import React from "react";
-import type { Editor as TinyMCEEditor } from 'tinymce';
 
 interface AddDescriptionProps {
   description: string;
@@ -24,60 +23,30 @@ const AddDescription: React.FC<AddDescriptionProps> = ({ description, setDescrip
           init={{
             height: 500,
             menubar: false,
-            inline: false,
             plugins: [
+              'advlist',
+              'autolink',
               'lists',
               'link',
               'table',
-              'autoresize',
-              'autolink',
-              'textcolor'
+              'wordcount'
             ],
             toolbar:
-              'undo redo | bold italic underline | forecolor backcolor | ' +
-              'bullist numlist | link table | alignleft aligncenter alignright',
-            content_style: `
-              body {
-                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                font-size: 15px;
-                line-height: 1.6;
-                color: #333;
-                padding: 20px 25px !important;
-                margin: 0;
-                min-height: 400px;
-              }
-              p, h1, h2, h3, h4, h5, h6 {
-                margin: 0 0 16px 0;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 16px 0;
-              }
-              table, th, td {
-                border: 1px solid #ddd;
-                padding: 10px 12px;
-              }
-              th {
-                background-color: #f5f5f5;
-              }
-              [data-mce-bogus="all"] {
-                display: none;
-              }
-            `,
-            table_default_attributes: {
-              border: '1'
-            },
-            table_default_styles: {
-              'border-collapse': 'collapse',
-              width: '100%'
-            },
-            table_responsive_width: true,
-            branding: false,
+              'bold italic underline | forecolor backcolor | bullist numlist | link table | removeformat',
+            color_map: [
+              "000000", "Black",
+              "FF0000", "Red",
+              "FFFF00", "Yellow",
+              "008000", "Green",
+              "0000FF", "Blue",
+              "800080", "Purple",
+              "FFFFFF", "White"
+            ],
             toolbar_mode: 'sliding',
-            mobile: {
-              toolbar: 'undo redo | bold italic | forecolor backcolor | table'
-            }
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            branding: false,
+            resize: false,
+            statusbar: false
           }}
         />
       </div>

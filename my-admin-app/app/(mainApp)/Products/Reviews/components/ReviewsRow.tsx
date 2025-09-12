@@ -94,14 +94,15 @@ const ReviewsRow: React.FC<ReviewRowProps> = ({ product, onRowClick }) => {
             <div className="relative w-12 h-12 mr-3 rounded-full md:block">
               <Image
                 className=" w-full h-full rounded-full"
-                objectFit="contain"
+                style={{ objectFit: "contain" }}
+
                 src={
                   product.images[0] ||
                   "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
                 }
-                layout="fill"
-                alt=""
-                loading="lazy"
+                fill={true}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                alt={product.name}
               />
               <div
                 className="absolute inset-0 rounded-full shadow-inner"

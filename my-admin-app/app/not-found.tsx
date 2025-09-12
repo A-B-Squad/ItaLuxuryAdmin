@@ -26,7 +26,8 @@ function NotFound() {
             "https://res.cloudinary.com/dc1cdbirz/image/upload/v1715507897/muvdju2ecqaf7zsdfhog.jpg"
           }
           priority={true}
-          objectFit="contain"
+          style={{ objectFit: "contain" }}
+
           width={400}
           height={400}
           quality={100}

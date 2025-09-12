@@ -73,6 +73,7 @@ const CreateOrderPage = ({ searchParams }: any) => {
   const [showBackUp, setShowBackUp] = useState(false);
   const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
   const [isFreeDelivery, setIsFreeDelivery] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{
     id: string;
     name: string;
@@ -133,9 +134,12 @@ const CreateOrderPage = ({ searchParams }: any) => {
       packageById({
         variables: { packageId },
       });
-      if (data && data.packageById) {
-        setPackageData(data.packageById);
-      }
+    }
+  }, [packageId, packageById]);
+
+  useEffect(() => {
+    if (data && data.packageById) {
+      setPackageData(data.packageById);
     }
   }, [data]);
 
@@ -161,195 +165,192 @@ const CreateOrderPage = ({ searchParams }: any) => {
     setProductToDelete(null);
   }, []);
 
-  // Add this state near the top with other state declarations
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Modify the handleUpdateCheckout function
+
+  //  handleUpdateCheckout function
   const handleUpdateCheckout = async () => {
-  if (isSubmitting) return;
-  setIsSubmitting(true);
-  
-  try {
-    if (!packageData || !packageData.Checkout) {
-      console.error("No package data or checkout available");
-      return;
-    }
-
-    const calculateTotal = () => {
-      const subtotal = packageData.Checkout.productInCheckout.reduce(
-        (acc, item) => {
-          const itemPrice = item.discountedPrice || item.price;
-          return acc + itemPrice * item.productQuantity;
-        },
-        0,
-      );
-
-      const couponDiscount = packageData.Checkout.Coupons?.discount
-        ? subtotal * (packageData.Checkout.Coupons.discount / 100)
-        : 0;
-
-      const manualDiscount =
-        inputManualDiscount || packageData.Checkout.manualDiscount;
-      const shippingCost = isFreeDelivery ? 0 : deliveryPrice;
-
-      return subtotal - couponDiscount - manualDiscount + shippingCost;
-    };
-
-    const total = calculateTotal();
-
-    const input = {
-      checkoutId: packageData.Checkout.id,
-      total: total,
-      ...(packageData.status === "CONFIRMED" && { orderStatus: "CONFIRMED" }),
-      productInCheckout: packageData.Checkout.productInCheckout.map((item) => ({
-        productId: item.product.id,
-        productQuantity: item.productQuantity,
-        price: item.price,
-        discountedPrice: item.discountedPrice,
-      })),
-      freeDelivery: isFreeDelivery,
-      manualDiscount: inputManualDiscount,
-    };
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
-      await updateCheckout({ variables: { input } });
+      if (!packageData || !packageData.Checkout) {
+        console.error("No package data or checkout available");
+        return;
+      }
 
-      toast({
-        title: "Commande mise à jour",
-        className: "text-white bg-mainColorAdminDash border-0",
-        description: "La commande a été mise à jour avec succès.",
-        duration: 3000,
-      });
-      console.log("Checkout updated successfully");
-      setTimeout(() => {
-        router.replace(`/Orders/UpdateOrder?orderId=${packageData.id}`);
-      }, 1000);
-    } catch (error) {
-      console.log(error);
-
-      toast({
-        title: "Erreur de création",
-        variant: "destructive",
-        description: "Veuillez remplir tous les champs obligatoires.",
-        duration: 5000,
-      });
-      console.error("Error updating checkout:", error);
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// Modify the createCheckoutFromAdminDash function
-const createCheckoutFromAdminDash = async () => {
-  if (isSubmitting) return;
-  setIsSubmitting(true);
-
-  try {
-    const {
-      userId,
-      userName,
-      familyName,
-      phone1,
-      phone2,
-      governorate,
-      address,
-    } = customerInfo;
-
-    if (!packageData || !packageData.Checkout) {
-      console.error("No package data or checkout available");
-      return;
-    }
-
-    const phone = [phone1, phone2];
-    var fullName = `${userName} ${familyName}`;
-
-    const calculateTotal = () => {
-      const subtotal = packageData.Checkout.productInCheckout.reduce(
-        (acc, item) => {
-          const itemPrice = item.discountedPrice || item.price;
-          return acc + itemPrice * item.productQuantity;
-        },
-        0,
-      );
-
-      const manualDiscount =
-        inputManualDiscount || packageData.Checkout.manualDiscount;
-      const shippingCost = isFreeDelivery ? 0 : deliveryPrice;
-
-      return subtotal - manualDiscount + shippingCost;
-    };
-
-    const input = {
-      userId: userId || null,
-      userName: fullName,
-      governorateId: governorate,
-      address: address,
-      total: calculateTotal(),
-      phone: phone,
-      manualDiscount: inputManualDiscount,
-      freeDelivery: isFreeDelivery,
-      products: packageData.Checkout.productInCheckout.map((item) => ({
-        productId: item.product.id,
-        productQuantity: item.productQuantity,
-        price: item.price,
-        discountedPrice: item.discountedPrice || item.price,
-      })),
-    };
-
-    try {
-      const { data } = await createCheckoutFromAdmin({ variables: { input } });
-
-      toast({
-        title: "Commande créée",
-        className: "text-white bg-mainColorAdminDash border-0",
-        description: "La commande a été créée avec succès.",
-        duration: 3000,
-      });
-
-      setTimeout(() => {
-        router.replace(
-          `/Orders/UpdateOrder?orderId=${data.createCheckoutFromAdmin}`,
+      const calculateTotal = () => {
+        const subtotal = packageData.Checkout.productInCheckout.reduce(
+          (acc, item) => {
+            const itemPrice = item.discountedPrice || item.price;
+            return acc + itemPrice * item.productQuantity;
+          },
+          0,
         );
-      }, 1000);
-    } catch (error) {
-      toast({
-        title: "Erreur de création",
-        variant: "destructive",
-        description:
-          "Une erreur est survenue lors de la création de la commande.",
-        duration: 5000,
-      });
-      console.error("Error creating checkout:", error);
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
-// Update the button in the JSX
-<button
-  onClick={packageId ? handleUpdateCheckout : createCheckoutFromAdminDash}
-  className="bg-mainColorAdminDash hover:bg-mainColorAdminDash/90 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2"
-  disabled={!packageData?.Checkout.productInCheckout.length || isSubmitting}
->
-  {isSubmitting ? (
-    <>
-      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-      </svg>
-      {packageId ? "Mise à jour..." : "Création..."}
-    </>
-  ) : (
-    <>
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-      {packageId ? "Mettre à jour la commande" : "Créer la commande"}
-    </>
-  )}
-</button>
+        const couponDiscount = packageData.Checkout.Coupons?.discount
+          ? subtotal * (packageData.Checkout.Coupons.discount / 100)
+          : 0;
+
+        const manualDiscount =
+          inputManualDiscount || packageData.Checkout.manualDiscount;
+        const shippingCost = isFreeDelivery ? 0 : deliveryPrice;
+
+        return subtotal - couponDiscount - manualDiscount + shippingCost;
+      };
+
+      const total = calculateTotal();
+
+      const input = {
+        checkoutId: packageData.Checkout.id,
+        total: total,
+        ...(packageData.status === "CONFIRMED" && { orderStatus: "CONFIRMED" }),
+        productInCheckout: packageData.Checkout.productInCheckout.map((item) => ({
+          productId: item.product.id,
+          productQuantity: item.productQuantity,
+          price: item.price,
+          discountedPrice: item.discountedPrice,
+        })),
+        freeDelivery: isFreeDelivery,
+        manualDiscount: inputManualDiscount,
+      };
+
+      try {
+        await updateCheckout({ variables: { input } });
+
+        toast({
+          title: "Commande mise à jour",
+          className: "text-white bg-mainColorAdminDash border-0",
+          description: "La commande a été mise à jour avec succès.",
+          duration: 3000,
+        });
+        console.log("Checkout updated successfully");
+        setTimeout(() => {
+          router.replace(`/Orders/UpdateOrder?orderId=${packageData.id}`);
+        }, 1000);
+      } catch (error) {
+        console.log(error);
+
+        toast({
+          title: "Erreur de création",
+          variant: "destructive",
+          description: "Veuillez remplir tous les champs obligatoires.",
+          duration: 5000,
+        });
+        console.error("Error updating checkout:", error);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // createCheckoutFromAdminDash function
+  const createCheckoutFromAdminDash = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const {
+        userId,
+        userName,
+        familyName,
+        phone1,
+        phone2,
+        governorate,
+        address,
+      } = customerInfo;
+
+      if (!packageData || !packageData.Checkout) {
+        console.error("No package data or checkout available");
+        return;
+      }
+
+      const phone = [phone1, phone2];
+      var fullName = `${userName} ${familyName}`;
+
+      const calculateTotal = () => {
+        const subtotal = packageData.Checkout.productInCheckout.reduce(
+          (acc, item) => {
+            const itemPrice = item.discountedPrice || item.price;
+            return acc + itemPrice * item.productQuantity;
+          },
+          0,
+        );
+
+        const manualDiscount =
+          inputManualDiscount || packageData.Checkout.manualDiscount;
+        const shippingCost = isFreeDelivery ? 0 : deliveryPrice;
+
+        return subtotal - manualDiscount + shippingCost;
+      };
+
+      const input = {
+        userId: userId || null,
+        userName: fullName,
+        governorateId: governorate,
+        address: address,
+        total: calculateTotal(),
+        phone: phone,
+        manualDiscount: inputManualDiscount,
+        freeDelivery: isFreeDelivery,
+        products: packageData.Checkout.productInCheckout.map((item) => ({
+          productId: item.product.id,
+          productQuantity: item.productQuantity,
+          price: item.price,
+          discountedPrice: item.discountedPrice || item.price,
+        })),
+      };
+
+      try {
+        const { data } = await createCheckoutFromAdmin({ variables: { input } });
+
+        toast({
+          title: "Commande créée",
+          className: "text-white bg-mainColorAdminDash border-0",
+          description: "La commande a été créée avec succès.",
+          duration: 3000,
+        });
+
+        setTimeout(() => {
+          router.replace(
+            `/Orders/UpdateOrder?orderId=${data.createCheckoutFromAdmin}`,
+          );
+        }, 1000);
+      } catch (error) {
+        toast({
+          title: "Erreur de création",
+          variant: "destructive",
+          description:
+            "Une erreur est survenue lors de la création de la commande.",
+          duration: 5000,
+        });
+        console.error("Error creating checkout:", error);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  <button
+    onClick={packageId ? handleUpdateCheckout : createCheckoutFromAdminDash}
+    className="bg-mainColorAdminDash hover:bg-mainColorAdminDash/90 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2"
+    disabled={!packageData?.Checkout.productInCheckout.length || isSubmitting}
+  >
+    {isSubmitting ? (
+      <>
+        <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        {packageId ? "Mise à jour..." : "Création..."}
+      </>
+    ) : (
+      <>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        {packageId ? "Mettre à jour la commande" : "Créer la commande"}
+      </>
+    )}
+  </button>
 
   const handleQuantityChange = useCallback(
     (productId: string, newQuantity: number) => {
@@ -377,11 +378,10 @@ const createCheckoutFromAdminDash = async () => {
     (selectedProduct: any) => {
       setShowBackUp(true);
       setPackageData((prevPackage: any) => {
-        // Get the discounted price if available
-        const discountedPrice = selectedProduct?.productDiscounts?.length > 0 
-          ? selectedProduct.productDiscounts[0].newPrice 
+        const discountedPrice = selectedProduct?.productDiscounts?.length > 0
+          ? selectedProduct.productDiscounts[0].newPrice
           : null;
-        
+
         if (!prevPackage) {
           return {
             id: "",
@@ -411,12 +411,12 @@ const createCheckoutFromAdminDash = async () => {
             },
           };
         }
-    
+
         const existingProductIndex =
           prevPackage.Checkout.productInCheckout.findIndex(
             (item: any) => item.product.id === selectedProduct.id,
           );
-    
+
         let updatedProductInCheckout;
         if (existingProductIndex !== -1) {
           updatedProductInCheckout = [
@@ -440,7 +440,7 @@ const createCheckoutFromAdminDash = async () => {
             newProduct,
           ];
         }
-    
+
         return {
           ...prevPackage,
           Checkout: {
@@ -527,8 +527,8 @@ const createCheckoutFromAdminDash = async () => {
                     />
                     <div
                       className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${isFreeDelivery
-                          ? "border-mainColorAdminDash"
-                          : "border-gray-300"
+                        ? "border-mainColorAdminDash"
+                        : "border-gray-300"
                         }`}
                     >
                       {isFreeDelivery && (
@@ -550,8 +550,8 @@ const createCheckoutFromAdminDash = async () => {
                     />
                     <div
                       className={`w-5 h-5 border rounded-full mr-2 flex items-center justify-center ${!isFreeDelivery
-                          ? "border-mainColorAdminDash"
-                          : "border-gray-300"
+                        ? "border-mainColorAdminDash"
+                        : "border-gray-300"
                         }`}
                     >
                       {!isFreeDelivery && (

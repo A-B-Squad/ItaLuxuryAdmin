@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client";
 import { COUPONS_QUERY } from "@/app/graph/queries";
+import { useToast } from "@/components/ui/use-toast";
+import { useLazyQuery, useMutation } from "@apollo/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import SearchBarForTables from "../components/SearchBarForTables";
-import SmallSpinner from "../components/SmallSpinner";
-import Pagination from "../components/Paginations";
-import CouponsTable from "./components/CouponsTable";
+import React, { useCallback, useEffect, useState } from "react";
+import { MdDeleteOutline } from "react-icons/md";
 import { DELETE_COUPONS_MUTATIONS } from "../../graph/mutations";
 import DeleteModal from "../components/DeleteModal";
-import { useToast } from "@/components/ui/use-toast";
+import Pagination from "../components/Paginations";
+import SearchBarForTables from "../components/SearchBarForTables";
+import SmallSpinner from "../components/SmallSpinner";
+import CouponsTable from "./components/CouponsTable";
 
 interface Coupon {
   id: string;
@@ -48,9 +49,9 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(pageParam ? parseInt(pageParam) : 1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [couponsToDelete, setCouponsToDelete] = useState<Coupon | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const PAGE_SIZE = 10;
 
   const [searchCoupons, { loading, error }] = useLazyQuery<FetchAllCouponsData>(COUPONS_QUERY);
@@ -67,7 +68,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
 
       if (data?.fetchAllCoupons) {
         let fetchedCoupons = [...(data.fetchAllCoupons.coupons || [])];
-        
+
         // Apply client-side filtering for search and sortBy
         if (q) {
           fetchedCoupons = fetchedCoupons.filter(
@@ -107,19 +108,19 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
   useEffect(() => {
     // Update URL with current page, search, and sortBy
     const url = new URL(window.location.href);
-    
+
     if (page !== 1) {
       url.searchParams.set('page', page.toString());
     } else {
       url.searchParams.delete('page');
     }
-    
+
     if (q) {
       url.searchParams.set('q', q);
     } else {
       url.searchParams.delete('q');
     }
-    
+
     if (sortBy) {
       url.searchParams.set('sortBy', sortBy);
     } else {
@@ -144,29 +145,28 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
     if (page !== 1 && (q || sortBy)) {
       setPage(1);
     }
-  }, [q, sortBy]);
+  }, [q, sortBy, page]);
 
   const handleDeleteCoupons = async () => {
-    if (!couponsToDelete) return;
+    if (selectedIds.length <= 0) return;
 
     setIsDeleting(true);
 
     try {
       await deleteCouponsMutation({
         variables: {
-          couponsId: couponsToDelete.id,
+          couponsIds: selectedIds,
         },
       });
 
       toast({
         title: "Coupon supprimé",
-        description: `Le coupon ${couponsToDelete.code} a été supprimé avec succès.`,
+        description: `Les coupons a été supprimé avec succès.`,
         className: "text-white bg-mainColorAdminDash border-0",
       });
 
-      setCouponsToDelete(null);
       setShowDeleteModal(false);
-      
+
       // Refetch data to update the list and count
       await fetchCoupons();
     } catch (error: any) {
@@ -190,7 +190,7 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
   const numberOfPages = Math.ceil(filteredTotalCount / PAGE_SIZE);
 
   // For display purposes, show the current page of coupons
-  const displayedCoupons = q || sortBy 
+  const displayedCoupons = q || sortBy
     ? coupons.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
     : coupons;
 
@@ -228,12 +228,24 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
             </div>
           ) : (
             <>
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(true)
+                  }}
+                  disabled={selectedIds.length === 0}
+                  className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50"
+                >
+                  <MdDeleteOutline size={18} />
+                  Supprimer la sélection ({selectedIds.length})
+                </button>
+              </div>
+
               <CouponsTable
                 coupons={displayedCoupons}
-                onDeleteClick={(coupon: Coupon) => {
-                  setCouponsToDelete(coupon);
-                  setShowDeleteModal(true);
-                }}
+                setSelectedIds={setSelectedIds}
+                selectedIds={selectedIds}
+
                 loading={loading}
               />
 
@@ -276,14 +288,13 @@ const Coupons: React.FC<CouponsProps> = ({ searchParams }) => {
           )}
         </div>
       </div>
-      
-      {showDeleteModal && couponsToDelete && (
+
+      {showDeleteModal && selectedIds.length && (
         <DeleteModal
           sectionName="Coupons"
-          itemName={couponsToDelete.code}
+          itemName={"Coupons"}
           onConfirm={handleDeleteCoupons}
           onCancel={() => {
-            setCouponsToDelete(null);
             setShowDeleteModal(false);
           }}
           isLoading={isDeleting}
