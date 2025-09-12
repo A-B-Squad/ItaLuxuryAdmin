@@ -1,18 +1,37 @@
 import moment from "moment";
 import "moment/locale/fr";
 import "moment-timezone";
-import { MdDeleteOutline } from "react-icons/md";
 import { IoMdClose } from "react-icons/io";
 
 moment.locale("fr");
 
-const CouponsRow = ({ coupons, onDeleteClick }: any) => {
+const CouponsRow = ({ coupons, selectedIds,setSelectedIds }: any) => {
   const formatDate = (timestamp: string) => {
     return moment(parseInt(timestamp, 10)).format("DD/MM/YYYY");
   };
 
   return (
     <tr className=" text-gray-700 border-b ">
+      {coupons.available && (
+        <td className="Edits text-sm text-center  ">
+          <input
+            className="cursor-pointer w-4 h-4"
+            type="checkbox"
+            name=""
+            id={coupons.id}
+            checked={selectedIds.includes(coupons.id)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              if (isChecked) {
+                setSelectedIds((prev: string[]) => [...prev, coupons.id]);
+              } else {
+                setSelectedIds((prev: string[]) => prev.filter((id) => id !== coupons.id));
+              }
+            }}
+          />
+        </td>
+      )}
+
       <td className="px-4 py-3">
         <div className=" text-sm">
           <div className="relative font-semibold tracking-wider  mr-3 rounded-full md:block">
@@ -46,23 +65,7 @@ const CouponsRow = ({ coupons, onDeleteClick }: any) => {
           <IoMdClose color="red" className="w-full" />
         )}
       </td>
-      {coupons.available ? (
-        <td className="Edits text-sm ">
-          <div className="flex justify-center items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onDeleteClick(coupons)}
-              className="flex justify-center items-center w-9 h-9 hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
-            >
-              <MdDeleteOutline size={18} />
-            </button>
-          </div>
-        </td>
-      ) : (
-        <td className="Edits text-sm text-center  ">
-          <IoMdClose className="text-center w-full mt-4 " color="red" />
-        </td>
-      )}
+
     </tr>
   );
 };

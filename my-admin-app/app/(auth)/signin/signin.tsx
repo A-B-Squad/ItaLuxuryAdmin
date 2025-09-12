@@ -10,9 +10,12 @@ import { ADMIN_SIGNIN } from "@/app/graph/mutations";
 import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { FaEnvelope, FaLock, FaUserShield } from "react-icons/fa";
+import { setToken } from "@/app/utils/tokens/token";
+import { useAuth } from "@/app/hooks/useAuth";
 
 const Signin = () => {
   const { toast } = useToast();
+  const { updateToken } = useAuth();
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
   const {
@@ -27,12 +30,15 @@ const Signin = () => {
     setErrorMessage("");
     SignIn({
       variables: { input: data },
-      onCompleted: () => {
+      onCompleted: (data) => {
+
         toast({
           title: "Connexion réussie",
           description: "Bienvenue sur ita-luxury",
           className: "bg-green-500 text-white",
         });
+        setToken(data.adminSignIn);
+        updateToken(data.adminSignIn);
         router.replace("/Dashboard");
       },
       onError: (error) => {

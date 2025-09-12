@@ -64,9 +64,12 @@ const UploadBannerAds = ({
             <Image
               src={localLargeImage}
               alt="image de carrousel"
-              layout="fill"
-              objectFit="contain"
-              onLoadingComplete={() => setLocalLoadingImages(false)}
+              fill={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+              style={{ objectFit: "contain" }}
+
+              onLoad={() => setLocalLoadingImages(false)}
               onError={() => setLocalLoadingImages(false)}
             />
             {localLoadingImages && <LoaderSpiner />}
@@ -109,10 +112,13 @@ const UploadBannerAds = ({
                 <Image
                   src={localInputField.images[0]}
                   alt="image téléchargée"
-                  layout="fill"
+                  fill={true}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
                   className={`${!localLoadingImages ? "visible" : "invisible"}`}
-                  objectFit="contain"
-                  onLoadingComplete={() => setLocalLoadingImages(false)}
+                  style={{ objectFit: "contain" }}
+
+                  onLoad={() => setLocalLoadingImages(false)}
                   onError={() => setLocalLoadingImages(false)}
                 />
               </div>

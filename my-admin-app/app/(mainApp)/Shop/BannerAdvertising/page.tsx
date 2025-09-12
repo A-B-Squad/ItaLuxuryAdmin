@@ -102,7 +102,7 @@ const BannerAdvertisingPage = () => {
   }, [
     InputFieldOfTopDealsBanner,
     InputFieldLessThen20Banner,
-    InputFieldPromotionBanner,
+    InputFieldPromotionBanner
   ]);
 
   return (

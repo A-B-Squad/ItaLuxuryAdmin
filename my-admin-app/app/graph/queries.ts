@@ -21,17 +21,6 @@ export const GET_ALL_USERS_QUERY = gql`
     }
   }
 `;
-export const CATEGORY_BY_ID_QUERY = gql`
-  query CategoryById($categoryId: String!) {
-    categoryById(categoryId: $categoryId) {
-      name
-      bigImage
-      smallImage
-      description
-      parentId
-    }
-  }
-`;
 
 export const CATEGORY_QUERY = gql`
   query Categories {
@@ -58,63 +47,75 @@ export const CATEGORY_QUERY = gql`
   }
 `;
 export const SEARCH_PRODUCTS_QUERY = gql`
-  query SearchProducts($input: ProductSearchInput!) {
-    searchProducts(input: $input) {
-      results {
-        products {
+query SearchProducts($input: ProductSearchInput!) {
+  searchProducts(input: $input) {
+    results {
+      products {
+        id
+        name
+        price
+        purchasePrice
+        isVisible
+        reference
+        description
+        inventory
+        solde
+        broken
+        images
+        createdAt
+        reviews {
           id
-          name
-          price
-          purchasePrice
-          isVisible
-          reference
-          description
-          inventory
-          solde
-          broken
-          reviews {
-            id
-            rating
-            comment 
-            userName
-          }
-          categories {
-            id
-            name
-            subcategories {
-              id
-              name
-              parentId
-              subcategories {
-                id
-                name
-                parentId
-              }
-            }
-          }
-          Colors {
-            id
-            color
-            Hex
-          }
-          productDiscounts {
-            dateOfStart
-            dateOfEnd
-            price
-            newPrice
-          
-          }
-          images
-          createdAt
+          rating
+          comment
+          userName
         }
         categories {
           id
           name
+          subcategories {
+            id
+            name
+            parentId
+            subcategories {
+              id
+              name
+              parentId
+            }
+          }
+        }
+        Colors {
+          id
+          color
+          Hex
+        }
+        productDiscounts {
+          dateOfStart
+          dateOfEnd
+          price
+          newPrice
+        }
+        ProductInCheckout {
+          checkout {
+            phone
+            package {
+              status
+            }
+            Governorate {
+              name
+            }
+          }
         }
       }
-      totalCount
+      categories {
+        id
+        name
+      }
     }
+    totalCount
   }
+}
+
+
 `;
 export const GET_BRANDS = gql`
   query FetchBrands {
@@ -267,15 +268,6 @@ export const GET_API_CREDENTIALS = gql`
   }
 `;
 
-export const GET_ALL_USERS = gql`
-  query FetchAllUsers {
-    fetchAllUsers {
-      id
-      fullName
-      email
-    }
-  }
-`;
 
 export const FETCH_ALL_BASKET = gql`
   query FetchAllBasket {
@@ -358,6 +350,7 @@ query FetchAllUsers {
   fetchAllUsers {
     id
     fullName
+    email
     ContactUs {
       id
       subject
@@ -402,7 +395,6 @@ query FetchAllUsers {
       userId
       checkoutId
     }
-    email
     pointTransactions {
       id
       amount
@@ -519,6 +511,15 @@ export const COMPANY_INFO_QUERY = gql`
   }
 `;
 
+export const GET_ALL_PRODUCT_GROUPS = gql`
+query GetAllProductGroups {
+  getAllProductGroups {
+    groupProductName
+    id
+  }
+}
+`
+
 export const PRODUCT_IN_TOP_DEALS = gql`
   query AllDeals {
     allDeals {
@@ -542,50 +543,67 @@ export const PRODUCT_IN_TOP_DEALS = gql`
 `;
 
 export const PRODUCT_BY_ID_QUERY = gql`
-  query ProductById($productByIdId: ID!) {
-    productById(id: $productByIdId) {
+query ProductById($productByIdId: ID!) {
+  productById(id: $productByIdId) {
+    id
+    name
+    price
+    purchasePrice
+    isVisible
+    reference
+    description
+    inventory
+    solde
+    images
+    createdAt
+    categories {
       id
       name
-      price
-      purchasePrice
-      isVisible
-      reference
       description
-      inventory
-      solde
-      images
-      createdAt
-      categories {
+      subcategories {
         id
         name
+        parentId
         subcategories {
           id
           name
-          subcategories {
-            id
-            name
-          }
+          parentId
         }
       }
-      productDiscounts {
-        id
-        price
-        newPrice
-        dateOfEnd
-        dateOfStart
-        
-      }
-      Colors {
-        id
-        color
-        Hex
-      }
-      Brand {
+    }
+    productDiscounts {
+      id
+      price
+      newPrice
+      dateOfEnd
+      dateOfStart
+    }
+    Colors {
+      id
+      color
+      Hex
+    }
+    technicalDetails
+    reviews {
+      rating
+      userId
+    }
+    Brand {
+      name
+    }
+    GroupProductVariant {
+      id
+      groupProductName
+      Products {
         id
         name
-        logo
+        Colors {
+          Hex
+        }
       }
-      technicalDetails
     }
+    
   }
-`;
+}
+
+        `;

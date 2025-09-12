@@ -74,10 +74,13 @@ const UploadNextToCarouselAds: React.FC<UploadNextToCarouselAdsProps> = ({
             <Image
               src={localLargeImage}
               alt="Advertisement preview"
-              layout="fill"
-              objectFit="contain"
+              fill={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+              style={{ objectFit: "contain" }}
+
               className="transition-opacity duration-300"
-              onLoadingComplete={() => setLocalLoadingImages(false)}
+              onLoad={() => setLocalLoadingImages(false)}
               onError={() => setLocalLoadingImages(false)}
             />
             {localLoadingImages && <LoaderSpiner />}
@@ -121,10 +124,13 @@ const UploadNextToCarouselAds: React.FC<UploadNextToCarouselAdsProps> = ({
                 <Image
                   src={localInputField.images[0]}
                   alt="Uploaded thumbnail"
-                  layout="fill"
-                  objectFit="cover"
+                  fill={true}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                  style={{ objectFit: "cover" }}
+
                   className={`transition-opacity duration-300 ${!localLoadingImages ? "opacity-100" : "opacity-0"}`}
-                  onLoadingComplete={() => setLocalLoadingImages(false)}
+                  onLoad={() => setLocalLoadingImages(false)}
                   onError={() => setLocalLoadingImages(false)}
                 />
               </div>

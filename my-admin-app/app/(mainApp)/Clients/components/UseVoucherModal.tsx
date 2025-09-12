@@ -5,7 +5,6 @@ import { useMutation } from "@apollo/client";
 import React, { useState } from "react";
 
 
-// TypeScript Interfaces
 interface Review {
     productId: string;
     rating: number;
@@ -102,7 +101,7 @@ export const UseVoucherModal: React.FC<{
     const [checkoutId, setCheckoutId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const [useVoucher] = useMutation(USE_VOUCHER_MUTATION, {
+    const [executeUseVoucher] = useMutation(USE_VOUCHER_MUTATION, {
         refetchQueries: [
             'FETCH_ALL_USERS',
         ],
@@ -131,10 +130,13 @@ export const UseVoucherModal: React.FC<{
                 variables.input.checkoutId = checkoutId.trim();
             }
 
-            const result = await useVoucher({ variables });
 
-            if (result.data?.useVoucher?.success) {
-                alert(result.data.useVoucher.message);
+            const { data } = await executeUseVoucher({
+                variables
+            });
+
+            if (data?.useVoucher?.success) {
+                alert(data.useVoucher.message);
                 onSuccess();
                 onClose();
             }

@@ -148,7 +148,7 @@ const CompanyInfopage = () => {
         "/upload/",
         "/upload/f_webp,q_auto:good/"
       );
-      
+
       setCompanyInfo((prev) => ({
         ...prev,
         logo: webpUrl,
@@ -253,10 +253,13 @@ const CompanyInfopage = () => {
                     <Image
                       src={companyInfo.logo}
                       alt="Logo de l'entreprise"
-                      layout="fill"
-                      objectFit="contain"
+                      fill={true}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                      style={{ objectFit: "contain" }}
+
                       className="bg-white"
-                      onLoadingComplete={() => setLogoLoading(false)}
+                      onLoad={() => setLogoLoading(false)}
                     />
                     {logoLoading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">

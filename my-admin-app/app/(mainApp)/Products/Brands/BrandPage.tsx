@@ -3,19 +3,12 @@ import React, { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import {
   DELETE_BRAND_MUTATION,
   ADD_BRAND_MUTATION,
 } from "@/app/graph/mutations";
-import { CATEGORY_QUERY, GET_BRANDS } from "@/app/graph/queries";
+import { GET_BRANDS } from "@/app/graph/queries";
 import { useToast } from "@/components/ui/use-toast";
 import Loading from "../loading";
 
@@ -41,7 +34,6 @@ interface GetBrandsData {
 
 const BrandPage = () => {
   const { data, loading, error } = useQuery<GetBrandsData>(GET_BRANDS);
-  const { data: categoryData } = useQuery(CATEGORY_QUERY);
   const [addBrand] = useMutation(ADD_BRAND_MUTATION);
   const [deleteBrand] = useMutation(DELETE_BRAND_MUTATION);
   const { toast } = useToast();
@@ -124,7 +116,7 @@ const BrandPage = () => {
     // Transform the URL to WebP format while preserving original dimensions
     const originalUrl = result.info.secure_url;
     const webpUrl = originalUrl.replace("/upload/", "/upload/f_webp,q_auto:good/");
-    
+
     setNewBrandLogo(webpUrl);
     toast({
       title: "Succès",
@@ -199,7 +191,8 @@ const BrandPage = () => {
                         alt="Logo prévisualisé"
                         width={80}
                         height={80}
-                        objectFit="contain"
+                        style={{ objectFit: "contain" }}
+
                       />
                     </div>
                   )}
@@ -230,8 +223,11 @@ const BrandPage = () => {
                       <Image
                         src={brand.logo}
                         alt={brand.name}
-                        layout="fill"
-                        objectFit="contain"
+                        fill={true}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                        style={{ objectFit: "contain" }}
+
                         className="transition-opacity duration-300 group-hover:opacity-75"
                       />
                     </div>

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
 import { useToast } from "@/components/ui/use-toast";
-import { GET_ALL_USERS, GET_GOVERMENT_INFO } from "@/app/graph/queries";
+import { FETCH_ALL_USERS, GET_GOVERMENT_INFO } from "@/app/graph/queries";
 import { UPDATE_CUSTOMER_MUTATIONS } from "@/app/graph/mutations";
 import { User, GovernmentInfo, CustomerInfo, Order } from "@/app/types/index";
 
@@ -44,7 +44,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({
     }
     return showAllUsers ? users : users.slice(0, 5);
   }, [allUsers, searchTerm, showAllUsers]);
-  const { loading: usersLoading, data: userData } = useQuery(GET_ALL_USERS);
+  const { loading: usersLoading, data: userData } = useQuery(FETCH_ALL_USERS);
   const { loading: govLoading, data: governmentData } =
     useQuery(GET_GOVERMENT_INFO);
   const [updateCustomerCheckout] = useMutation(UPDATE_CUSTOMER_MUTATIONS);

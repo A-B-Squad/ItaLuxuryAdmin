@@ -26,10 +26,10 @@ const ProductRow: React.FC<ProductRowProps> = ({
 
   useEffect(() => {
     // Use discounted price if available and less than regular price, otherwise use regular price
-    const currentPrice = (discountedPrice && discountedPrice < price) 
-      ? discountedPrice 
+    const currentPrice = (discountedPrice && discountedPrice < price)
+      ? discountedPrice
       : price;
-      
+
     setTotal(parseFloat((currentPrice * quantity).toFixed(3)));
   }, [quantity, price, discountedPrice]);
 
@@ -56,10 +56,11 @@ const ProductRow: React.FC<ProductRowProps> = ({
                 item.product.images?.[0] ||
                 "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
               }
-              layout="fill"
-              objectFit="contain"
+              fill={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: "contain" }}
               alt={item.product.name || "Product image"}
-              loading="lazy"
+              
             />
             <div
               className="absolute inset-0 rounded-full shadow-inner"

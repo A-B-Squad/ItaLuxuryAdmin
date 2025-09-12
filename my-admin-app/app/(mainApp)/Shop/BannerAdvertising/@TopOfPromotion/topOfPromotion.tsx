@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 const TopOfPromotion = ({ setInputField, inputField }: any) => {
   const [localLargeImage, setLocalLargeImage] = useState<string>("");
 
-  const { data: topOfPromotionAds, loading: loadingTopOfBestDealsAds } =
+  const { data: topOfPromotionAds } =
     useQuery(ADVERTISSMENT_QUERY, {
       variables: { position: "BannerPromotion" },
     });

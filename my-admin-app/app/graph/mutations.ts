@@ -129,9 +129,9 @@ export const DELETE_PRODUCT_FROM_DEALS_MUTATION = gql`
   }
 `;
 export const DELETE_COUPONS_MUTATIONS = gql`
-  mutation DeleteCoupons($couponsId: ID!) {
-    deleteCoupons(couponsId: $couponsId)
-  }
+  mutation DeleteCoupons($couponsIds: [ID!]!) {
+  deleteCoupons(couponsIds: $couponsIds)
+}
 `;
 
 
@@ -180,6 +180,21 @@ export const CREATE_PRODUCT_MUTATIONS = gql`
     createProduct(input: $input)
   }
 `;
+export const CREATE_PRODUCT_GROUP_VARIANT_MUTATIONS = gql`
+mutation CreateGroupProductVariant($input: CreateGroupProductVariantInput!) {
+  createGroupProductVariant(input: $input) {
+    groupProductName
+    id
+  }
+}
+`;
+export const UPDATE_PRODUCT_GROUP_VARIANT_MUTATIONS = gql`
+mutation UpdateGroupProductVariant($input: UpdateGroupProductVariantInput!) {
+  updateGroupProductVariant(input: $input)
+}
+`;
+
+
 export const UPDATE_PRODUCT_MUTATIONS = gql`
   mutation UpdateProduct($productId: ID!, $input: ProductInput!) {
     updateProduct(productId: $productId, input: $input)

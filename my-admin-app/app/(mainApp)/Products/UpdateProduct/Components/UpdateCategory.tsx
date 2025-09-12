@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { CATEGORY_QUERY } from "@/app/graph/queries";
 
 import {
@@ -22,7 +22,7 @@ interface Category {
 interface Subcategory {
   id: string;
   name: string;
-  subSubcategories: SubSubcategory[];
+  subcategories: SubSubcategory[];
 }
 
 interface SubSubcategory {
@@ -49,15 +49,17 @@ const defaultSelectedIds: SelectedIds = {
 
 const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
   selectedIds,
-  setSelectedIds
+  setSelectedIds,
 }) => {
-  // Ensure selectedIds is always properly initialized, handling null or undefined values
-  const safeSelectedIds = useMemo(() => ({
-    categoryId: selectedIds?.categoryId || "",
-    subcategoryId: selectedIds?.subcategoryId || "",
-    subSubcategoryId: selectedIds?.subSubcategoryId || "",
-  }), [selectedIds]);
-  
+  const safeSelectedIds = useMemo(
+    () => ({
+      categoryId: selectedIds?.categoryId || "",
+      subcategoryId: selectedIds?.subcategoryId || "",
+      subSubcategoryId: selectedIds?.subSubcategoryId || "",
+    }),
+    [selectedIds]
+  );
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [orphanedSelections, setOrphanedSelections] = useState<{
     categoryName?: string;
@@ -67,77 +69,44 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
 
   const { loading, error, data: AllCategory } = useQuery(CATEGORY_QUERY);
 
-  const transformCategories = (categoriesData: any) => {
-    try {
-      if (!Array.isArray(categoriesData)) return [];
-  
-      const rootCategories = categoriesData.filter((cat: any) => !cat.parentId);
-      if (!Array.isArray(rootCategories) || rootCategories.length === 0) return [];
-  
-      return rootCategories.map((rootCat: any) => ({
-        id: rootCat.id,
-        name: rootCat.name,
-        subcategories: Array.isArray(rootCat.subcategories)
-          ? rootCat.subcategories.map((subcat: any) => ({
-              id: subcat.id,
-              name: subcat.name,
-              subSubcategories: Array.isArray(subcat.subcategories)
-                ? subcat.subcategories.map((subSubcat: any) => ({
-                    id: subSubcat.id,
-                    name: subSubcat.name,
-                  }))
-                : [],
-            }))
-          : [],
-      }));
-    } catch (error) {
-      console.error("Error transforming categories:", error);
-      return [];
-    }
-  };
-  
   useEffect(() => {
     if (AllCategory?.categories) {
-      const transformedCategories = transformCategories(AllCategory.categories);
-      setCategories(transformedCategories);
+      setCategories(AllCategory.categories);
     } else {
-      setCategories([]); 
+      setCategories([]);
     }
   }, [AllCategory]);
-  
-  // Enhanced validation with orphaned category tracking
-  useEffect(() => {
-    // Skip validation if categories aren't loaded yet
+
+  const validateSelections = useCallback(() => {
     if (!categories?.length) return;
-    
-    // Skip validation if no selectedIds are provided (new product or product without categories)
-    if (!safeSelectedIds.categoryId && !safeSelectedIds.subcategoryId && !safeSelectedIds.subSubcategoryId) return;
+    if (
+      !safeSelectedIds.categoryId &&
+      !safeSelectedIds.subcategoryId &&
+      !safeSelectedIds.subSubcategoryId
+    )
+      return;
 
     try {
       const newOrphanedSelections: typeof orphanedSelections = {};
       let updatedIds = { ...safeSelectedIds };
       let hasChanges = false;
 
-      // Check if category exists
+      //  Check category
       if (safeSelectedIds.categoryId) {
-        const category = categories.find(cat => cat.id === safeSelectedIds.categoryId);
+        const category = categories.find(
+          (cat) => cat.id === safeSelectedIds.categoryId
+        );
         if (!category) {
-          // Category was deleted - mark as orphaned
           newOrphanedSelections.categoryName = `Deleted Category (ID: ${safeSelectedIds.categoryId})`;
-          updatedIds = {
-            categoryId: "",
-            subcategoryId: "",
-            subSubcategoryId: "",
-          };
+          updatedIds = { categoryId: "", subcategoryId: "", subSubcategoryId: "" };
           hasChanges = true;
         } else {
-          // Category exists, check subcategory
+          //  Check subcategory
           if (safeSelectedIds.subcategoryId) {
             const subcategory = category.subcategories?.find(
-              sub => sub.id === safeSelectedIds.subcategoryId
+              (sub) => sub.id === safeSelectedIds.subcategoryId
             );
             if (!subcategory) {
-              // Subcategory was deleted
               newOrphanedSelections.subcategoryName = `Deleted Subcategory (ID: ${safeSelectedIds.subcategoryId})`;
               updatedIds = {
                 categoryId: safeSelectedIds.categoryId,
@@ -146,13 +115,12 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
               };
               hasChanges = true;
             } else {
-              // Subcategory exists, check sub-subcategory
+              //  Check sub-subcategory
               if (safeSelectedIds.subSubcategoryId) {
-                const subSubcategory = subcategory.subSubcategories?.find(
-                  sub => sub.id === safeSelectedIds.subSubcategoryId
+                const subSubcategory = subcategory.subcategories?.find(
+                  (sub) => sub.id === safeSelectedIds.subSubcategoryId
                 );
                 if (!subSubcategory) {
-                  // Sub-subcategory was deleted
                   newOrphanedSelections.subSubcategoryName = `Deleted Sub-subcategory (ID: ${safeSelectedIds.subSubcategoryId})`;
                   updatedIds = {
                     categoryId: safeSelectedIds.categoryId,
@@ -168,7 +136,6 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
       }
 
       setOrphanedSelections(newOrphanedSelections);
-
       if (hasChanges) {
         setSelectedIds(updatedIds);
       }
@@ -177,72 +144,90 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
       setSelectedIds(defaultSelectedIds);
       setOrphanedSelections({});
     }
-  }, [categories, safeSelectedIds.categoryId, safeSelectedIds.subcategoryId, safeSelectedIds.subSubcategoryId, setSelectedIds]);
+  }, [categories, safeSelectedIds, setSelectedIds]);
+
+  useEffect(() => {
+    validateSelections();
+  }, [validateSelections]);
 
   const getSubcategories = useMemo(() => {
     if (!safeSelectedIds.categoryId) return [];
-    const category = categories.find(cat => cat.id === safeSelectedIds.categoryId);
+    const category = categories.find(
+      (cat) => cat.id === safeSelectedIds.categoryId
+    );
     return category?.subcategories || [];
   }, [categories, safeSelectedIds.categoryId]);
 
   const getSubSubcategories = useMemo(() => {
     if (!safeSelectedIds.subcategoryId) return [];
     const subcategory = getSubcategories.find(
-      subcat => subcat.id === safeSelectedIds.subcategoryId
+      (subcat) => subcat.id === safeSelectedIds.subcategoryId
     );
-    return subcategory?.subSubcategories || [];
+    return subcategory?.subcategories || [];
   }, [getSubcategories, safeSelectedIds.subcategoryId]);
 
-  const handleCategoryChange = (value: string) => {
-    setSelectedIds({
-      categoryId: value || "",
-      subcategoryId: "",
-      subSubcategoryId: "",
-    });
-    setOrphanedSelections({}); // Clear orphaned selections when user makes new selection
-  };
+  const handleCategoryChange = useCallback(
+    (value: string) => {
+      setSelectedIds({
+        categoryId: value || "",
+        subcategoryId: "",
+        subSubcategoryId: "",
+      });
+      setOrphanedSelections({});
+    },
+    [selectedIds]
+  );
 
-  const handleSubcategoryChange = (value: string) => {
-    setSelectedIds({
-      ...safeSelectedIds,
-      subcategoryId: value || "",
-      subSubcategoryId: "",
-    });
-    setOrphanedSelections(prev => ({
-      ...prev,
-      subcategoryName: undefined,
-      subSubcategoryName: undefined
-    }));
-  };
+  const handleSubcategoryChange = useCallback(
+    (value: string) => {
+      setSelectedIds({
+        ...safeSelectedIds,
+        subcategoryId: value || "",
+        subSubcategoryId: "",
+      });
+      setOrphanedSelections((prev) => ({
+        ...prev,
+        subcategoryName: undefined,
+        subSubcategoryName: undefined,
+      }));
+    },
+    [safeSelectedIds, setSelectedIds]
+  );
 
-  const handleSubSubcategoryChange = (value: string) => {
-    setSelectedIds({
-      ...safeSelectedIds,
-      subSubcategoryId: value || "",
-    });
-    setOrphanedSelections(prev => ({
-      ...prev,
-      subSubcategoryName: undefined
-    }));
-  };
+  const handleSubSubcategoryChange = useCallback(
+    (value: string) => {
+      setSelectedIds({
+        ...safeSelectedIds,
+        subSubcategoryId: value || "",
+      });
+      setOrphanedSelections((prev) => ({
+        ...prev,
+        subSubcategoryName: undefined,
+      }));
+    },
+    [safeSelectedIds, setSelectedIds]
+  );
 
-  const renderOrphanedWarning = (type: 'category' | 'subcategory' | 'subSubcategory') => {
-    const messages = {
-      category: orphanedSelections.categoryName,
-      subcategory: orphanedSelections.subcategoryName,
-      subSubcategory: orphanedSelections.subSubcategoryName,
-    };
+  const renderOrphanedWarning = useCallback(
+    (type: "category" | "subcategory" | "subSubcategory") => {
+      const messages = {
+        category: orphanedSelections.categoryName,
+        subcategory: orphanedSelections.subcategoryName,
+        subSubcategory: orphanedSelections.subSubcategoryName,
+      };
 
-    if (!messages[type]) return null;
+      if (!messages[type]) return null;
 
-    return (
-      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-        <p className="text-sm text-yellow-800">
-          ⚠️ {messages[type]} - Please select a new {type}
-        </p>
-      </div>
-    );
-  };
+      return (
+        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-sm text-yellow-800">
+            ⚠️ {messages[type]} - Please select a new {type}
+          </p>
+        </div>
+      );
+    },
+    [orphanedSelections]
+  );
 
   if (loading) {
     return (
@@ -256,6 +241,7 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Category */}
       <div className="category bg-white rounded-md shadow-md p-3">
         <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
           Catégorie
@@ -278,9 +264,10 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
             </SelectGroup>
           </SelectContent>
         </Select>
-        {renderOrphanedWarning('category')}
+        {renderOrphanedWarning("category")}
       </div>
 
+      {/* Subcategory */}
       <div className="subcategory bg-white rounded-md shadow-md p-3">
         <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
           Sous-catégorie
@@ -304,9 +291,10 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
             </SelectGroup>
           </SelectContent>
         </Select>
-        {renderOrphanedWarning('subcategory')}
+        {renderOrphanedWarning("subcategory")}
       </div>
 
+      {/* Sub-subcategory */}
       <div className="subSubcategory bg-white rounded-md shadow-md p-3">
         <label className="block border-b py-2 w-full text-gray-700 font-semibold tracking-wider">
           Sous-sous-catégorie
@@ -330,7 +318,7 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
             </SelectGroup>
           </SelectContent>
         </Select>
-        {renderOrphanedWarning('subSubcategory')}
+        {renderOrphanedWarning("subSubcategory")}
       </div>
     </div>
   );

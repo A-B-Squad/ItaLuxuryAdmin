@@ -7,6 +7,7 @@ import { subDays } from "date-fns";
 import React, { useState } from "react";
 import { DateRange } from "react-day-picker";
 import Loading from "../loading";
+import HeaderTitle from "../Components/HeaderTitle";
 
 // Define types for the GraphQL response
 
@@ -99,19 +100,16 @@ const GovernorateStats: React.FC = () => {
     <div className="w-full bg-dashboard-neutral-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-3">
-          <h1 className="text-2xl font-bold text-dashboard-neutral-800">Analyse des Clients</h1>
+        <HeaderTitle
+          mainTitle={"Analyse des Clients"}
+        />
+        {/* DateRangePicker component */}
+        <DateRangePicker
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+        />
 
-          {/* DateRangePicker component */}
-          <div className="mt-3 md:mt-0">
-            <DateRangePicker
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-            />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md border border-dashboard-neutral-200 p-4 mb-6">
+        <div className="bg-white rounded-lg shadow-md border border-dashboard-neutral-200 p-4 my-6">
           <h2 className="text-lg font-semibold text-dashboard-neutral-800 mb-4">
             Distribution des clients par gouvernorat en Tunisie
           </h2>

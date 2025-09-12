@@ -12,6 +12,7 @@ import ChoiceBrand from "./Components/ChoiceBrand";
 import ChoiceCategory from "./Components/ChoiceCategory";
 import ChoiseColors from "./Components/ChoiseColors";
 import UploadImage from "./Components/UploadImages";
+import AddVariant from "./Components/AddVariant";
 
 
 
@@ -36,6 +37,7 @@ const CreateProductPage = () => {
     string | Date | null
   >(null);
   const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -132,6 +134,7 @@ const CreateProductPage = () => {
         purchasePrice: purchasePrice,
         colorsId: selectedColor,
         reference,
+        ...(selectedGroupId && { groupProductVariantId: selectedGroupId }),
         ...(hasDiscount && {
           discount: [
             {
@@ -161,6 +164,8 @@ const CreateProductPage = () => {
         setDateOfEndDiscount(null);
         setSelectedColor(null);
         setVisibility(true);
+        setSelectedGroupId(null);
+
         setSelectedIds({
           categoryId: "",
           subcategoryId: "",
@@ -257,7 +262,10 @@ const CreateProductPage = () => {
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
           />
-
+          <AddVariant
+            selectedGroupId={selectedGroupId}
+            setSelectedGroupId={setSelectedGroupId}
+          />
           <AddStock stock={stock} setStock={setStock} />
           <AddReference reference={reference} setReference={setReference} />
           <ChoiseColors

@@ -20,6 +20,7 @@ import { DateRange } from "react-day-picker";
 import { FaChartBar } from "react-icons/fa";
 import { translateStatus } from "../../Helpers/_translateStatus";
 import Loading from "../loading";
+import HeaderTitle from "../Components/HeaderTitle";
 
 ChartJS.register(
   CategoryScale,
@@ -111,14 +112,14 @@ const MarketingPage = () => {
           {
             label: "Total des commandes (TND)",
             data: sortedDates.map((date) => groupedByDate[date].total),
-            backgroundColor: "rgba(59, 130, 246, 0.7)", // dashboard-primary
+            backgroundColor: "rgba(59, 130, 246, 0.7)",
             borderColor: "rgba(59, 130, 246, 1)",
             borderWidth: 1,
           },
           {
             label: "Nombre de commandes",
             data: sortedDates.map((date) => groupedByDate[date].count),
-            backgroundColor: "rgba(16, 185, 129, 0.7)", // dashboard-success
+            backgroundColor: "rgba(16, 185, 129, 0.7)",
             borderColor: "rgba(16, 185, 129, 1)",
             borderWidth: 1,
           }
@@ -130,14 +131,14 @@ const MarketingPage = () => {
           {
             label: "Total des commandes (TND)",
             data: statusTotals,
-            backgroundColor: "rgba(99, 102, 241, 0.7)", // dashboard-secondary
+            backgroundColor: "rgba(99, 102, 241, 0.7)",
             borderColor: "rgba(99, 102, 241, 1)",
             borderWidth: 1,
           },
           {
             label: "Nombre de commandes",
             data: statusCounts,
-            backgroundColor: "rgba(6, 182, 212, 0.7)", // dashboard-info
+            backgroundColor: "rgba(6, 182, 212, 0.7)",
             borderColor: "rgba(6, 182, 212, 1)",
             borderWidth: 1,
           },
@@ -162,7 +163,7 @@ const MarketingPage = () => {
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(30, 41, 59, 0.9)', // dashboard-neutral-800
+        backgroundColor: 'rgba(30, 41, 59, 0.9)',
         titleFont: {
           size: 13,
           family: "'Inter', sans-serif"
@@ -239,19 +240,16 @@ const MarketingPage = () => {
   return (
     <div className="w-full bg-dashboard-neutral-50 p-2 md:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 border-b pb-3">
-          <h1 className="text-xl md:text-2xl font-bold text-dashboard-neutral-800 mb-2 md:mb-0">Analyse Marketing</h1>
+        <HeaderTitle
+          mainTitle={"Analyse Marketing"}
+        />
+        {/* DateRangePicker component */}
+        <DateRangePicker
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+        />
 
-          {/* DateRangePicker component */}
-          <div className="w-full md:w-auto">
-            <DateRangePicker
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:gap-6 mb-4 md:mb-6">
+        <div className="grid grid-cols-1 gap-4 md:gap-6 mb-4 my-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <div className="bg-white p-3 md:p-4 rounded-lg shadow-md border border-dashboard-neutral-200">

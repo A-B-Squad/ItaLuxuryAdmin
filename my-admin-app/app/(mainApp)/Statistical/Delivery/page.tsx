@@ -1,8 +1,8 @@
 import React from "react";
-import DeliveryPage from "./DeliveryPage";
+import DeliveryAnalytics from "./DeliveryAnalytics";
 
 const DeliveryPageWrapper = () => {
-  return <DeliveryPage />;
+  return <DeliveryAnalytics />;
 };
 
 export default DeliveryPageWrapper;

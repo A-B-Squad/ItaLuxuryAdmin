@@ -1,6 +1,6 @@
 "use client";
 import { Editor } from '@tinymce/tinymce-react';
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import type { Editor as TinyMCEEditor } from 'tinymce';
 
 interface UpdateDescriptionProps {
@@ -9,6 +9,7 @@ interface UpdateDescriptionProps {
 }
 
 const UpdateDescription: React.FC<UpdateDescriptionProps> = ({ description, setDescription }) => {
+  const editorRef = useRef<TinyMCEEditor | null>(null);
 
   return (
     <div className="w-full">
@@ -18,6 +19,7 @@ const UpdateDescription: React.FC<UpdateDescriptionProps> = ({ description, setD
       <div className="border border-gray-300 rounded-lg overflow-hidden">
         <Editor
           apiKey={process.env.NEXT_PUBLIC_TinyMCE_API_KEY}
+          onInit={(evt: any, editor: TinyMCEEditor | null) => editorRef.current = editor}
           value={description}
           onEditorChange={(content: string) => {
             setDescription(content);
@@ -26,18 +28,19 @@ const UpdateDescription: React.FC<UpdateDescriptionProps> = ({ description, setD
             height: 500,
             menubar: false,
             plugins: [
+              'advlist',
+              'autolink', 
               'lists',
               'link',
               'table',
-              'undo',
-              'textcolor' // Optional for older versions, safe to include
+              'wordcount'
             ],
             toolbar:
-              'undo redo | bold italic underline | forecolor backcolor | bullist numlist | link table',
+              'bold italic underline | forecolor backcolor | bullist numlist | link table | removeformat',
             color_map: [
               "000000", "Black",
               "FF0000", "Red",
-              "FFFF00", "Yellow",
+              "FFFF00", "Yellow", 
               "008000", "Green",
               "0000FF", "Blue",
               "800080", "Purple",
@@ -45,9 +48,11 @@ const UpdateDescription: React.FC<UpdateDescriptionProps> = ({ description, setD
             ],
             toolbar_mode: 'sliding',
             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            branding: false,
+            resize: false,
+            statusbar: false
           }}
         />
-
       </div>
     </div>
   );

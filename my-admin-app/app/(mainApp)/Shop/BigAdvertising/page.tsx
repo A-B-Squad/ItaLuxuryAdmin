@@ -88,7 +88,7 @@ const BigAdvertisingPage = () => {
       "/upload/",
       "/upload/f_webp,q_auto:good,w_700,h_450/"
     );
-    
+
     if (webpUrl) {
       setImage({ urlImage: webpUrl, linkImage: image.linkImage });
       setLoadingImages((prev) => ({ ...prev, [webpUrl]: true }));
@@ -117,9 +117,12 @@ const BigAdvertisingPage = () => {
               <Image
                 src={image.urlImage}
                 alt="image de carrousel"
-                layout="fill"
-                objectFit="contain"
-                onLoadingComplete={() =>
+                fill={true}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                style={{ objectFit: "contain" }}
+
+                onLoad={() =>
                   setLoadingImages((prev) => ({
                     ...prev,
                     [image.urlImage]: false,
@@ -171,11 +174,14 @@ const BigAdvertisingPage = () => {
                   <Image
                     src={image.urlImage}
                     alt="image téléchargée"
-                    layout="fill"
+                    fill={true}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
                     className={`${!loadingImages[image.urlImage] ? "visible" : "invisible"
                       }`}
-                    objectFit="contain"
-                    onLoadingComplete={() =>
+                    style={{ objectFit: "contain" }}
+
+                    onLoad={() =>
                       setLoadingImages((prev) => ({
                         ...prev,
                         [image.urlImage]: false,

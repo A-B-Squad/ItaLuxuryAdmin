@@ -18,7 +18,7 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [searchProducts, { data, loading }] = useLazyQuery(SEARCH_PRODUCTS_QUERY, {
+  const [searchProducts, { data }] = useLazyQuery(SEARCH_PRODUCTS_QUERY, {
     onError: (error) => {
       console.error("Error searching products:", error);
       toast({
@@ -34,24 +34,21 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
     },
   });
 
-  // Debounce search to improve performance
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      if (query.trim().length > 1) {
-        setIsLoading(true);
-        searchProducts({
-          variables: {
-            input: {
-              query,
-              page: 1,
-              pageSize: 20,
-            },
+  // Debounce search 
+  const debouncedSearch = debounce((query: string) => {
+    if (query.trim().length > 1) {
+      setIsLoading(true);
+      searchProducts({
+        variables: {
+          input: {
+            query,
+            page: 1,
+            pageSize: 20,
           },
-        });
-      }
-    }, 300),
-    [searchProducts]
-  );
+        },
+      });
+    }
+  }, 300);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -181,9 +178,9 @@ const SearchProduct: React.FC<SearchProductProps> = ({ onProductSelect }) => {
                       </p>
                       <p className="text-xs text-gray-500 line-clamp-1">
                         Réf: {product.reference} | Prix: {
-                          product.productDiscounts && 
-                          product.productDiscounts.length > 0 && 
-                          product.productDiscounts[0].newPrice < product.price ? (
+                          product.productDiscounts &&
+                            product.productDiscounts.length > 0 &&
+                            product.productDiscounts[0].newPrice < product.price ? (
                             <>
                               <span className="line-through">{product.price.toFixed(3)}</span>
                               <span className="text-red-500 ml-1">{product.productDiscounts[0].newPrice.toFixed(3)}</span>

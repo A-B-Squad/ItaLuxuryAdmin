@@ -115,7 +115,7 @@ const CreateCategory = () => {
     // Transform the URL to WebP format
     const originalUrl = result.info.secure_url;
     const webpUrl = originalUrl.replace("/upload/", "/upload/f_webp,q_auto:good/");
-    
+
     setFormData((prevFormData) => ({
       ...prevFormData,
       [position]: webpUrl,
@@ -296,9 +296,12 @@ const CreateCategory = () => {
                   <Image
                     src={formData.bigImage}
                     alt={formData.name}
-                    layout="fill"
-                    objectFit="contain"
-                    onLoadingComplete={() =>
+                    fill={true}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                    style={{ objectFit: "contain" }}
+
+                    onLoad={() =>
                       setUploadingImage((prev) => ({
                         ...prev,
                         bigImageLoad: false,
@@ -319,13 +322,13 @@ const CreateCategory = () => {
               uploadPreset="ita-luxury"
               onSuccess={(result, { widget }) => {
                 handleImageUpload(result, "smallImage");
-
                 widget.close();
               }}
               onOpen={() =>
                 setUploadingImage((prev) => ({ ...prev, smallImageLoad: true }))
               }
             >
+              
               {({ open }) => (
                 <div
                   onClick={() => open()}
@@ -364,7 +367,7 @@ const CreateCategory = () => {
                   alt={formData.name}
                   width={120}
                   height={120}
-                  onLoadingComplete={() =>
+                  onLoad={() =>
                     setUploadingImage((prev) => ({
                       ...prev,
                       smallImageLoad: false,

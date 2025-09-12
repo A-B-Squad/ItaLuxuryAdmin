@@ -57,7 +57,7 @@ const CarouselAdvertisingPage = () => {
       const validInputFields = inputFields.filter(
         field => field.urlImage && field.linkImage
       );
-      
+
       if (validInputFields.length === 0) {
         toast({
           title: "Validation Error",
@@ -102,7 +102,7 @@ const CarouselAdvertisingPage = () => {
         );
       setImagesSlider(allImages);
       setInputFields(allImages.length > 0 ? allImages : [{ urlImage: "", linkImage: "" }]);
-      
+
       // Set the first image as preview if available
       if (allImages.length > 0) {
         setLargeImageTest(allImages[0].urlImage);
@@ -130,7 +130,7 @@ const CarouselAdvertisingPage = () => {
         ...prev,
         [webpUrl]: true,
       }));
-      
+
       // Set as preview image if none is selected
       if (!largeImageTest) {
         setLargeImageTest(webpUrl);
@@ -195,10 +195,13 @@ const CarouselAdvertisingPage = () => {
               <Image
                 src={largeImageTest}
                 alt="Carousel advertisement preview"
-                layout="fill"
-                objectFit="contain"
+                fill={true}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                style={{ objectFit: "contain" }}
+
                 className="transition-opacity duration-300"
-                onLoadingComplete={() =>
+                onLoad={() =>
                   setLoadingImages((prev) => ({
                     ...prev,
                     [largeImageTest]: false,
@@ -230,17 +233,20 @@ const CarouselAdvertisingPage = () => {
                     key={index}
                     className="basis-1/3 md:basis-1/4"
                   >
-                    <div 
+                    <div
                       className="relative h-32 border rounded-md overflow-hidden cursor-pointer hover:border-blue-500 transition-colors"
                       onClick={() => handleImageClick(img.urlImage, img.linkImage)}
                     >
                       <Image
                         src={img.urlImage}
                         alt={`Carousel image ${index + 1}`}
-                        layout="fill"
-                        objectFit="cover"
+                        fill={true}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                        style={{ objectFit: "cover" }}
+
                         className={`transition-opacity duration-300 ${loadingImages[img.urlImage] ? 'opacity-50' : 'opacity-100'}`}
-                        onLoadingComplete={() =>
+                        onLoad={() =>
                           setLoadingImages((prev) => ({
                             ...prev,
                             [img.urlImage]: false,
@@ -263,7 +269,7 @@ const CarouselAdvertisingPage = () => {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Manage Carousel Images</h2>
-            <button 
+            <button
               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50"
               onClick={handleAddInputField}
             >
@@ -299,7 +305,7 @@ const CarouselAdvertisingPage = () => {
                       )}
                     </CldUploadWidget>
                   </div>
-                  
+
                   <div className="flex-1">
                     <label htmlFor={`link-${index}`} className="mb-2 block text-sm font-medium">Destination URL</label>
                     <div className="relative">
@@ -317,19 +323,22 @@ const CarouselAdvertisingPage = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {field.urlImage && (
-                  <div 
+                  <div
                     className="relative h-20 w-32 border rounded-md overflow-hidden cursor-pointer mx-auto sm:mx-0"
                     onClick={() => handleImageClick(field.urlImage, field.linkImage)}
                   >
                     <Image
                       src={field.urlImage}
                       alt={`Uploaded image ${index + 1}`}
-                      layout="fill"
-                      objectFit="cover"
+                      fill={true}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                      style={{ objectFit: "cover" }}
+
                       className={`transition-opacity duration-300 ${loadingImages[field.urlImage] ? 'opacity-50' : 'opacity-100'}`}
-                      onLoadingComplete={() =>
+                      onLoad={() =>
                         setLoadingImages((prev) => ({
                           ...prev,
                           [field.urlImage]: false,
@@ -340,7 +349,7 @@ const CarouselAdvertisingPage = () => {
                   </div>
                 )}
               </div>
-              
+
               <button
                 className="absolute top-2 right-2 p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
                 onClick={() => handleDeleteImage(index)}

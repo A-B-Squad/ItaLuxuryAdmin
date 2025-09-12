@@ -162,8 +162,11 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
                     category.smallImage ||
                     "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
                   }
-                  layout="fill"
-                  objectFit="cover"
+                  fill={true}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+                  style={{ objectFit: "cover" }}
+
                   alt={category.name}
                 />
               </div>

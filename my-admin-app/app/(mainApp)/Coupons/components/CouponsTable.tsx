@@ -1,21 +1,23 @@
 import React from "react";
 import SmallSpinner from "../../components/SmallSpinner";
 import CouponsRow from "./CouponsRow";
+import { Dispatch, SetStateAction } from 'react';
 
 interface Coupon {
   id: string;
 }
 
+
 interface CouponsTableProps {
   coupons: Coupon[];
-  onDeleteClick: any;
   loading: boolean;
+  setSelectedIds: Dispatch<SetStateAction<string[]>>;
+  selectedIds: String[];
 }
 
 const CouponsTable: React.FC<CouponsTableProps> = ({
   coupons,
-  onDeleteClick,
-  loading,
+  loading, setSelectedIds, selectedIds
 }) => (
   <section className="container mx-auto py-6 px-3 relative">
     <div className="w-full mb-8 overflow-hidden rounded-lg shadow-md">
@@ -23,12 +25,12 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
         <table className="w-full">
           <thead className="bg-gray-800 text-white">
             <tr>
+              <th className="px-4 py-3 text-left">Coupon</th>
               <th className="px-4 py-3 text-left">Coupon Code</th>
               <th className="px-4 py-3 text-left">Available</th>
               <th className="px-4 py-3 text-left">Discount %</th>
               <th className="px-4 py-3 text-left">Utilisée</th>
               <th className="px-4 py-3 text-left">Checkout Id</th>
-              <th className="px-4 py-3 text-left">Edits</th>
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -43,8 +45,10 @@ const CouponsTable: React.FC<CouponsTableProps> = ({
                 <CouponsRow
                   key={coupon.id}
                   coupons={coupon}
-                  onDeleteClick={onDeleteClick}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
                 />
+
               ))
             )}
           </tbody>

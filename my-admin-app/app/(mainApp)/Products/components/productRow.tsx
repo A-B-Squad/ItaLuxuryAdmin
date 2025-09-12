@@ -27,10 +27,11 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
                 product.images[0] ||
                 "https://res.cloudinary.com/dc1cdbirz/image/upload/v1718970701/b23xankqdny3n1bgrvjz.png"
               }
-              layout="fill"
-              objectFit="cover"
-              alt=""
-              loading="lazy"
+              fill={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: "cover" }}
+              alt={product.name}
+
             />
             <div
               className="absolute inset-0 rounded-lg shadow-inner"

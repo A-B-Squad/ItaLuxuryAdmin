@@ -119,17 +119,7 @@ const OrdersPage = () => {
     exportToEXCELAllPackage(filteredOrders, dateRange, deliveryPrice);
   }, [filteredOrders, dateRange, deliveryPrice]);
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-    checkDeliveryStatuses();
-  }, [refetch]);
 
-  const handleClearFilters = useCallback(() => {
-    setSearchCommande("");
-    setFilter("Toute");
-    setDateRange(undefined);
-    setPage(1);
-  }, []);
 
   // Function to call the delivery status check API
   const checkDeliveryStatuses = useCallback(async () => {
@@ -159,7 +149,7 @@ const OrdersPage = () => {
       // If statuses were updated, refresh the data with a complete network refetch
       if (result.success && result.results?.some((r: { newStatus: string }) => r.newStatus)) {
         await refetch({
-          fetchPolicy: 'network-only' 
+          fetchPolicy: 'network-only'
         });
       }
     } catch (error) {
@@ -169,198 +159,29 @@ const OrdersPage = () => {
     }
   }, [refetch]);
 
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+    checkDeliveryStatuses();
+  }, [refetch, checkDeliveryStatuses]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchCommande("");
+    setFilter("Toute");
+    setDateRange(undefined);
+    setPage(1);
+  }, []);
+
   // Call the API when the page loads
   useEffect(() => {
     checkDeliveryStatuses();
   }, [checkDeliveryStatuses]);
 
+  // Call the API when the page loads
+  useEffect(() => {
+    checkDeliveryStatuses();
+  }, [checkDeliveryStatuses]);
 
-  // // Mutation for updating package status
-  // const [updatePackageStatus] = useMutation(PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS);
-
-  // // Consolidated function to check delivery status with the agency API
-  // const checkDeliveryStatusWithAgency = useCallback(async (deliveryReference: string) => {
-  //   // Step 1: Make API request to check status
-  //   try {
-  //     console.log(`[Step 1] Checking delivery status for reference: ${deliveryReference}`);
-  //     const response = await fetch(`/api/jax-delivery/check-status?referenceId=${deliveryReference}`, {
-  //       cache: 'no-store',
-  //       headers: {
-  //         'Cache-Control': 'no-cache',
-  //         'Pragma': 'no-cache'
-  //       }
-  //     });
-
-  //     // Step 2: Handle API response
-  //     if (!response.ok) {
-  //       console.error(`[Step 2] Error checking delivery status: ${response.status}`);
-  //       return null;
-  //     }
-
-  //     const result = await response.json();
-  //     console.log(`[Step 2] Status for ${deliveryReference}:`, result);
-  //     return result.status;
-  //   } catch (error) {
-  //     console.error('[Step 2] Error checking with delivery agency:', error);
-  //     return null;
-  //   }
-  // }, []);
-
-  // // Update package status based on delivery status
-  // const updatePackageBasedOnStatus = useCallback(async (order: Packages, currentStatus: string) => {
-  //   const { id, deliveryReference, customId, Checkout, status: orderStatus } = order;
-
-  //   // Step 3: Validate order data
-  //   if (!deliveryReference) {
-  //     console.log(`[Step 3] Order ${customId} has no delivery reference, skipping`);
-  //     return null;
-  //   }
-
-  //   // Step 4: Check if status has changed
-  //   const prevStatus = checkedReferencesRef.current.get(deliveryReference);
-  //   console.log(`[Step 4] Order ${customId} - Previous status: ${prevStatus || 'none'}, Current status: ${currentStatus}, Order status: ${orderStatus}`);
-
-  //   if (prevStatus === currentStatus) {
-  //     console.log(`[Step 4] Status unchanged for ${customId}, skipping update`);
-  //     return null;
-  //   }
-
-  //   // Step 5: Determine if status update is needed
-  //   let newStatus = null;
-
-  //   if ((currentStatus === DELIVERY_STATUS.RECEIVED ||
-  //     currentStatus === DELIVERY_STATUS.PREPARING_TRANSFER || currentStatus === DELIVERY_STATUS.IN_THE_PROCESS_OF_DELIVERY) &&
-  //     orderStatus === STATUS.CONFIRMED) {
-  //     newStatus = STATUS.TRANSFER_TO_DELIVERY_COMPANY;
-  //     console.log(`[Step 5] Order ${customId} qualifies for TRANSFER_TO_DELIVERY_COMPANY update`);
-  //   } else if (currentStatus === DELIVERY_STATUS.DELIVERED &&
-  //     orderStatus === STATUS.TRANSFER_TO_DELIVERY_COMPANY) {
-  //     newStatus = STATUS.PAYED_AND_DELIVERED;
-  //     console.log(`[Step 5] Order ${customId} qualifies for PAYED_AND_DELIVERED update`);
-  //   } else {
-  //     console.log(`[Step 5] Order ${customId} does not qualify for status update. Current order status: ${orderStatus}, Delivery status: ${currentStatus}`);
-  //   }
-
-  //   // Step 6: Update the package status if needed
-  //   if (newStatus) {
-  //     try {
-  //       console.log(`[Step 6] Attempting to update order ${customId} to ${newStatus}`);
-  //       const result = await updatePackageStatus({
-  //         variables: {
-  //           packageId: id,
-  //           paymentMethod: Checkout?.paymentMethod,
-  //           status: newStatus,
-  //         }
-  //       });
-
-  //       // Step 7: Record the updated status
-  //       checkedReferencesRef.current.set(deliveryReference, currentStatus);
-  //       console.log(`[Step 7] Successfully updated order ${customId} to ${newStatus}`);
-  //       return result;
-  //     } catch (err) {
-  //       console.error(`[Step 6] Error updating status for order ${customId}:`, err);
-  //     }
-  //   }
-
-  //   // Step 7: Record the checked status even if we didn't update
-  //   checkedReferencesRef.current.set(deliveryReference, currentStatus || prevStatus || '');
-  //   return null;
-  // }, [updatePackageStatus]);
-
-
-  // // Effect to check delivery statuses when data changes
-  // useEffect(() => {
-  //   // Only run the check when data is loaded for the first time or explicitly refreshed
-  //   if (data?.getAllPackages && !isCheckingStatus) {
-  //     // Use a debounce to prevent multiple rapid checks
-  //     const timer = setTimeout(() => {
-  //       checkAllDeliveryStatuses();
-  //     }, 1000);
-
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [data?.getAllPackages?.packages?.length, isCheckingStatus]);
-
-  // // Modify the checkAllDeliveryStatuses function to add a check for recent executions
-  // const lastCheckRef = useRef<number>(0);
-
-  // const checkAllDeliveryStatuses = useCallback(async (forceCheck = false) => {
-  //   // Step 0: Initial validation
-  //   if (!data?.getAllPackages?.packages) {
-  //     console.log("[Step 0] No package data available to check statuses");
-  //     return;
-  //   }
-
-  //   if (isCheckingStatus) {
-  //     console.log("[Step 0] Status check already in progress, skipping");
-  //     return;
-  //   }
-
-  //   // Prevent frequent checks unless forced
-  //   const now = Date.now();
-  //   if (!forceCheck && now - lastCheckRef.current < 30000) { // 30 seconds cooldown
-  //     console.log("[Step 0] Status check performed recently, skipping");
-  //     return;
-  //   }
-
-  //   lastCheckRef.current = now;
-  //   console.log(`[Step 0] Starting status check for all orders (force check: ${forceCheck})`);
-  //   setIsCheckingStatus(true);
-
-  //   // Rest of the function remains the same
-  //   try {
-  //     // Step 1: Filter orders that need checking
-  //     const relevantOrders = data.getAllPackages.packages.filter(
-  //       (order: Packages) => {
-  //         const shouldCheck = (order.status === STATUS.CONFIRMED || order.status === STATUS.TRANSFER_TO_DELIVERY_COMPANY) &&
-  //           order.deliveryReference &&
-  //           (forceCheck || !checkedReferencesRef.current.has(order.deliveryReference));
-
-  //         if (shouldCheck) {
-  //           console.log(`[Step 1] Will check order: ${order.customId}, status: ${order.status}, ref: ${order.deliveryReference}`);
-  //         }
-  //         return shouldCheck;
-  //       }
-  //     );
-
-  //     console.log(`[Step 1] Found ${relevantOrders.length} orders to check`);
-
-  //     if (relevantOrders.length === 0) {
-  //       console.log("[Step 1] No relevant orders to check, exiting");
-  //       return;
-  //     }
-
-  //     // Step 2: Process orders in parallel
-  //     console.log("[Step 2] Starting parallel processing of orders");
-  //     const updatePromises = relevantOrders.map(async (order: Packages) => {
-  //       if (!order.deliveryReference) return null;
-
-  //       // Steps 3-4: Check delivery status and update if needed
-  //       const currentStatus = await checkDeliveryStatusWithAgency(order.deliveryReference);
-  //       if (currentStatus) {
-  //         return updatePackageBasedOnStatus(order, currentStatus);
-  //       }
-  //       console.log(`[Step 4] Could not get status for ${order.customId}`);
-  //       return null;
-  //     });
-
-  //     // Step 5: Collect results and refresh if needed
-  //     const results = await Promise.all(updatePromises);
-  //     const updatedCount = results.filter(Boolean).length;
-
-  //     console.log(`[Step 5] Status check complete. Updated ${updatedCount} out of ${relevantOrders.length} orders`);
-
-  //     if (updatedCount > 0) {
-  //       console.log("[Step 6] Refreshing data after updates");
-  //       await refetch();
-  //     }
-  //   } catch (error) {
-  //     console.error("[Error] Error in checkAllDeliveryStatuses:", error);
-  //   } finally {
-  //     setIsCheckingStatus(false);
-  //     console.log("[Complete] Status check process finished");
-  //   }
-  // }, [data, updatePackageBasedOnStatus, checkDeliveryStatusWithAgency, refetch, isCheckingStatus]);
 
   // Display loading state
   if (loading && !data) return <Loading />;
@@ -446,12 +267,10 @@ const OrdersPage = () => {
           </div>
 
           {/* Calendar Section */}
-          <div className="relative w-full sm:w-auto">
-            <DateRangePicker
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-            />
-          </div>
+          <DateRangePicker
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+          />
 
           {/* Clear and Reload Buttons */}
           <div className="flex gap-2 w-full sm:w-auto">
