@@ -4,7 +4,8 @@ import autoTable from "jspdf-autotable";
 import { formatDate } from "./_formatDate";
 import { translatePaymentMethodStatus, translateStatus } from "./_translateStatus";
 import { DateRange } from "react-day-picker";
-export const exportToPDFAllPackageList = (filteredOrders: any[], dateRange: DateRange | undefined ,deliveryPrice: number) => {
+export const 
+exportToPDFAllPackageList = (filteredOrders: any[], dateRange: DateRange | undefined ,deliveryPrice: number) => {
     const doc = new jsPDF({ orientation: "landscape" });
     const mainColor: [number, number, number] = [32, 41, 57];
     doc.setFontSize(18);
@@ -44,7 +45,7 @@ export const exportToPDFAllPackageList = (filteredOrders: any[], dateRange: Date
         0,
     );
 
-    // Add the table with custom styles
+    // table with custom styles
     autoTable(doc, {
         startY: 46,
         head: [

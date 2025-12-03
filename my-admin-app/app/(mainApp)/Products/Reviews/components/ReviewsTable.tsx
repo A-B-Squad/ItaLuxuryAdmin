@@ -10,6 +10,7 @@ interface Review {
 interface Product {
   id: string;
   name: string;
+  slug: string;
   reference: string;
   solde: number;
   inventory: number;

@@ -12,11 +12,24 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleSuccessUpload = (result: any) => {
-    // Transform the URL to WebP format with quality optimization and resize to fit within 800x800
-    const transformedUrl = result.info.secure_url.replace(
-      "/upload/",
-      "/upload/c_limit,w_800,h_800,f_webp,q_auto:good/"
-    );
+
+    let transformedUrl;
+
+    // Check if cropping coordinates exist
+    if (result.info.coordinates && result.info.coordinates.custom && result.info.coordinates.custom.length > 0) {
+      const crop = result.info.coordinates.custom[0];
+      // Apply crop transformation with the coordinates
+      transformedUrl = result.info.secure_url.replace(
+        "/upload/",
+        `/upload/c_crop,x_${crop[0]},y_${crop[1]},w_${crop[2]},h_${crop[3]}/c_fill,w_800,h_800,f_webp,q_auto:good/`
+      );
+    } else {
+      // No crop coordinates, just resize
+      transformedUrl = result.info.secure_url.replace(
+        "/upload/",
+        "/upload/c_fill,w_800,h_800,f_webp,q_auto:good/"
+      );
+    }
 
     setUploadedImages((prevImages: any) => [
       ...prevImages,
@@ -57,11 +70,7 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
     const newImages = [...uploadedImages];
     const draggedImage = newImages[draggedIndex];
 
-    // Remove the dragged image from its original position
     newImages.splice(draggedIndex, 1);
-
-    // Insert it at the new position
-    // Adjust the drop index if we removed an item before it
     const adjustedDropIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
     newImages.splice(adjustedDropIndex, 0, draggedImage);
 
@@ -80,6 +89,34 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
       <h3 className="text-lg font-bold mb-4">Upload Image</h3>
       <CldUploadWidget
         uploadPreset="ita-luxury"
+        options={{
+          sources: ['local', 'url', 'camera'],
+          multiple: false,
+          maxFiles: 1,
+          cropping: true,
+          croppingAspectRatio: 1,
+          croppingDefaultSelectionRatio: 0.9,
+          croppingShowDimensions: true,
+          croppingCoordinatesMode: 'custom',
+          showSkipCropButton: false,
+          styles: {
+            palette: {
+              window: "#FFFFFF",
+              windowBorder: "#90A0B3",
+              tabIcon: "#0078FF",
+              menuIcons: "#5A616A",
+              textDark: "#000000",
+              textLight: "#FFFFFF",
+              link: "#0078FF",
+              action: "#FF620C",
+              inactiveTabIcon: "#0E2F5A",
+              error: "#F44235",
+              inProgress: "#0078FF",
+              complete: "#20B832",
+              sourceBg: "#E4EBF1"
+            }
+          }
+        }}
         onSuccess={(result, { widget }) => {
           handleSuccessUpload(result);
         }}
@@ -87,7 +124,7 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
         {({ open }) => (
           <button
             type="button"
-            className="uppercase shadow-xl flex-col border-dashed text-sm h-[50px] w-[100px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors cursor-pointer"
+            className="uppercase shadow-xl flex-col border-dashed text-sm h-[50px] w-[100px] tracking-wider text-gray-500 border rounded-md border-lightBlack flex items-center justify-center text-center bg-gray-200 transition-colors cursor-pointer hover:bg-gray-300"
             onClick={() => open()}
           >
             <IoImageOutline className="text-2xl" />
@@ -95,13 +132,13 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
         )}
       </CldUploadWidget>
       <div className="mt-4 flex items-center border border-gray-200 text-blue-500 border-l-mainColorAdminDash py-2 rounded-md border-l-4 px-2">
-        <IoMdAlert />
-        <p>
-          Remarque: pour une meilleure apparence visuelle, utilisez l'image du
-          produit avec une taille de 800x800. Glissez-déposez pour réorganiser l'ordre.
+        <IoMdAlert className="mr-2" />
+        <p className="text-sm">
+          Remarque: l'image sera recadrée en format carré (1:1) avant l'upload.
+          Glissez-déposez pour réorganiser l'ordre.
         </p>
       </div>
-      <div className="mt-4 flex gap-1 flex-wrap">
+      <div className="mt-4 flex gap-2 flex-wrap">
         {uploadedImages.map((url: string | StaticImport, index: number) => (
           <div
             key={index}
@@ -123,21 +160,16 @@ const UploadImage = ({ uploadedImages, setUploadedImages }: any) => {
               height={800}
               src={url}
               style={{ objectFit: "contain" }}
-
               alt={`Uploaded image ${index + 1}`}
               className="h-32 w-32 rounded-md pointer-events-none"
             />
             <button
               type="button"
-              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 z-10"
+              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 z-10 hover:bg-red-700 transition-colors"
               onClick={() => handleDeleteImage(index)}
             >
               <FaTrashAlt className="text-sm" />
             </button>
-            {/* Visual indicator for drag handle */}
-            <div className="absolute top-1 left-1 bg-gray-800 bg-opacity-70 text-white rounded px-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-              ⋮⋮
-            </div>
           </div>
         ))}
       </div>

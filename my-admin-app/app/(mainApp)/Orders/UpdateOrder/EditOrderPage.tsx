@@ -4,11 +4,14 @@ import {
   CANCEL_PACKAGE_MUTATIONS,
   PAYED_OR_TO_DELIVERY_PACKAGE_MUTATIONS,
   REFUND_PACKAGE_MUTATIONS,
+  MANAGE_POINTS_MUTATION,
+  DELETE_TRANSACTION,
 } from "@/app/graph/mutations";
 import {
   COMPANY_INFO_QUERY,
   GET_GOVERMENT_INFO,
   PACKAGE_BY_ID_QUERY,
+  GET_POINT_SETTINGS,
 } from "@/app/graph/queries";
 import { useToast } from "@/components/ui/use-toast";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
@@ -23,6 +26,7 @@ import OrderReference from "./[...orderId]/components/OrderReference";
 import OrderTotalPrice from "./[...orderId]/components/OrderTotalPrice";
 import RefundModal from "./[...orderId]/components/RefundModal";
 import { useRouter } from "next/navigation";
+import { formatAmount } from "../../Helpers/_formatAmount";
 
 const EditOrderPage = ({ searchParams }: any) => {
   const { toast } = useToast();
@@ -49,10 +53,25 @@ const EditOrderPage = ({ searchParams }: any) => {
   );
   const [cancelPackage] = useMutation(CANCEL_PACKAGE_MUTATIONS);
   const [refundPackage] = useMutation(REFUND_PACKAGE_MUTATIONS);
+
+
+  const [managePoints] = useMutation(MANAGE_POINTS_MUTATION, {
+    refetchQueries: ['FETCH_ALL_USERS'],
+    awaitRefetchQueries: true
+  });
+
+
+  const [deletePointTransaction] = useMutation(DELETE_TRANSACTION);
+
   const [governmentInfo, setGovernmentInfo] = useState<{
     [key: string]: string;
   }>({});
   const order = data?.packageById;
+
+  // Get point settings
+  const { data: pointSettingsData } = useQuery(GET_POINT_SETTINGS, {
+    fetchPolicy: "cache-first",
+  });
 
   useQuery(COMPANY_INFO_QUERY, {
     fetchPolicy: "cache-first",
@@ -135,11 +154,42 @@ const EditOrderPage = ({ searchParams }: any) => {
           },
         },
       });
+
+      // Remove points if user is not a guest
+      if (order?.Checkout?.userId && !order?.Checkout?.isGuest) {
+        try {
+          // Filter point transactions for this specific checkout
+          const pointTransactions = order.Checkout.User?.pointTransactions?.filter(
+            (transaction: any) => transaction.checkoutId === order.Checkout.id
+          ) || [];
+
+          // Delete each transaction related to this order
+          for (const transaction of pointTransactions) {
+            await deletePointTransaction({
+              variables: {
+                transactionId: transaction.id,
+              },
+            });
+          }
+
+          if (pointTransactions.length > 0) {
+            console.log(`Removed ${pointTransactions.length} point transaction(s) for cancelled order`);
+          }
+        } catch (pointError) {
+          console.error("Error removing points:", pointError);
+          // Don't block the cancellation if points removal fails
+        }
+      }
+
       setShowCancelModal(false);
       await refetch();
+
+      const pointsRemoved = order?.Checkout?.userId && !order?.Checkout?.isGuest;
       toast({
         title: "Commande annulée",
-        description: "La commande a été annulée avec succès.",
+        description: pointsRemoved
+          ? "La commande a été annulée et les points ont été retirés."
+          : "La commande a été annulée avec succès.",
         className: "bg-green-50 border-green-200",
       });
     } catch (error) {
@@ -174,11 +224,41 @@ const EditOrderPage = ({ searchParams }: any) => {
           },
         },
       });
+
+      //  Remove points if user is not a guest
+      if (order?.Checkout?.userId && !order?.Checkout?.isGuest) {
+        try {
+          //  Filter point transactions for this checkout
+          const pointTransactions = order.Checkout.User?.pointTransactions?.filter(
+            (transaction: any) => transaction.checkoutId === order.Checkout.id
+          ) || [];
+
+          // Delete each transaction related to this order
+          for (const transaction of pointTransactions) {
+            await deletePointTransaction({
+              variables: {
+                transactionId: transaction.id,
+              },
+            });
+          }
+
+          if (pointTransactions.length > 0) {
+            console.log(`Removed ${pointTransactions.length} point transaction(s) for refunded order`);
+          }
+        } catch (pointError) {
+          console.error("Error removing points:", pointError);
+        }
+      }
+
       setShowRefundModal(false);
       await refetch();
+
+      const pointsRemoved = order?.Checkout?.userId && !order?.Checkout?.isGuest;
       toast({
         title: "Commande remboursée",
-        description: "La commande a été remboursée avec succès.",
+        description: pointsRemoved
+          ? "La commande a été remboursée et les points ont été retirés."
+          : "La commande a été remboursée avec succès.",
         className: "bg-green-50 border-green-200",
       });
     } catch (error) {
@@ -194,15 +274,12 @@ const EditOrderPage = ({ searchParams }: any) => {
     }
   };
 
-
-
   useEffect(() => {
     const fetchJaxGovernorates = async () => {
       try {
         const response = await fetch('/api/jax-delivery/governorates');
         if (response.ok) {
           const data = await response.json();
-          // Create a mapping from governorate name to JAX ID
           const govMapping: { [key: string]: number } = {};
           data.forEach((gov: { id: number, nom: string }) => {
             govMapping[gov.nom.toLowerCase()] = gov.id;
@@ -222,33 +299,25 @@ const EditOrderPage = ({ searchParams }: any) => {
   const handleConfirmedOrder = async () => {
     setIsSubmitting(true);
     try {
-      // First create the delivery in JAX system to get the reference
       let deliveryReference = null;
 
       if (order?.Checkout?.address) {
         try {
-          // Handle both registered users and guest users
           const userName = order.Checkout.userName || "Client";
           const phone = order.Checkout.phone || [];
           const address = order.Checkout.address;
-
-          // Get governorate name from your system
           const govName = order.Checkout.Governorate?.name || '';
 
-          // Find matching JAX governorate ID with better error handling
           let jaxGovId = '';
           if (govName) {
-            // Try to find by name (case insensitive)
             const matchedId = jaxGovernorates[govName.toLowerCase().trim()];
             if (matchedId) {
               jaxGovId = matchedId.toString();
             } else {
-              // If no match found, use a default (Tunis = 4)
               console.warn(`No JAX governorate match found for: ${govName}, using default`);
               jaxGovId = '4';
             }
           } else {
-            // If no governorate name, use a default
             jaxGovId = '4';
           }
 
@@ -258,11 +327,9 @@ const EditOrderPage = ({ searchParams }: any) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              // Use product references instead of order ID
               referenceExterne: order.Checkout.productInCheckout.map((item: any) =>
                 `${item.product.reference}*${item.productQuantity > 1 ? item.productQuantity : ''}`
               ).join(', ').substring(0, 100),
-
               nomContact: userName,
               tel: Array.isArray(phone) && phone.length > 0 ? phone[0] : (phone || ''),
               tel2: Array.isArray(phone) && phone.length > 1 ? phone[1] : "",
@@ -272,17 +339,14 @@ const EditOrderPage = ({ searchParams }: any) => {
               description: `Commande #${order.customId} - ${order.Checkout.productInCheckout.reduce((acc: number, item: any) => acc + item.productQuantity, 0)} produits: ${order.Checkout.productInCheckout.map((item: any) =>
                 `${item.product.name} x${item.productQuantity}`
               ).join(', ').substring(0, 150)}`,
-
               cod: order.Checkout.paymentMethod === 'CASH_ON_DELIVERY' ?
                 (order.Checkout.total).toString() : '0',
               echange: 0
             })
           });
 
-          // Get the delivery reference from JAX response
           if (jaxResponse.ok) {
             const jaxData = await jaxResponse.json();
-
             if (jaxData && jaxData.code) {
               deliveryReference = jaxData.code;
             }
@@ -301,8 +365,6 @@ const EditOrderPage = ({ searchParams }: any) => {
         }
       }
 
-      // Then update the order status in your system with the delivery reference
-
       await payedOrConfirmedOrInTransitPackage({
         variables: {
           packageId: orderId,
@@ -312,21 +374,50 @@ const EditOrderPage = ({ searchParams }: any) => {
         },
       });
 
+      let pointsAdded = false;
+
+      if (order?.Checkout?.userId && !order?.Checkout?.isGuest && pointSettingsData?.getPointSettings?.isActive) {
+        try {
+          const settings = pointSettingsData.getPointSettings;
+          const purchaseAmountInMillimes = Math.round(order.Checkout.total * 1000);
+          const pointsToEarn = Math.floor(purchaseAmountInMillimes * settings.conversionRate);
+
+          if (pointsToEarn > 0) {
+            await managePoints({
+              variables: {
+                input: {
+                  userId: order.Checkout.userId,
+                  amount: pointsToEarn,
+                  type: 'EARNED',
+                  description: `Points gagnés pour la commande #${order.customId} - ${formatAmount(order.Checkout.total)}`,
+                  checkoutId: order.Checkout.customId
+                }
+              },
+            });
+            pointsAdded = true;
+            console.log(`Added ${pointsToEarn} points for order confirmation`);
+          }
+        } catch (pointError) {
+          console.error("Error adding points:", pointError);
+          // Don't block the confirmation if points addition fails
+        }
+      } else {
+        console.log("Points system inactive or guest checkout - no points added");
+      }
+
       await refetch();
 
-      if (deliveryReference) {
-        toast({
-          title: "Commande confirmée",
-          description: `La commande a été confirmée et envoyée à JAX Delivery (Référence: ${deliveryReference}).`,
-          className: "bg-green-50 border-green-200",
-        });
-      } else {
-        toast({
-          title: "Commande confirmée",
-          description: "La commande a été confirmée pour livraison avec succès.",
-          className: "bg-green-50 border-green-200",
-        });
-      }
+      const baseMessage = deliveryReference
+        ? `La commande a été confirmée et envoyée à JAX Delivery (Référence: ${deliveryReference}).`
+        : "La commande a été confirmée pour livraison avec succès.";
+
+      const pointsMessage = pointsAdded ? " Les points ont été ajoutés au compte client." : "";
+
+      toast({
+        title: "Commande confirmée",
+        description: baseMessage + pointsMessage,
+        className: "bg-green-50 border-green-200",
+      });
     } catch (error) {
       console.error("Error updating package status:", error);
       toast({
@@ -426,7 +517,6 @@ const EditOrderPage = ({ searchParams }: any) => {
   return (
     <div className="order w-full py-4 sm:py-6 md:py-10">
       <div className="container w-full px-4">
-        {/* Header with back button */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => router.back()}
@@ -442,9 +532,7 @@ const EditOrderPage = ({ searchParams }: any) => {
           </h1>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-6">
             <OrderDetails
               deliveryPrice={deliveryPrice}
@@ -475,7 +563,6 @@ const EditOrderPage = ({ searchParams }: any) => {
             />
           </div>
 
-          {/* Customer Info Sidebar */}
           <div className="lg:col-span-4">
             <CustomerInfo
               governmentInfo={governmentInfo}
@@ -485,7 +572,6 @@ const EditOrderPage = ({ searchParams }: any) => {
         </div>
       </div>
 
-      {/* Fixed Bottom Bar */}
       <div className="bg-white shadow-md fixed left-0 bottom-0 w-full py-4 flex items-center gap-2 px-4 border justify-end z-10">
         <button
           onClick={() => generateInvoice(order, deliveryPrice)}
@@ -509,7 +595,6 @@ const EditOrderPage = ({ searchParams }: any) => {
         </button>
       </div>
 
-      {/* Modals */}
       {showCancelModal && (
         <CancelModal
           order={order}

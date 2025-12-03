@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { CldUploadWidget } from "next-cloudinary";
 import { useMutation, useQuery } from "@apollo/client";
-import { CATEGORY_QUERY } from "../../../../graph/queries";
+import { MAIN_CATEGORY_QUERY } from "../../../../graph/queries";
 import {
   Select,
   SelectContent,
@@ -42,7 +42,7 @@ const CreateCategory = () => {
     bigImageLoad: false,
   });
 
-  const { data: allCategories, loading } = useQuery(CATEGORY_QUERY);
+  const { data: allCategories, loading } = useQuery(MAIN_CATEGORY_QUERY);
   const [createCategory] = useMutation(CREATE_CATEGORY_MUTATIONS);
   if (loading) return <Loading />;
 
@@ -224,7 +224,7 @@ const CreateCategory = () => {
                   setFormData({ ...formData, parentCategory: value })
                 }
               >
-                {renderCategoryOptions(allCategories?.categories)}
+                {renderCategoryOptions(allCategories?.fetchMainCategories)}
               </Select>
             </div>
 
@@ -328,7 +328,7 @@ const CreateCategory = () => {
                 setUploadingImage((prev) => ({ ...prev, smallImageLoad: true }))
               }
             >
-              
+
               {({ open }) => (
                 <div
                   onClick={() => open()}

@@ -1,11 +1,10 @@
 "use client";
-import { Packages } from "@/app/types";
 import DateRangePicker from "@/components/ui/date-range-picker";
-import { useQuery } from "@apollo/client";
+import { useQuery, useLazyQuery } from "@apollo/client";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { DateRange } from "react-day-picker";
-import { COMPANY_INFO_QUERY, PACKAGES_QUERY } from "../../graph/queries";
+import { COMPANY_INFO_QUERY, PACKAGES_QUERY, PACKAGES_EXPORT_QUERY } from "../../graph/queries";
 import Pagination from "../components/Paginations";
 import SmallSpinner from "../components/SmallSpinner";
 import { exportToEXCELAllPackage } from "../Helpers/_exportToEXCELAllPackage";
@@ -16,21 +15,56 @@ import { translateStatus } from "../Helpers/_translateStatus";
 import OrderTable from "./components/OrderTable";
 import Loading from "./loading";
 
-
-
 const OrdersPage = () => {
-  // Basic state
-  const [searchCommande, setSearchCommande] = useState("");
+  const [localSearchTerm, setLocalSearchTerm] = useState(""); // For input display
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); // For actual queries
   const [filter, setFilter] = useState("Toute");
   const [page, setPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [deliveryPrice, setDeliveryPrice] = useState(0);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  // Using a single set to track checked references with their status
-  const checkedReferencesRef = useRef(new Map<string, string>());
+  // Debounce timer ref
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const ordersPerPage = 15;
+
+  // Debounce the search term
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(localSearchTerm);
+    }, 1000); 
+
+    // Cleanup function
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [localSearchTerm]);
+
+  // backend status filter
+  const getStatusFilter = useCallback((filter: string) => {
+    if (filter === "Toute") return undefined;
+    
+    const statusMap: Record<string, string> = {
+      "ANNULÉ": "CANCELLED",
+      "EN TRAITEMENT": "PROCESSING", 
+      "COMMANDE CONFIRMÉ": "CONFIRMED",
+      "TRANSFÉRÉ À LA SOCIÉTÉ DE LIVRAISON": "TRANSFER_TO_DELIVERY_COMPANY",
+      "PAYÉ ET LIVRÉ": "PAYED_AND_DELIVERED",
+      "PAYÉ MAIS NON LIVRÉ": "PAYED_NOT_DELIVERED",
+      "REMBOURSER": "REFUNDED"
+    };
+    
+    return statusMap[filter] ? [statusMap[filter]] : undefined;
+  }, []);
 
   // Company info query with error handling
   const { error: companyError } = useQuery(COMPANY_INFO_QUERY, {
@@ -42,123 +76,170 @@ const OrdersPage = () => {
     }
   });
 
-  // Main query with better error handling and pagination
+  // Add lazy query for export
+  const [fetchAllOrdersForExport, { loading: exportLoading }] = useLazyQuery(
+    PACKAGES_EXPORT_QUERY,
+    {
+      fetchPolicy: "network-only",
+    }
+  );
+
+  // Main query - now with proper server-side filtering using debounced search
   const { loading, error, data, refetch } = useQuery(PACKAGES_QUERY, {
     variables: {
-      page: (searchCommande || (dateRange?.from && dateRange?.to)) ? undefined : page,
-      pageSize: (searchCommande || (dateRange?.from && dateRange?.to)) ? undefined : ordersPerPage,
-      searchTerm: searchCommande || undefined,
+      page: page,
+      pageSize: ordersPerPage,
+      searchTerm: debouncedSearchTerm || undefined, 
       dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
-      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined
+      dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined,
+      statusFilter: getStatusFilter(filter)
     },
     onCompleted(data) {
-      if (!searchCommande && !dateRange?.from && !dateRange?.to) {
-        setPage(data.getAllPackages.pagination.currentPage);
+      // Update page if server returns different pagination
+      const serverCurrentPage = data.getAllPackages?.pagination?.currentPage;
+      if (serverCurrentPage && serverCurrentPage !== page) {
+        setPage(serverCurrentPage);
       }
     },
     fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true,
   });
 
-  // Update pagination to use server response
+  // Get pagination info from server response
   const { totalPages, currentPage } = useMemo(() => ({
-    totalPages: (searchCommande || (dateRange?.from && dateRange?.to)) ? 1 : (data?.getAllPackages?.pagination.totalPages || 0),
-    currentPage: (searchCommande || (dateRange?.from && dateRange?.to)) ? 1 : (data?.getAllPackages?.pagination.currentPage || page)
-  }), [data, page, searchCommande, dateRange]);
+    totalPages: data?.getAllPackages?.pagination?.totalPages || 1,
+    currentPage: data?.getAllPackages?.pagination?.currentPage || page
+  }), [data, page]);
 
-  // Get orders from paginated response
+  // Get orders directly from server response (no client-side filtering needed)
   const orders = useMemo(() =>
     data?.getAllPackages?.packages || [],
     [data]);
 
-  // Memoized search term for better performance
-  const searchLower = useMemo(() =>
-    (searchCommande || "").toLowerCase(),
-    [searchCommande]);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, filter, dateRange]);
 
-  const filteredOrders = useMemo(() => {
-    if (!orders.length) return [];
+  // Search input handler
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalSearchTerm(e.target.value);
+  }, []);
 
-    return orders.filter((order: Packages) => {
-      const userId = (order.Checkout?.userId || "").toLowerCase();
-      const userName = (order.Checkout?.userName || "").toLowerCase();
-      const deliveryRef = (order.deliveryReference || "").toLowerCase();
-      const customId = order.customId.toLowerCase();
-      const orderDate = new Date(parseInt(order.createdAt));
+  // Optional: Add immediate search on Enter key
+  const handleSearchKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // Clear timeout and search immediately
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      setDebouncedSearchTerm(localSearchTerm);
+    }
+  }, [localSearchTerm]);
 
-      // Check search criteria first - most likely to filter out items
-      const matchesSearch =
-        deliveryRef.includes(searchLower) ||
-        customId.includes(searchLower) ||
-        userId.includes(searchLower) ||
-        userName.includes(searchLower) ||
-        (order.Checkout?.phone || []).some((phone: string) =>
-          phone.toLowerCase().includes(searchLower)
-        );
+  // Clear search function
+  const handleClearSearch = useCallback(() => {
+    setLocalSearchTerm("");
+    setDebouncedSearchTerm("");
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+  }, []);
 
-      if (!matchesSearch) return false;
-
-      const matchesFilter =
-        filter === "Toute" || translateStatus(order.status) === filter;
-
-      if (!matchesFilter) return false;
-
-      // Finally check date range - most expensive operation
-      if (!dateRange || !dateRange.from || !dateRange.to) return true;
-
-      return orderDate >= dateRange.from && orderDate <= dateRange.to;
-    });
-  }, [orders, searchLower, filter, dateRange]);
-
-  // Export functions with stable dependencies
-  const handleExportPDF = useCallback(() => {
-    exportToPDFAllPackageList(filteredOrders, dateRange, deliveryPrice);
-  }, [filteredOrders, dateRange, deliveryPrice]);
-
-  const handleExportEXCEL = useCallback(() => {
-    exportToEXCELAllPackage(filteredOrders, dateRange, deliveryPrice);
-  }, [filteredOrders, dateRange, deliveryPrice]);
-
-
-
-  // Function to call the delivery status check API
-  const checkDeliveryStatuses = useCallback(async () => {
+  // Export functions - use server-filtered data with debounced search
+  const handleExportPDF = useCallback(async () => {
     try {
-      setIsCheckingStatus(true);
-      console.log("Checking delivery statuses via API route...");
-
-
-      // Call the API route with the secret if available and a cache-busting timestamp
-      const response = await fetch(`/api/cron/check-delivery-status?secret=d8f3a7b5c2e9f1h6j4k8m0n3p5q7r9t2v4x6z8`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+      const { data: exportData } = await fetchAllOrdersForExport({
+        variables: {
+          searchTerm: debouncedSearchTerm || undefined,
+          dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+          dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined,
+          statusFilter: getStatusFilter(filter),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`API returned status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("Delivery status check result:", result);
-
-      // If statuses were updated, refresh the data with a complete network refetch
-      if (result.success && result.results?.some((r: { newStatus: string }) => r.newStatus)) {
-        await refetch({
-          fetchPolicy: 'network-only'
-        });
-      }
+      const allOrders = exportData?.getAllPackages?.packages || [];
+      exportToPDFAllPackageList(allOrders, dateRange, deliveryPrice);
     } catch (error) {
-      console.error("Error checking delivery statuses:", error);
-    } finally {
-      setIsCheckingStatus(false);
+      console.error("Error fetching orders for export:", error);
+      // Fallback to current page orders
+      exportToPDFAllPackageList(orders, dateRange, deliveryPrice);
     }
-  }, [refetch]);
+  }, [
+    fetchAllOrdersForExport,
+    debouncedSearchTerm, 
+    dateRange,
+    filter,
+    getStatusFilter,
+    deliveryPrice,
+    orders, 
+  ]);
 
+  const handleExportEXCEL = useCallback(async () => {
+    try {
+      const { data: exportData } = await fetchAllOrdersForExport({
+        variables: {
+          searchTerm: debouncedSearchTerm || undefined, 
+          dateFrom: dateRange?.from ? dateRange.from.toISOString() : undefined,
+          dateTo: dateRange?.to ? dateRange.to.toISOString() : undefined,
+          statusFilter: getStatusFilter(filter),
+        },
+      });
+
+      const allOrders = exportData?.getAllPackages?.packages || [];
+      exportToEXCELAllPackage(allOrders, dateRange, deliveryPrice);
+    } catch (error) {
+      console.error("Error fetching orders for export:", error);
+      // Fallback to current page orders
+      exportToEXCELAllPackage(orders, dateRange, deliveryPrice);
+    }
+  }, [
+    fetchAllOrdersForExport,
+    debouncedSearchTerm, 
+    dateRange,
+    filter,
+    getStatusFilter,
+    deliveryPrice,
+    orders, 
+  ]);
+
+ // Function to call the delivery status check API
+ const checkDeliveryStatuses = useCallback(async () => {
+  try {
+    setIsCheckingStatus(true);
+    console.log("Checking delivery statuses via API route...");
+
+    // Call the API route with the secret if available and a cache-busting timestamp
+    const response = await fetch(`/api/cron/check-delivery-status?secret=d8f3a7b5c2e9f1h6j4k8m0n3p5q7r9t2v4x6z8`, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`API returned status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Delivery status check result:", result);
+
+    // If statuses were updated, refresh the data with a complete network refetch
+    if (result.success && result.results?.some((r: { newStatus: string }) => r.newStatus)) {
+      await refetch({
+        fetchPolicy: 'network-only'
+      });
+    }
+  } catch (error) {
+    console.error("Error checking delivery statuses:", error);
+  } finally {
+    setIsCheckingStatus(false);
+  }
+}, [refetch]);
 
   const handleRefresh = useCallback(() => {
     refetch();
@@ -166,22 +247,28 @@ const OrdersPage = () => {
   }, [refetch, checkDeliveryStatuses]);
 
   const handleClearFilters = useCallback(() => {
-    setSearchCommande("");
+    setLocalSearchTerm(""); // Clear local search
+    setDebouncedSearchTerm(""); // Clear debounced search immediately
     setFilter("Toute");
     setDateRange(undefined);
     setPage(1);
+    
+    // Clear any pending timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Proper page change handler
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
   }, []);
 
   // Call the API when the page loads
   useEffect(() => {
     checkDeliveryStatuses();
   }, [checkDeliveryStatuses]);
-
-  // Call the API when the page loads
-  useEffect(() => {
-    checkDeliveryStatuses();
-  }, [checkDeliveryStatuses]);
-
 
   // Display loading state
   if (loading && !data) return <Loading />;
@@ -192,7 +279,7 @@ const OrdersPage = () => {
         <h1 className="text-2xl font-bold text-dashboard-neutral-800">Commandes</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-dashboard-neutral-500 hidden md:inline">
-            {filteredOrders.length} commandes trouvées
+            {orders.length} commandes trouvées
           </span>
           <Link
             href="/Orders/CreateOrder"
@@ -226,23 +313,50 @@ const OrdersPage = () => {
 
       <div className="bg-white rounded-lg shadow-md border border-dashboard-neutral-200 mb-6">
         <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-dashboard-neutral-200">
-          {/* Search Input */}
+          {/* Updated Search Input with debounce */}
           <div className="w-full sm:w-auto sm:flex-grow">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Rechercher par ID, client ou téléphone..."
-                className="w-full border border-dashboard-neutral-300 p-2 pl-8 rounded-md focus:outline-none focus:ring-2 focus:ring-dashboard-primary/30 focus:border-dashboard-primary"
-                value={searchCommande}
-                onChange={(e) => {
-                  setSearchCommande(e.target.value);
-                  setPage(1);
-                }}
+                className="w-full border border-dashboard-neutral-300 p-2 pl-8 pr-10 rounded-md focus:outline-none focus:ring-2 focus:ring-dashboard-primary/30 focus:border-dashboard-primary"
+                value={localSearchTerm} // Use local search term
+                onChange={handleSearchChange}
+                onKeyPress={handleSearchKeyPress}
               />
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-3 text-dashboard-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
+              
+              {/* Loading indicator when search is happening */}
+              {localSearchTerm !== debouncedSearchTerm && (
+                <div className="absolute right-8 top-3">
+                  <div className="animate-spin h-4 w-4 border-2 border-dashboard-primary border-t-transparent rounded-full"></div>
+                </div>
+              )}
+              
+              {/* Clear search button */}
+              {localSearchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-2.5 top-3 text-dashboard-neutral-400 hover:text-dashboard-neutral-600"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
+            
+            {/* Search hint */}
+            <p className="text-xs text-dashboard-neutral-500 mt-1">
+              {localSearchTerm !== debouncedSearchTerm 
+                ? "Recherche en cours..." 
+                : debouncedSearchTerm 
+                ? `Résultats pour: "${debouncedSearchTerm}"`
+                : "Tapez pour rechercher (Entrée pour recherche immédiate)"
+              }
+            </p>
           </div>
 
           {/* Filter Select */}
@@ -252,7 +366,7 @@ const OrdersPage = () => {
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);
-                setPage(1);
+                // Page reset is handled by useEffect
               }}
             >
               <option>Toute</option>
@@ -303,7 +417,7 @@ const OrdersPage = () => {
           <div className="flex justify-center p-8">
             <SmallSpinner />
           </div>
-        ) : filteredOrders.length === 0 ? (
+        ) : orders.length === 0 ? (
           <div className="p-8 text-center">
             <div className="mx-auto w-16 h-16 bg-dashboard-neutral-100 rounded-full flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-dashboard-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -311,12 +425,17 @@ const OrdersPage = () => {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-dashboard-neutral-700">Aucune commande trouvée</h3>
-            <p className="text-dashboard-neutral-500 mt-1">Essayez de modifier vos filtres ou d'ajouter une nouvelle commande.</p>
+            <p className="text-dashboard-neutral-500 mt-1">
+              {debouncedSearchTerm || filter !== "Toute" || dateRange 
+                ? "Essayez de modifier vos filtres pour voir plus de résultats."
+                : "Commencez par ajouter une nouvelle commande."
+              }
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <OrderTable
-              orders={filteredOrders}
+              orders={orders}
               formatDate={formatDate}
               translateStatus={translateStatus}
               generateInvoice={generateInvoice}
@@ -326,12 +445,12 @@ const OrdersPage = () => {
         )}
 
         {/* Pagination */}
-        {filteredOrders.length > 0 && (
+        {orders.length > 0 && totalPages > 1 && (
           <div className="p-4 border-t border-dashboard-neutral-200">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
             />
           </div>
         )}
@@ -341,29 +460,37 @@ const OrdersPage = () => {
       <div className="relative bottom-0 left-0 right-0 md:relative md:mt-4 bg-white md:bg-transparent border-t md:border-0 border-dashboard-neutral-200 p-4 md:p-0 shadow-lg md:shadow-none z-10">
         <div className="flex flex-col sm:flex-row gap-3 max-w-screen-xl mx-auto">
           <button
-            className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${filteredOrders.length === 0
+            className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${orders.length === 0 || exportLoading
               ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
               : "bg-dashboard-secondary text-white hover:bg-dashboard-secondary/90 transition-colors"
               }`}
             onClick={handleExportPDF}
-            disabled={filteredOrders.length === 0}
+            disabled={orders.length === 0 || exportLoading}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            {exportLoading ? (
+              <SmallSpinner />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            )}
             Exporter en PDF
           </button>
           <button
-            className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${filteredOrders.length === 0
+            className={`w-full sm:w-auto px-4 py-2 rounded-md flex items-center justify-center gap-2 ${orders.length === 0 || exportLoading
               ? "bg-dashboard-neutral-200 text-dashboard-neutral-500 cursor-not-allowed"
               : "bg-dashboard-accent text-white hover:bg-dashboard-accent/90 transition-colors"
               }`}
             onClick={handleExportEXCEL}
-            disabled={filteredOrders.length === 0}
+            disabled={orders.length === 0 || exportLoading}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            {exportLoading ? (
+              <SmallSpinner />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            )}
             Exporter en Excel
           </button>
           <Link

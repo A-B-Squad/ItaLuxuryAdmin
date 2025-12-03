@@ -18,8 +18,6 @@ interface Product {
   productDiscounts: Array<{ Discount: { percentage: number }; newPrice?: number }>;
 }
 
-// Maximum number of products allowed in Top Deals
-// Change the maximum limit to 2
 const MAX_TOP_DEALS = 2;
 
 const TopDealsPage = () => {

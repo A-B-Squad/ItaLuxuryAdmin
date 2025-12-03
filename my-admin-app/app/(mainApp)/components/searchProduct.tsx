@@ -3,7 +3,7 @@ import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
 import { useOutsideClick } from "@/app/(mainApp)/Helpers/_outsideClick";
 import { useLazyQuery } from "@apollo/client";
 import Image from "next/image";
-import React, { ChangeEvent, useRef, useState, useCallback, useEffect } from "react";
+import React, { ChangeEvent, useRef, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { FaSearch, FaSpinner, FaTimesCircle } from "react-icons/fa";
 import { debounce } from "lodash";

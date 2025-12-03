@@ -87,7 +87,7 @@ const SideBar = () => {
       href: "/Products",
       subItems: [
         { text: "Tous les produits", href: "/Products" },
-        { text: "Nouveau produit", href: "/Products/CreateProduct" },
+        { text: "Nouveau produit", href: "/Products/CreateProduct/new" },
         { text: "Categoriés", href: "/Products/Categories/" },
         { text: "Inventaire", href: "/Products/Inventory" },
         { text: "Commentaires", href: "/Products/Reviews" },
@@ -103,6 +103,8 @@ const SideBar = () => {
       subItems: [
         { text: "Meilleures ventes", href: "/Marketing/TopSells" },
         { text: "Meilleures offres", href: "/Marketing/TopDeals" },
+        { text: "Campagne Promotionnelle", href: "/Marketing/GestionPromotionnelle" },
+        { text: "Bundles", href: "/Marketing/Bundle" },
       ],
     },
     {

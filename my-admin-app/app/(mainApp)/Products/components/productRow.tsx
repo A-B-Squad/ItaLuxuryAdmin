@@ -5,13 +5,15 @@ import { FiEdit2 } from "react-icons/fi";
 import { BiShow } from "react-icons/bi";
 import { MdDeleteOutline } from "react-icons/md";
 import moment from "moment";
+import { HiOutlineDocumentDuplicate } from "react-icons/hi2";
 
 interface ProductRowProps {
   product: any;
   onDeleteClick: (product: { id: string; name: string }) => void;
+  onDuplicateClick: (product: any) => void;
 }
 
-const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
+const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick, onDuplicateClick }) => {
   const formatDate = (timestamp: string) => {
     return moment(parseInt(timestamp, 10)).format("DD/MM/YYYY");
   };
@@ -81,23 +83,31 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onDeleteClick }) => {
         <div className="flex justify-center items-center gap-2">
           <Link
             target="_blank"
-            href={{
-              pathname: "/Products/UpdateProduct",
-              query: { productId: product.id },
-            }}
+            href={`/Products/UpdateProduct/${product.slug}`}
             className="p-2 w-10 hover:opacity-40 transition-opacity shadow-md h-10 rounded-full border-2"
           >
             <FiEdit2 size={20} />
           </Link>
+
           <Link
             target="_blank"
             href={
-              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}`
+              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/${product.slug}`
             }
             className="p-2 w-10 hover:opacity-40 transition-opacity shadow-md h-10 rounded-full border-2"
           >
             <BiShow size={22} />
           </Link>
+
+          <button
+            type="button"
+            onClick={() =>
+              onDuplicateClick(product)
+            }
+            className="p-2 w-10 h-10 hover:opacity-40 transition-opacity shadow-md rounded-full border-2"
+          >
+            <HiOutlineDocumentDuplicate size={20} />
+          </button>
           <button
             type="button"
             onClick={() =>

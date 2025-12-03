@@ -1,5 +1,4 @@
 import moment from "moment";
-import "moment/locale/fr";
 import "moment-timezone";
 import { IoMdClose } from "react-icons/io";
 

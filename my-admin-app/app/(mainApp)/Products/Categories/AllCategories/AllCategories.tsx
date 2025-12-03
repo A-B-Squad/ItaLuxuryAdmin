@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { FiEdit2, FiExternalLink, FiChevronDown, FiChevronRight } from "react-icons/fi";
+import { FiEdit2, FiExternalLink, FiChevronDown, FiChevronRight, FiMove } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
-import { CATEGORY_QUERY } from "@/app/graph/queries";
+import { MAIN_CATEGORY_QUERY } from "@/app/graph/queries";
 import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,13 +10,15 @@ import SearchBarForTables from "@/app/(mainApp)/components/SearchBarForTables";
 import AddCategories from "../components/AddCategoriesButton";
 import Loading from "@/app/loading";
 import { useToast } from "@/components/ui/use-toast";
-import { DELETE_CATEGORIES_MUTATIONS } from "../../../../graph/mutations";
+import { DELETE_CATEGORIES_MUTATIONS, REORDER_CATEGORIES_MUTATION } from "../../../../graph/mutations";
 import DeleteModal from "@/app/(mainApp)/components/DeleteModal";
 
 interface Category {
   id: string;
   name: string;
   smallImage: string;
+  order?: number;
+  parentId?: string | null;
   subcategories?: Category[];
 }
 
@@ -27,7 +29,6 @@ interface AllCategoriesProps {
 }
 
 const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
-  // State management
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -36,25 +37,35 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
     id: string;
     name: string;
   } | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{
+    id: string;
+    parentId: string | null;
+  } | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
-  // Extract search query from URL parameters
   const query = searchParams.q;
 
-  // Fetch categories data using Apollo Client
-  const { data, loading, error, refetch } = useQuery(CATEGORY_QUERY, {
+  const { data, loading, error, refetch } = useQuery(MAIN_CATEGORY_QUERY, {
     fetchPolicy: "cache-and-network",
   });
 
   const [deleteCategoriesMutation, { loading: isDeleting }] = useMutation(DELETE_CATEGORIES_MUTATIONS);
+  const [reorderCategoriesMutation] = useMutation(REORDER_CATEGORIES_MUTATION);
 
-  // Update categories state when data is fetched
   useEffect(() => {
-    if (data?.categories) {
-      setCategories(data.categories);
+    if (data?.fetchMainCategories) {
+      // Sort by order field
+      const sortCategories = (cats: Category[]): Category[] => {
+        return cats.map(cat => ({
+          ...cat,
+          subcategories: cat.subcategories ? sortCategories(cat.subcategories) : []
+        })).sort((a, b) => (a.order || 0) - (b.order || 0));
+      };
+      
+      setCategories(sortCategories(data.fetchMainCategories));
     }
   }, [data]);
 
-  // Memoized filtered categories to improve performance
   const filteredCategories = useMemo(() => {
     if (!categories.length) return [];
 
@@ -84,7 +95,6 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
     return filterAndSortCategories(categories);
   }, [categories, query]);
 
-  // Handle category deletion
   const handleDeleteCategory = useCallback(async () => {
     if (!categoryToDelete) return;
 
@@ -113,7 +123,6 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
     }
   }, [categoryToDelete, deleteCategoriesMutation, refetch, toast]);
 
-  // Toggle category expansion
   const toggleCategory = useCallback((categoryId: string) => {
     setExpandedCategories((prev) => {
       const newSet = new Set(prev);
@@ -126,19 +135,170 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
     });
   }, []);
 
-  // Render a single category row (recursive for subcategories)
-  const renderCategoryRow = useCallback((category: Category, depth = 0) => {
+  // Helper function to get categories at the same level
+  const getCategoriesAtLevel = (parentId: string | null, cats: Category[]): Category[] => {
+    if (parentId === null) {
+      return cats.filter(c => !c.parentId);
+    }
+    
+    const findChildren = (categories: Category[]): Category[] => {
+      for (const cat of categories) {
+        if (cat.id === parentId) {
+          return cat.subcategories || [];
+        }
+        if (cat.subcategories) {
+          const found = findChildren(cat.subcategories);
+          if (found.length > 0) return found;
+        }
+      }
+      return [];
+    };
+    
+    return findChildren(cats);
+  };
+
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, categoryId: string, parentId: string | null) => {
+    setDraggedItem({ id: categoryId, parentId });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, categoryId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverItem(categoryId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetCategoryId: string, targetParentId: string | null) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.id === targetCategoryId) {
+      setDraggedItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    // Only allow reordering within the same level
+    if (draggedItem.parentId !== targetParentId) {
+      toast({
+        title: "Action non autorisée",
+        description: "Vous ne pouvez réorganiser que les catégories du même niveau.",
+        variant: "destructive",
+      });
+      setDraggedItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    // Get categories at the same level
+    const sameLevelCategories = getCategoriesAtLevel(targetParentId, filteredCategories);
+    
+    const draggedIndex = sameLevelCategories.findIndex(cat => cat.id === draggedItem.id);
+    const targetIndex = sameLevelCategories.findIndex(cat => cat.id === targetCategoryId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    // Reorder array
+    const newSameLevelCategories = [...sameLevelCategories];
+    const [removed] = newSameLevelCategories.splice(draggedIndex, 1);
+    newSameLevelCategories.splice(targetIndex, 0, removed);
+
+    // Update order values
+    const categoryOrders = newSameLevelCategories.map((cat, index) => ({
+      id: cat.id,
+      order: index,
+    }));
+
+    // Update UI recursively
+    const updateCategoriesOrder = (cats: Category[]): Category[] => {
+      return cats.map(cat => {
+        if (targetParentId === null && !cat.parentId) {
+          // Updating main categories
+          const foundIndex = newSameLevelCategories.findIndex(c => c.id === cat.id);
+          if (foundIndex !== -1) {
+            return { ...cat, order: foundIndex };
+          }
+        } else if (cat.id === targetParentId) {
+          // Found parent, update its children
+          return {
+            ...cat,
+            subcategories: newSameLevelCategories
+          };
+        } else if (cat.subcategories) {
+          // Keep searching recursively
+          return {
+            ...cat,
+            subcategories: updateCategoriesOrder(cat.subcategories)
+          };
+        }
+        return cat;
+      });
+    };
+
+    // Optimistically update UI
+    setCategories(targetParentId === null ? newSameLevelCategories : updateCategoriesOrder(categories));
+
+    try {
+      await reorderCategoriesMutation({
+        variables: { categoryOrders },
+      });
+
+      toast({
+        title: "Ordre mis à jour",
+        description: "L'ordre des catégories a été mis à jour avec succès.",
+        className: "bg-green-600 text-white",
+      });
+    } catch (err) {
+      // Revert on error
+      await refetch();
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'ordre des catégories.",
+        variant: "destructive",
+      });
+    }
+
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const renderCategoryRow = useCallback((category: Category, depth = 0, parentId: string | null = null) => {
     const isExpanded = expandedCategories.has(category.id);
     const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+    const isDragging = draggedItem?.id === category.id;
+    const isDragOver = dragOverItem === category.id;
 
     return (
       <React.Fragment key={category.id}>
-        <tr className={`border-b border-gray-100 ${depth % 2 === 1 ? 'bg-gray-50/30' : ''}`}>
+        <tr 
+          className={`border-b border-gray-100 ${depth % 2 === 1 ? 'bg-gray-50/30' : ''} ${
+            isDragging ? 'opacity-50' : ''
+          } ${isDragOver ? 'bg-blue-50' : ''} transition-all`}
+          draggable={!query} // All categories can be dragged (within their level)
+          onDragStart={(e) => handleDragStart(e, category.id, parentId)}
+          onDragOver={(e) => handleDragOver(e, category.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, category.id, parentId)}
+        >
           <td className="px-6 py-4">
             <div
               className="flex items-center"
               style={{ paddingLeft: `${depth * 24}px` }}
             >
+              {!query && (
+                <div className="mr-3 cursor-move text-gray-400 hover:text-gray-600">
+                  <FiMove size={18} />
+                </div>
+              )}
+              
               {hasSubcategories ? (
                 <button
                   onClick={() => toggleCategory(category.id)}
@@ -164,9 +324,7 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
                   }
                   fill={true}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-
                   style={{ objectFit: "cover" }}
-
                   alt={category.name}
                 />
               </div>
@@ -221,11 +379,11 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
 
         {isExpanded &&
           category.subcategories?.map((subcategory) =>
-            renderCategoryRow(subcategory, depth + 1)
+            renderCategoryRow(subcategory, depth + 1, category.id)
           )}
       </React.Fragment>
     );
-  }, [expandedCategories, toggleCategory, isDeleting]);
+  }, [expandedCategories, toggleCategory, isDeleting, draggedItem, dragOverItem, query, categories, filteredCategories]);
 
   if (loading) return <Loading />;
 
@@ -259,6 +417,15 @@ const AllCategories: React.FC<AllCategoriesProps> = ({ searchParams }) => {
         <div className="mb-6">
           <SearchBarForTables page="Products/Categories" />
         </div>
+
+        {!query && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 flex items-center gap-2">
+              <FiMove size={16} />
+              Glissez-déposez les catégories pour modifier leur ordre (au sein du même niveau uniquement)
+            </p>
+          </div>
+        )}
 
         <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
           <table className="w-full border-collapse">

@@ -4,6 +4,7 @@ import Link from "next/link";
 interface Product {
   id: string;
   name: string;
+  slug: string;
   reference: string;
   solde: number;
   inventory: number;
@@ -50,7 +51,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
           <Link
             target="_blank"
             href={
-              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}}`
+              `${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?slug=${product.slug}`
             }
             className="font-semibold hover:opacity-85 transition-opacity text-black"
           >

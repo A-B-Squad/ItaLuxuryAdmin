@@ -20,10 +20,8 @@ const DELIVERY_STATUS = {
     DELIVERED: "Livré"
 };
 
-
-
 // Add a secret key validation for security
-const validateSecret = (request: Request) => {
+const validateSecret = (request: any) => {
     try {
         const url = new URL(request.url);
         const secret = url.searchParams.get('secret');
@@ -46,7 +44,7 @@ const validateSecret = (request: Request) => {
     }
 };
 
-export async function GET(request: Request) {
+export async function GET(request: any) {
     // Validate the request has the correct secret
     if (!validateSecret(request)) {
         console.log('[CRON] Authorization failed - invalid or missing secret');
@@ -59,7 +57,6 @@ export async function GET(request: Request) {
     try {
         console.log("[CRON] Starting automated delivery status check");
 
-        // Create a fresh Apollo Client instance with a unique cache identifier
         const client = new ApolloClient({
             uri: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql',
             cache: new InMemoryCache(),
@@ -77,19 +74,21 @@ export async function GET(request: Request) {
                     errorPolicy: 'all',
                 },
             },
-            // Add a random query string parameter to prevent caching at the HTTP level
             name: `cron-client-${Date.now()}`,
         });
 
-        // Get packages that need status checking without the _timestamp variable
+        // Get packages that need status checking 
         const { data } = await client.query({
             query: PACKAGES_QUERY,
             variables: {
-                statusFilter: [STATUS.CONFIRMED, STATUS.TRANSFER_TO_DELIVERY_COMPANY]
+                page: 1,
+                pageSize: 1000,
+                statusFilter: [STATUS.CONFIRMED, STATUS.TRANSFER_TO_DELIVERY_COMPANY],
+                dateFrom: undefined,
+                dateTo: undefined
             },
             fetchPolicy: 'no-cache',
             context: {
-                // Add headers to prevent HTTP caching
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache',
@@ -154,7 +153,8 @@ export async function GET(request: Request) {
                     let newStatus = null;
                     console.log("[CRON] Current status:", orderStatus);
                     if ((currentStatus === DELIVERY_STATUS.RECEIVED ||
-                        currentStatus === DELIVERY_STATUS.PREPARING_TRANSFER || currentStatus === DELIVERY_STATUS.IN_THE_PROCESS_OF_DELIVERY) &&
+                        currentStatus === DELIVERY_STATUS.PREPARING_TRANSFER ||
+                        currentStatus === DELIVERY_STATUS.IN_THE_PROCESS_OF_DELIVERY) &&
                         orderStatus === STATUS.CONFIRMED) {
 
                         newStatus = STATUS.TRANSFER_TO_DELIVERY_COMPANY;
@@ -172,7 +172,6 @@ export async function GET(request: Request) {
                                     packageId: id,
                                     paymentMethod: Checkout?.paymentMethod,
                                     status: newStatus,
-
                                 }
                             });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { IoSearch, IoClose, IoFilter, IoArrowUp, IoArrowDown } from "react-icons/io5";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -30,15 +30,27 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  
+  // Keep track of the last URL update to prevent conflicts
+  const lastUrlUpdateRef = useRef<string>("");
 
-  // Update local state when URL params change
+  // Update local state when URL params change (but avoid conflicts with user typing)
   useEffect(() => {
-    setSearchValue(searchParams.get("q") || "");
-  }, [searchParams]);
+    const urlQuery = searchParams.get("q") || "";
+    
+    // Only update if the URL actually changed and it's different from what user is typing
+    if (urlQuery !== lastUrlUpdateRef.current && urlQuery !== searchValue) {
+      setSearchValue(urlQuery);
+    }
+  }, [searchParams]); // Remove searchValue from dependency array to avoid conflicts
 
   const updateSearchParams = useCallback(
     (newQuery: string, newSortBy: string, newSortOrder?: string) => {
       const params = new URLSearchParams(searchParams);
+      
+      // Track the query we're about to set in URL
+      lastUrlUpdateRef.current = newQuery;
+      
       if (newQuery) {
         params.set("q", newQuery);
       } else {
@@ -64,30 +76,48 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
     [router, searchParams, page]
   );
 
-  // Debounce search to improve performance
-  const debouncedSearch = useMemo(
-    () => debounce((query: string) => {
-      updateSearchParams(query, searchParams.get("sortBy") || "default");
-    }, 300),
-    [updateSearchParams, searchParams]
+  // Create a stable debounced function that doesn't recreate on every render
+  const debouncedSearchRef = useRef(
+    debounce((query: string, sortBy: string) => {
+      updateSearchParams(query, sortBy);
+    }, 300)
   );
+
+  // Update the debounced function when dependencies change
+  useEffect(() => {
+    debouncedSearchRef.current.cancel();
+    debouncedSearchRef.current = debounce((query: string, sortBy: string) => {
+      updateSearchParams(query, sortBy);
+    }, 300);
+  }, [updateSearchParams]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
+      
+      // Update local state immediately for responsive UI
       setSearchValue(newValue);
-      debouncedSearch(newValue);
+      
+      // Debounce the URL update
+      const currentSortBy = searchParams.get("sortBy") || "default";
+      debouncedSearchRef.current(newValue, currentSortBy);
     },
-    [debouncedSearch],
+    [searchParams]
   );
 
   const handleClearSearch = useCallback(() => {
+    // Cancel any pending debounced calls
+    debouncedSearchRef.current.cancel();
+    
     setSearchValue("");
     updateSearchParams("", searchParams.get("sortBy") || "default");
   }, [updateSearchParams, searchParams]);
 
   const handleFilterChange = useCallback(
     (value: string) => {
+      // Cancel any pending search updates
+      debouncedSearchRef.current.cancel();
+      
       if (value === "default") {
         updateSearchParams(searchValue, "", "");
       } else if (page === "Coupons") {
@@ -99,8 +129,26 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
         updateSearchParams(searchValue, sortByValue, sortOrderValue);
       }
     },
-    [updateSearchParams, searchValue, page],
+    [updateSearchParams, searchValue, page]
   );
+
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Cancel debounced call and execute immediately
+      debouncedSearchRef.current.cancel();
+      updateSearchParams(searchValue, searchParams.get("sortBy") || "default");
+    },
+    [searchValue, updateSearchParams, searchParams]
+  );
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearchRef.current.cancel();
+    };
+  }, []);
 
   const placeholder = useMemo(() => {
     switch (page) {
@@ -135,30 +183,24 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
         { value: "name-desc", label: "Nom : Z → A", icon: <IoArrowDown /> },
         { value: "isVisible-desc", label: "Visible", icon: <IoArrowUp /> },
         { value: "isVisible-asc", label: "Non visible", icon: <IoArrowDown /> },
+        { value: "outOfStock-desc", label: "Rupture de Stock", icon: <IoArrowUp /> },
       ];
     }
     return null;
   }, [page]);
-
 
   const showFilter = useMemo(
     () =>
       page !== "Products/Categories" &&
       page !== "Products/Inventory" &&
       page !== "TopDeals",
-    [page],
+    [page]
   );
-
-  const currentOrder = searchParams.get("sortBy") || "default";
 
   return (
     <form
       className="flex flex-col md:flex-row w-full gap-3 px-3 mb-6"
-      onSubmit={(e) => {
-        e.preventDefault();
-        debouncedSearch.cancel();
-        updateSearchParams(searchValue, searchParams.get("sortBy") || "default");
-      }}
+      onSubmit={handleFormSubmit}
     >
       <div className="relative flex flex-col sm:flex-row gap-3 w-full md:w-[80%]">
         <div className={`search w-full relative transition-all duration-200 group`}>
@@ -171,6 +213,7 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
             value={searchValue}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
+            autoComplete="off"
           />
           <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-mainColorAdminDash transition-colors">
             <IoSearch size={20} />
@@ -192,7 +235,6 @@ const SearchBarForTables: React.FC<SearchBarProps> = ({ page }) => {
         </div>
       </div>
       {showFilter && filterOptions && (
-        // Fix the value selection for the Select component
         <Select
           onValueChange={handleFilterChange}
           value={
