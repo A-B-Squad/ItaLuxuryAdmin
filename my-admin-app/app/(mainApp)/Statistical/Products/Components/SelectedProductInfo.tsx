@@ -1,4 +1,6 @@
 import React from "react";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
 
 // Updated interfaces to match your GraphQL response
 interface Governorate {
@@ -51,13 +53,15 @@ type GovStats = Record<OrderStatus, number> & {
 };
 
 interface SelectedProductInfoProps {
-    selectedProduct: Product; // Changed from 'any' to 'Product'
+    selectedProduct: Product;
     onClearSelection: () => void;
+    dateRange?: DateRange;
 }
 
 const SelectedProductInfo: React.FC<SelectedProductInfoProps> = ({
     selectedProduct,
     onClearSelection,
+    dateRange,
 }) => {
     // Process governorate data with all order status types
     const governorateStats = selectedProduct.ProductInCheckout.reduce(
@@ -152,7 +156,14 @@ const SelectedProductInfo: React.FC<SelectedProductInfoProps> = ({
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-gray-800">Analyse Produit</h3>
-                        <p className="text-gray-600 text-xs">Statuts des commandes par gouvernorat</p>
+                        <p className="text-gray-600 text-xs">
+                            Statuts des commandes par gouvernorat
+                            {dateRange && dateRange.from && dateRange.to && (
+                                <span className="block text-blue-600 font-medium mt-1">
+                                    {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                                </span>
+                            )}
+                        </p>
                     </div>
                 </div>
                 <button
@@ -173,9 +184,28 @@ const SelectedProductInfo: React.FC<SelectedProductInfoProps> = ({
                 </h4>
                 <div className="flex items-center space-x-4 text-xs text-gray-600">
                     <span>Réf: <strong>{selectedProduct.reference}</strong></span>
-                    <span>Total: <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{totalPurchases}</span></span>
+                    <span>
+                        Total: <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{totalPurchases}</span>
+                        {dateRange && dateRange.from && dateRange.to && (
+                            <span className="ml-2 text-blue-600">(période sélectionnée)</span>
+                        )}
+                    </span>
                 </div>
             </div>
+
+            {/* Date Range Indicator */}
+            {dateRange && dateRange.from && dateRange.to && (
+                <div className="bg-blue-100 border border-blue-200 text-blue-800 p-2 rounded-lg mb-3 text-xs">
+                    <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                        <span>
+                            <strong>Données filtrées</strong> - Cette analyse ne montre que les commandes de la période sélectionnée
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Overall Statistics - Compact Grid */}
             <div className="bg-white p-3 rounded-lg mb-3">
@@ -248,7 +278,6 @@ const SelectedProductInfo: React.FC<SelectedProductInfoProps> = ({
                                         );
                                     })}
                                 </div>
-
                                 {/* Key Metrics - Compact */}
                                 <div className="text-xs space-y-1">
                                     <div className="flex justify-between">
@@ -278,7 +307,21 @@ const SelectedProductInfo: React.FC<SelectedProductInfoProps> = ({
                 </div>
 
                 {sortedGovernorates.length === 0 && (
-                    <p className="text-gray-500 text-center py-4 text-sm">Aucune donnée disponible</p>
+                    <div className="text-center py-8">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-500 text-sm">
+                            Aucune donnée disponible pour cette période
+                            {dateRange && dateRange.from && dateRange.to && (
+                                <span className="block text-xs mt-1">
+                                    Essayez d'élargir la période de dates
+                                </span>
+                            )}
+                        </p>
+                    </div>
                 )}
             </div>
         </div>

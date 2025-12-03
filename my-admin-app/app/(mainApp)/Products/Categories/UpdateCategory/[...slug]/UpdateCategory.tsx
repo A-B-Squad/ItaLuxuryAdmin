@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import { CATEGORY_QUERY, GET_CATEGORY_BY_ID } from "@/app/graph/queries";
+import { MAIN_CATEGORY_QUERY, GET_CATEGORY_BY_ID } from "@/app/graph/queries";
 import {
   Select,
   SelectContent,
@@ -46,7 +46,7 @@ const UpdateCategory = () => {
   });
 
   const { data: allCategories, loading: categoriesLoading } =
-    useQuery(CATEGORY_QUERY);
+    useQuery(MAIN_CATEGORY_QUERY);
   const [getCategory, { data: categoryData, loading: categoryLoading }] =
     useLazyQuery(GET_CATEGORY_BY_ID);
   const [updateCategory] = useMutation(UPDATE_CATEGORY_MUTATION);
@@ -266,7 +266,7 @@ const UpdateCategory = () => {
                   setFormData({ ...formData, parentCategory: value })
                 }
               >
-                {renderCategoryOptions(allCategories?.categories)}
+                {renderCategoryOptions(allCategories?.fetchMainCategories)}
               </Select>
             </div>
 

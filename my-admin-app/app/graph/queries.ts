@@ -22,30 +22,33 @@ export const GET_ALL_USERS_QUERY = gql`
   }
 `;
 
-export const CATEGORY_QUERY = gql`
-  query Categories {
-    categories {
+
+export const MAIN_CATEGORY_QUERY = gql`
+ query FetchMainCategories {
+  fetchMainCategories {
+    id
+    name
+    bigImage
+    smallImage
+    order
+    subcategories {
       id
       name
-      bigImage
+      parentId
       smallImage
+      order
       subcategories {
         id
         name
         parentId
-        bigImage
         smallImage
-        subcategories {
-          id
-          name
-          parentId
-          bigImage
-          smallImage
-        }
+        order
       }
     }
   }
+}
 `;
+
 export const SEARCH_PRODUCTS_QUERY = gql`
 query SearchProducts($input: ProductSearchInput!) {
   searchProducts(input: $input) {
@@ -53,15 +56,23 @@ query SearchProducts($input: ProductSearchInput!) {
       products {
         id
         name
+        slug
+        images
+        reference
         price
+        productDiscounts {
+          dateOfStart
+          dateOfEnd
+          price
+          newPrice
+        }
+        
         purchasePrice
         isVisible
-        reference
         description
         inventory
         solde
         broken
-        images
         createdAt
         reviews {
           id
@@ -72,28 +83,14 @@ query SearchProducts($input: ProductSearchInput!) {
         categories {
           id
           name
-          subcategories {
-            id
-            name
-            parentId
-            subcategories {
-              id
-              name
-              parentId
-            }
-          }
+         
         }
         Colors {
           id
           color
           Hex
         }
-        productDiscounts {
-          dateOfStart
-          dateOfEnd
-          price
-          newPrice
-        }
+       
         ProductInCheckout {
           checkout {
             phone
@@ -117,6 +114,84 @@ query SearchProducts($input: ProductSearchInput!) {
 
 
 `;
+
+
+export const GET_ALL_CAMPAIGNS_QUERY = gql`
+  query GetAllCampaigns {
+    getAllCampaigns {
+      id
+      name
+      description
+      type
+      dateStart
+      dateEnd
+      isActive
+      conditions
+      productsAffected
+      totalRevenue
+      createdAt
+      updatedAt
+      createdBy {
+        fullName
+      }
+    }
+  }
+`;
+export const GET_ACTIVE_CAMPAIGNS_QUERY = gql`
+  query GetActiveCampaigns {
+    getActiveCampaigns {
+      id
+      name
+      description
+      type
+      dateStart
+      dateEnd
+      isActive
+      conditions
+      productsAffected
+      totalRevenue
+      createdAt
+      updatedAt
+      createdBy {
+        fullName
+      }
+    }
+  }
+`;
+
+
+export const GET_DISCOUNT_HISTORY_QUERY = gql`
+query GetDiscountHistory($productName: String!) {
+  getDiscountHistory(productName: $productName) {
+    id
+    product {
+      id
+    }
+    productId
+    price
+    newPrice
+    discountType
+    discountValue
+    campaignName
+    campaignType
+    dateOfStart
+    dateOfEnd
+    isActive
+    isDeleted
+    createdAt
+    updatedAt
+    createdBy {
+      fullName
+    }
+    createdById
+  }
+}
+
+`;
+
+
+
+
 export const GET_BRANDS = gql`
   query FetchBrands {
     fetchBrands {
@@ -166,6 +241,7 @@ export const BEST_SELLS_QUERY = gql`
       Product {
         id
         name
+        slug
         images
         price
         productDiscounts {
@@ -186,48 +262,48 @@ export const BEST_SELLS_QUERY = gql`
   }
 `;
 export const PACKAGES_QUERY = gql`
-   query GetAllPackages($page: Int, $pageSize: Int,$dateFrom: String, $dateTo: String,$statusFilter:[String]) {
-    getAllPackages(page: $page, pageSize: $pageSize, dateFrom: $dateFrom, dateTo: $dateTo,statusFilter:$statusFilter) {
+  query GetAllPackages($page: Int, $pageSize: Int, $dateFrom: String, $searchTerm: String, $dateTo: String, $statusFilter: [String]) {
+    getAllPackages(page: $page, pageSize: $pageSize, searchTerm: $searchTerm, dateFrom: $dateFrom, dateTo: $dateTo, statusFilter: $statusFilter) {
       packages {
-          id
-      customId
-      deliveryReference
-      Checkout {
-        userName
-        userId
-        guestEmail
-        deliveryComment
-        Governorate {
-          id
-          name
-        }
-        address
-        phone
-        freeDelivery
-        paymentMethod
-        manualDiscount
-        productInCheckout {
-          productQuantity
-          price
-          discountedPrice
-          product {
+        id
+        customId
+        deliveryReference
+        Checkout {
+          userName
+          userId
+          guestEmail
+          deliveryComment
+          Governorate {
             id
             name
-            reference
-            images
-            solde
-            broken
-            purchasePrice
-            price
           }
+          address
+          phone
+          freeDelivery
+          paymentMethod
+          manualDiscount
+          productInCheckout {
+            productQuantity
+            price
+            discountedPrice
+            product {
+              id
+              name
+              reference
+              images
+              solde
+              broken
+              purchasePrice
+              price
+            }
+          }
+          total
         }
-        total
-      }
-      status
-      createdAt
-      delivredAt
-      inTransitAt
-      returnedAt
+        status
+        createdAt
+        delivredAt
+        inTransitAt
+        returnedAt
       }
       pagination {
         currentPage
@@ -237,7 +313,47 @@ export const PACKAGES_QUERY = gql`
       }
     }
   }
+`;
 
+export const PACKAGES_EXPORT_QUERY = gql`
+  query GetAllPackagesForExport(
+    $searchTerm: String
+    $dateFrom: String
+    $dateTo: String
+    $statusFilter: [String]
+  ) {
+    getAllPackages(
+      searchTerm: $searchTerm
+      dateFrom: $dateFrom
+      dateTo: $dateTo
+      statusFilter: $statusFilter
+    ) {
+      packages {
+
+        id
+        customId
+        createdAt
+        status
+
+        Checkout {
+          userName
+          userId
+          phone
+          total
+          guestEmail
+          deliveryComment
+          freeDelivery
+          paymentMethod
+        }
+      }
+      pagination {
+        currentPage
+        hasNextPage
+        hasPreviousPage
+        totalPages
+      }
+    }
+  }
 `;
 export const GET_GOVERMENT_INFO = gql`
   query AllGovernorate {
@@ -269,6 +385,7 @@ export const FETCH_ALL_BASKET = gql`
         id
         reference
         name
+        slug
         price
         images
         productDiscounts {
@@ -320,6 +437,8 @@ export const GET_REVIEW_QUERY = gql`
   }
 `;
 
+
+
 export const USER_POINTS_QUERY = gql`
   query UserPoints($userId: String!) {
     userPoints(userId: $userId) {
@@ -341,6 +460,7 @@ query FetchAllUsers {
     id
     fullName
     email
+    createdAt
     ContactUs {
       id
       subject
@@ -415,61 +535,71 @@ export const GET_POINT_SETTINGS = gql`
   }
 `;
 export const PACKAGE_BY_ID_QUERY = gql`
-  query PackageById($packageId: ID!) {
-    packageById(packageId: $packageId) {
+ query PackageById($packageId: ID!) {
+  packageById(packageId: $packageId) {
+    id
+    comments
+    createdAt
+    customId
+    status
+    deliveryReference
+    Checkout {
       id
-      comments
-      createdAt
-      customId
-      status
-      deliveryReference
-      Checkout {
+      userName
+      userId
+      guestEmail
+      deliveryComment
+      paymentMethod
+      Governorate {
         id
-        userName
-        userId
-        guestEmail
-        deliveryComment
-        paymentMethod
-        Governorate {
+        name
+      }
+      User {
+        id
+        fullName
+        email
+        number
+        pointTransactions {
+          id
+          amount
+          type
+          createdAt
+        }
+      }
+      Coupons {
+        discount
+      }
+      phone
+      address
+      Governorate {
+        name
+      }
+      governorateId
+      manualDiscount
+      freeDelivery
+      total
+      productInCheckout {
+        id
+        productQuantity
+        price
+        discountedPrice
+        product {
           id
           name
-        }
-        User {
-          fullName
-          email
-          number
-        }
-        Coupons {
-          discount
-        }
-        phone
-        address
-        governorateId
-        manualDiscount
-        freeDelivery
-        total
-        productInCheckout {
-          id
-          productQuantity
-          price
-          discountedPrice
-          product {
-            id
-            name
-            inventory
-            reference
-            images
-            productDiscounts {
-              dateOfEnd
-              price
-              newPrice
-             
-            }
+          inventory
+          reference
+          images
+          productDiscounts {
+            dateOfEnd
+            price
+            newPrice
           }
         }
       }
     }
   }
+}
+
 `;
 
 export const ADVERTISSMENT_QUERY = gql`
@@ -480,13 +610,7 @@ export const ADVERTISSMENT_QUERY = gql`
     }
   }
 `;
-export const PRODUCT_QUERY = gql`
-  query Products {
-    products {
-      id
-    }
-  }
-`;
+
 export const COMPANY_INFO_QUERY = gql`
   query CompanyInfo {
     companyInfo {
@@ -517,6 +641,7 @@ export const PRODUCT_IN_TOP_DEALS = gql`
       product {
         id
         images
+        slug
         price
         name
         reference
@@ -531,6 +656,74 @@ export const PRODUCT_IN_TOP_DEALS = gql`
     }
   }
 `;
+
+export const GET_PRODUCTS_BY_SLUG = gql`
+query GetProductBySlug($slug: String!) {
+  getProductBySlug(slug: $slug) {
+      id
+      name
+      slug
+      price
+      purchasePrice
+      isVisible
+      reference
+      description
+      inventory
+      solde
+      images
+      createdAt
+      updatedAt
+      technicalDetails
+      categories {
+        id
+        name
+        description
+        subcategories {
+          id
+          name
+          parentId
+          subcategories {
+            id
+            name
+            parentId
+          }
+        }
+      }
+      productDiscounts {
+        id
+        price
+        newPrice
+        dateOfEnd
+        dateOfStart
+      }
+      Colors {
+        id
+        color
+        Hex
+      }
+      
+      reviews {
+        rating
+        userId
+      }
+      Brand {
+        id
+        name
+      }
+      GroupProductVariant {
+        id
+        groupProductName
+        Products {
+          id
+          slug
+          name
+          Colors {
+            Hex
+          }
+        }
+      }
+    }
+  }`
 
 export const PRODUCT_BY_ID_QUERY = gql`
 query ProductById($productByIdId: ID!) {
@@ -596,4 +789,83 @@ query ProductById($productByIdId: ID!) {
   }
 }
 
+
+
         `;
+
+
+
+
+export const GET_All_BUNDLES = gql`
+query GetAllBundles($status: BundleStatus, $type: BundleType) {
+  getAllBundles(status: $status, type: $type) {
+    id
+    name
+    description
+    type
+    status
+    startDate
+    endDate
+    minPurchaseAmount
+    minQuantity
+    requiredProductRefs
+    anyProductRefs
+    requiredCategoryIds
+    requiredBrandIds
+    requireAllProducts
+    freeProductQuantity
+    freeProductRef
+    discountPercentage
+    discountAmount
+    applyDiscountTo
+    givesFreeDelivery
+    giftProductRef
+    giftQuantity
+    maxUsagePerUser
+    maxUsageTotal
+    currentUsage
+    createdAt
+    updatedAt
+  }
+}
+`;
+export const GET_BUNDLE_BY_ID = gql`
+
+query GetBundle($id: ID!) {
+  getBundle(id: $id) {
+    id
+    name
+    description
+    type
+    status
+    startDate
+    endDate
+    minPurchaseAmount
+    minQuantity
+    requiredProductRefs
+    anyProductRefs
+    requiredCategoryIds
+    requiredBrandIds
+    requireAllProducts
+    freeProductQuantity
+    freeProductRef
+    discountPercentage
+    discountAmount
+    applyDiscountTo
+    givesFreeDelivery
+    giftProductRef
+    giftQuantity
+    maxUsagePerUser
+    maxUsageTotal
+    currentUsage
+    checkouts {
+      id
+      userName
+      total
+    }
+    
+    createdAt
+    updatedAt
+  }
+}
+`;

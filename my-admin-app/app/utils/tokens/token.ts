@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 import jwt from 'jsonwebtoken';
-import { DecodedToken } from './types';
+import { DecodedToken } from './bundle.types';
 
 export const getToken = (): string | undefined => {
     return Cookies.get('Token');

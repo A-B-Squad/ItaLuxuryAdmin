@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import JsBarcode from "jsbarcode";
-import { Order, ProductInCheckout } from "../../types/index";
+import { Order, ProductInCheckout } from "../../bundle.types/index";
 import { translatePaymentMethodStatus } from "./_translateStatus";
 
 const formatDate = (dateString: string): string => {

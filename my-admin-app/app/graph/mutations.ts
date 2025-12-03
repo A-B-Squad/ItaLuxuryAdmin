@@ -6,6 +6,13 @@ export const CREATE_CAROUSEL_ADVERTISEMENT_MUTATIONS = gql`
   }
 `;
 
+
+export const REORDER_CATEGORIES_MUTATION = gql`
+  mutation ReorderCategories($categoryOrders: [CategoryOrderInput!]!) {
+    reorderCategories(categoryOrders: $categoryOrders)
+  }
+`;
+
 export const ADMIN_SIGNIN = gql`
   mutation AdminSignIn($input: AdminSignInInput!) {
     adminSignIn(input: $input)
@@ -124,9 +131,9 @@ export const DELETE_PRODUCT_MUTATIONS = gql`
   }
 `;
 export const DELETE_PRODUCT_FROM_DEALS_MUTATION = gql`
-  mutation DeleteTopDeals($productId: String!) {
-    deleteTopDeals(productId: $productId)
-  }
+mutation DeleteTopDeals($productId: String!) {
+  deleteTopDeals(productId: $productId)
+}
 `;
 export const DELETE_COUPONS_MUTATIONS = gql`
   mutation DeleteCoupons($couponsIds: [ID!]!) {
@@ -188,6 +195,11 @@ mutation CreateGroupProductVariant($input: CreateGroupProductVariantInput!) {
   }
 }
 `;
+export const DELETE_PRODUCT_GROUP_VARIANT_MUTATIONS = gql`
+mutation DeleteGroupProductVariant($deleteGroupProductVariantId: ID!) {
+  deleteGroupProductVariant(id: $deleteGroupProductVariantId)
+}
+`;
 export const UPDATE_PRODUCT_GROUP_VARIANT_MUTATIONS = gql`
 mutation UpdateGroupProductVariant($input: UpdateGroupProductVariantInput!) {
   updateGroupProductVariant(input: $input)
@@ -196,9 +208,9 @@ mutation UpdateGroupProductVariant($input: UpdateGroupProductVariantInput!) {
 
 
 export const UPDATE_PRODUCT_MUTATIONS = gql`
-  mutation UpdateProduct($productId: ID!, $input: ProductInput!) {
-    updateProduct(productId: $productId, input: $input)
-  }
+mutation UpdateProduct($slug: String!, $input: ProductInput!) {
+  updateProduct(slug: $slug, input: $input)
+}
 `;
 export const CANCEL_PACKAGE_MUTATIONS = gql`
   mutation CancelPackage($input: CancelPackageInput!) {
@@ -269,9 +281,9 @@ export const DELETE_CATEGORIES_MUTATIONS = gql`
   }
 `;
 
-export const ADD_POINTS_MUTATION = gql`
-mutation AddPointsToUser($userId: ID!, $points: Int!, $PointType: PointType!, $description: String) {
-  addPointsToUser(userId: $userId, points: $points, PointType: $PointType, description: $description)
+export const MANAGE_POINTS_MUTATION = gql`
+mutation ManageUserPoints($input: PointTransactionInput!) {
+  manageUserPoints(input: $input)
 }
 `;
 
@@ -328,3 +340,168 @@ export const UPDATE_POINT_SETTINGS = gql`
     }
   }
 `;
+
+
+export const ADD_PROMOTIONAL_CAMPAIGN_MUTATION = gql`
+mutation AddPromotionalCampaign($input: PromotionalCampaignInput!) {
+  addPromotionalCampaign(input: $input) {
+    success
+    message
+    affectedProducts
+    campaignId
+  }
+}
+
+`;
+
+export const REMOVE_PROMOTIONAL_CAMPAIGN_MUTATION = gql`
+ mutation RemovePromotionalCampaigns(
+  $conditions: RemovePromotionalCampaignsConditions
+  $campaignName: String
+  $softDelete: Boolean
+) {
+  removePromotionalCampaigns(
+    conditions: $conditions
+    campaignName: $campaignName
+    softDelete: $softDelete
+  ) {
+    success
+    message
+    removedCount
+  }
+}
+
+
+`;
+
+export const REACTIVATE_CAMPAIGN_MUTATION = gql`
+mutation ReactivateCampaign($campaignName: String!) {
+  reactivateCampaign(campaignName: $campaignName) {
+    success
+    message
+
+  }
+}
+
+`;
+
+export const GET_ACTIVE_CAMPAIGNS_QUERY = gql`
+  query GetActiveCampaigns {
+    getActiveCampaigns {
+      id
+      name
+      type
+      dateStart
+      dateEnd
+      isActive
+      productsAffected
+      createdAt
+    }
+  }
+`;
+
+export const GET_DISCOUNT_HISTORY_QUERY = gql`
+  query GetDiscountHistory($productId: String!) {
+    getDiscountHistory(productId: $productId) {
+      id
+      originalPrice
+      discountedPrice
+      discountType
+      discountValue
+      campaignName
+      campaignType
+      dateOfStart
+      dateOfEnd
+      isActive
+      isDeleted
+      createdAt
+    }
+  }
+`;
+
+
+export const CREATE_BUNDLE_MUTATION = gql`
+  mutation CreateBundle($input: CreateBundleInput!) {
+  createBundle(input: $input) {
+    id
+    name
+    description
+    type
+    status
+    startDate
+    endDate
+    minPurchaseAmount
+    minQuantity
+    requiredProductRefs
+    anyProductRefs
+    requiredCategoryIds
+    requiredBrandIds
+    requireAllProducts
+    freeProductQuantity
+    freeProductRef
+    discountPercentage
+    discountAmount
+    applyDiscountTo
+    givesFreeDelivery
+    giftProductRef
+    giftQuantity
+    maxUsagePerUser
+    maxUsageTotal
+    currentUsage
+    createdAt
+    updatedAt
+  }
+}
+`;
+
+export const UPDATE_BUNDLE_MUTATION = gql`
+mutation UpdateBundle($id: ID!, $input: UpdateBundleInput!) {
+  updateBundle(id: $id, input: $input) {
+    id
+    name
+    description
+    type
+    status
+    startDate
+    endDate
+    minPurchaseAmount
+    minQuantity
+    requiredProductRefs
+    anyProductRefs
+    requiredCategoryIds
+    requiredBrandIds
+    requireAllProducts
+    freeProductQuantity
+    freeProductRef
+    discountPercentage
+    discountAmount
+    applyDiscountTo
+    givesFreeDelivery
+    giftProductRef
+    giftQuantity
+    maxUsagePerUser
+    maxUsageTotal
+    currentUsage
+    createdAt
+    updatedAt
+  }
+}
+`;
+
+export const DELETE_BUNDLE_MUTATION = gql`
+mutation DeleteBundle($id: ID!) {
+  deleteBundle(id: $id)
+}
+`;
+
+export const TOGGLE_BUNDLE_STATUS_MUTATION = gql`
+mutation ToggleBundleStatus($id: ID!, $status: BundleStatus!) {
+  toggleBundleStatus(id: $id, status: $status) {
+    id
+    name
+    status
+    updatedAt
+  }
+}
+`;
+

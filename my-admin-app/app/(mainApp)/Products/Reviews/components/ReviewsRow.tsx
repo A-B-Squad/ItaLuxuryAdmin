@@ -17,6 +17,7 @@ interface Review {
 interface Product {
   id: string;
   name: string;
+  slug: string;
   reference: string;
   solde: number;
   inventory: number;
@@ -112,7 +113,7 @@ const ReviewsRow: React.FC<ReviewRowProps> = ({ product, onRowClick }) => {
             <div>
               <Link
                 target="_blank"
-                href={`${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${product.id}`}
+                href={`${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?slug=${product.slug}`}
                 className="font-semibold hover:opacity-85 transition-opacity text-black"
                 onClick={(e) => e.stopPropagation()} // Prevent row click when clicking the link
               >

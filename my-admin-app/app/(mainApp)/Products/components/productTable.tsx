@@ -4,11 +4,13 @@ import ProductRow from "./productRow";
 interface ProductTableProps {
   products: any;
   onDeleteClick: (product: { id: string; name: string }) => void;
+  onDuplicateClick: (product:any) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
   onDeleteClick,
+  onDuplicateClick
 }) => {
   return (
     <section className="container mx-auto py-6 px-3  relative">
@@ -36,6 +38,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                   key={product.id}
                   product={product}
                   onDeleteClick={onDeleteClick}
+                  onDuplicateClick={onDuplicateClick}
                 />
               ))}
             </tbody>

@@ -1,6 +1,7 @@
 "use client";
 
 import { USE_VOUCHER_MUTATION } from "@/app/graph/mutations";
+import { FETCH_ALL_USERS } from "@/app/graph/queries";
 import { useMutation } from "@apollo/client";
 import React, { useState } from "react";
 
@@ -29,12 +30,11 @@ interface Package {
 
 interface Checkout {
     id: string;
-    GovernoTaux: {
+    Governorate: {
         name: string;
     };
     package: Package[];
 }
-
 interface Voucher {
     id: string;
     code: string;
@@ -103,10 +103,18 @@ export const UseVoucherModal: React.FC<{
 
     const [executeUseVoucher] = useMutation(USE_VOUCHER_MUTATION, {
         refetchQueries: [
+            { query: FETCH_ALL_USERS },
             'FETCH_ALL_USERS',
         ],
         awaitRefetchQueries: true,
-
+        // Cache update
+        update: (cache) => {
+            cache.evict({
+                id: `User:${user.id}`,
+                fieldName: 'Voucher'
+            });
+            cache.gc();
+        }
     });
 
     const handleUseVoucher = async () => {
@@ -130,14 +138,11 @@ export const UseVoucherModal: React.FC<{
                 variables.input.checkoutId = checkoutId.trim();
             }
 
-
-            const { data } = await executeUseVoucher({
-                variables
-            });
+            const { data } = await executeUseVoucher({ variables });
 
             if (data?.useVoucher?.success) {
                 alert(data.useVoucher.message);
-                onSuccess();
+                await onSuccess(); 
                 onClose();
             }
         } catch (error) {

@@ -1,8 +1,8 @@
 "use client";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation } from "@apollo/client";
-import { useState } from "react";
-import { CREATE_PRODUCT_MUTATIONS } from "../../../graph/mutations";
+import { useEffect, useState } from "react";
+import { CREATE_PRODUCT_MUTATIONS } from "../../../../graph/mutations";
 import TechnicalDetails from "./Components/AddTechnicalDetails";
 import AddDescription from "./Components/AddDescription";
 import AddPrice from "./Components/AddPrice";
@@ -15,12 +15,9 @@ import UploadImage from "./Components/UploadImages";
 import AddVariant from "./Components/AddVariant";
 
 
-
-const CreateProductPage = () => {
+const CreateProduct = ({ action }: { action?: string }) => {
   const { toast } = useToast();
-  // Add a loading state to track submission status
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
   const [technicalDetails, setTechnicalDetails] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [title, setTitle] = useState<string>("");
@@ -38,8 +35,6 @@ const CreateProductPage = () => {
   >(null);
   const [isDiscountEnabled, setIsDiscountEnabled] = useState<boolean>(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-
-
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<boolean>(true);
   const [finalDiscountPrice, setFinalDiscountPrice] = useState<number>(0);
@@ -53,6 +48,67 @@ const CreateProductPage = () => {
   const [brand, setBrand] = useState<string | null>(null);
   const [createProductMutation] = useMutation(CREATE_PRODUCT_MUTATIONS);
 
+  useEffect(() => {
+    if (action === 'duplicate') {
+      try {
+        const duplicatedData = sessionStorage.getItem('duplicateProductData');
+        if (duplicatedData) {
+          const productData = JSON.parse(duplicatedData);
+          // Set all your form states with the duplicated data
+          setTitle(productData.name);
+          setDescription(productData.description);
+          setStock(productData.inventory);
+          setUploadedImages(productData.images);
+          setOriginalPrice(productData.price);
+          setPurchasePrice(productData.purchasePrice);
+          setVisibility(productData.isVisible);
+          setTechnicalDetails(productData.technicalDetails);
+          setReference(productData.reference);
+          setBrand(productData.brandId);
+          setSelectedGroupId(productData.groupVariantId);
+
+          if (productData.hasDiscount && productData.discount) {
+            setIsDiscountEnabled(true);
+            setDateOfStartDiscount(productData.discount.dateOfStart);
+            setDateOfEndDiscount(productData.discount.dateOfEnd);
+            setManualDiscountPrice(productData.discount.newPrice);
+            setFinalDiscountPrice(productData.discount.newPrice);
+          }
+
+          // Set categories if you have them
+          if (productData.categoryIds && productData.categoryIds.length > 0) {
+            setSelectedIds({
+              categoryId: productData.categoryIds[0] || "",
+              subcategoryId: productData.categoryIds[1] || "",
+              subSubcategoryId: productData.categoryIds[2] || "",
+            });
+          }
+
+          // Set colors if you have them
+          if (productData.colorId) {
+            setSelectedColor(productData.colorId);
+          }
+
+          // Clean up sessionStorage after loading
+          sessionStorage.removeItem('duplicateProductData');
+
+          toast({
+            title: "Produit dupliqué",
+            description: "Les données du produit ont été chargées pour duplication.",
+            className: "bg-blue-600 text-white",
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing duplicated product data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load duplicated product data",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [action, toast]);
+
   const handleSubmit = () => {
     // Prevent multiple submissions
     if (isSubmitting) return;
@@ -64,7 +120,8 @@ const CreateProductPage = () => {
       !title ||
       !description ||
       !uploadedImages.length ||
-      !selectedIds.categoryId
+      !selectedIds.categoryId ||
+      !reference
     ) {
       toast({
         title: "Erreur de création",
@@ -230,7 +287,6 @@ const CreateProductPage = () => {
             setDateOfEndDiscount={setDateOfEndDiscount}
             dateOfStartDiscount={dateOfStartDiscount}
             setDateOfStartDiscount={setDateOfStartDiscount}
-
             setFinalDiscountPrice={setFinalDiscountPrice}
           />
 
@@ -290,4 +346,4 @@ const CreateProductPage = () => {
   );
 };
 
-export default CreateProductPage;
+export default CreateProduct;

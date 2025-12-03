@@ -27,6 +27,7 @@ interface Product {
   id: string;
   reference: string;
   name: string;
+  slug: string;
   price: number;
   images: string[];
   productDiscounts: ProductDiscount[];
@@ -174,7 +175,7 @@ const ClientAbandonedBasketPage: React.FC = () => {
                     {baskets[selectedBasket].map((item, index) => (
                       <div key={item.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <Link
-                          href={`${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?productId=${item.Product.id}`}
+                          href={`${process.env.NEXT_PUBLIC_BASE_URL_DOMAIN}/products/tunisie?slug=${item.Product.slug}`}
                           target="_blank"
                           className="block"
                         >

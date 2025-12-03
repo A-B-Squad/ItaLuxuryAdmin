@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { CATEGORY_QUERY } from "@/app/graph/queries";
+import { MAIN_CATEGORY_QUERY } from "@/app/graph/queries";
 
 import {
   Select,
@@ -67,11 +67,11 @@ const ChoiceCategory: React.FC<ChoiceCategoryProps> = ({
     subSubcategoryName?: string;
   }>({});
 
-  const { loading, error, data: AllCategory } = useQuery(CATEGORY_QUERY);
+  const { loading, error, data: AllCategory } = useQuery(MAIN_CATEGORY_QUERY);
 
   useEffect(() => {
-    if (AllCategory?.categories) {
-      setCategories(AllCategory.categories);
+    if (AllCategory?.fetchMainCategories) {
+      setCategories(AllCategory.fetchMainCategories);
     } else {
       setCategories([]);
     }

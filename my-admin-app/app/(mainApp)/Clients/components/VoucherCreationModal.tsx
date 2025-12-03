@@ -1,73 +1,10 @@
 "use client";
 
-import { GENERATE_VOUCHER_MUTATION } from "@/app/graph/mutations";
-import { useMutation, useQuery } from "@apollo/client";
+import { GENERATE_VOUCHER_MUTATION, USE_VOUCHER_MUTATION } from "@/app/graph/mutations";
+import { FETCH_ALL_USERS } from "@/app/graph/queries";
+import { useMutation } from "@apollo/client";
 import { useToast } from "@/components/ui/use-toast";
 import React, { useState } from "react";
-import { GET_POINT_SETTINGS } from "@/app/graph/queries";
-
-// TypeScript Interfaces
-interface Review {
-    productId: string;
-    rating: number;
-    product: {
-        name: string;
-        reference: string;
-    };
-}
-
-interface ContactUs {
-    id: string;
-    subject: string;
-    document: string;
-    message: string;
-}
-
-interface Package {
-    id: string;
-    customId: string;
-    status: string;
-}
-
-interface ProductInCheckout {
-    product: {
-        name: string;
-    };
-    productQuantity: number;
-    price: number;
-}
-
-interface Checkout {
-    id: string;
-    productInCheckout: ProductInCheckout[];
-    total: number;
-    Governorate: {
-        name: string;
-    };
-    package: Package[];
-}
-
-interface Voucher {
-    id: string;
-    code: string;
-    amount: number;
-    isUsed: boolean;
-    createdAt: string;
-    expiresAt: string;
-    usedAt: string | null;
-    userId: string;
-    checkoutId: string | null;
-}
-
-interface PointTransaction {
-    id: string;
-    amount: number;
-    type: 'EARNED' | 'EXPIRED' | 'ADJUSTMENT' | 'ADMIN_ADDED';
-    description: string;
-    createdAt: string;
-    userId: string;
-    checkoutId: string | null;
-}
 
 interface User {
     id: string;
@@ -75,16 +12,14 @@ interface User {
     email: string;
     number: string;
     points: number;
-    reviews: Review[];
-    ContactUs: ContactUs[];
-    checkout: Checkout[];
-    Voucher: Voucher[];
-    pointTransactions: PointTransaction[];
+    reviews: any[];
+    ContactUs: any[];
+    checkout: any[];
+    Voucher: any[];
+    pointTransactions: any[];
 }
 
-
-
-// Voucher Creation Modal Component
+// ============ VOUCHER CREATION MODAL ============
 export const VoucherCreationModal: React.FC<{
     user: User;
     isOpen: boolean;
@@ -95,48 +30,64 @@ export const VoucherCreationModal: React.FC<{
     const [voucherAmount, setVoucherAmount] = useState<number>(0);
     const [expiresAt, setExpiresAt] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
 
     const [generateVoucher] = useMutation(GENERATE_VOUCHER_MUTATION, {
         refetchQueries: [
-            'FETCH_ALL_USERS',
+            { query: FETCH_ALL_USERS },
+            'FETCH_ALL_USERS'
         ],
         awaitRefetchQueries: true,
-        onCompleted: () => {
-            onSuccess();
-            toast({
-                title: "Voucher created successfully",
-                description: "The voucher has been created successfully",
+        // ADDED: Cache update
+        update: (cache) => {
+            cache.evict({ 
+                id: `User:${user.id}`,
+                fieldName: 'Voucher'
             });
-            window.location.reload();
-        },
+            cache.evict({ 
+                id: `User:${user.id}`,
+                fieldName: 'points'
+            });
+            cache.gc();
+        }
     });
-    const { toast } = useToast();
 
     const handleCreateVoucher = async () => {
-        const conversionRate = pointSettingsData?.getPointSettings.conversionRate || 0.01;
+        const conversionRate = pointSettingsData?.getPointSettings.reimbursementRate || 0.01;
+        const minVoucherAmount = pointSettingsData?.getPointSettings.loyaltyRewardValue || 0;
         const userPoints = user.points;
-        const maxAmount = Math.floor(userPoints * conversionRate);
+        const maxAmount = Math.round(userPoints * conversionRate * 100) / 100; 
 
-        if (voucherAmount > maxAmount) {
+        if (voucherAmount <= 0 || !expiresAt) {
             toast({
-                title: "Points insuffisants",
-                description: `Vous pouvez uniquement ajouter un bon de ${maxAmount} DT, car vous n’avez pas assez de points.`,
+                title: "Erreur de validation",
+                description: "Veuillez saisir un montant et une date d'expiration valides.",
                 variant: "destructive",
             });
             return;
         }
 
-        if (voucherAmount <= 0 || !expiresAt) {
+        if (voucherAmount < minVoucherAmount) {
             toast({
-                title: "Erreur de validation",
-                description: "Veuillez saisir un montant et une date d’expiration valides.",
+                title: "Montant insuffisant",
+                description: `Le montant minimum pour créer un bon est de ${minVoucherAmount} DT.`,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (voucherAmount > maxAmount) {
+            toast({
+                title: "Points insuffisants",
+                description: `Vous pouvez uniquement créer un bon de maximum ${maxAmount.toFixed(2)} DT avec vos ${userPoints.toLocaleString()} points.`,
+                variant: "destructive",
             });
             return;
         }
 
         setIsLoading(true);
         try {
-            const result = await generateVoucher({
+            await generateVoucher({
                 variables: {
                     input: {
                         userId: user.id,
@@ -152,10 +103,9 @@ export const VoucherCreationModal: React.FC<{
                 variant: "default",
             });
 
-            onSuccess();
+            await onSuccess(); // IMPORTANT: Wait for success callback
             onClose();
-            setVoucherAmount(0);
-            setExpiresAt("");
+            resetModal();
         } catch (error) {
             toast({
                 title: "Erreur lors de la création",
@@ -167,7 +117,6 @@ export const VoucherCreationModal: React.FC<{
         }
     };
 
-
     const resetModal = () => {
         setVoucherAmount(0);
         setExpiresAt("");
@@ -178,7 +127,6 @@ export const VoucherCreationModal: React.FC<{
         onClose();
     };
 
-    // Get minimum date (current date + 1 day)
     const getMinDate = () => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -190,30 +138,35 @@ export const VoucherCreationModal: React.FC<{
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-                <h2 className="text-xl font-bold mb-4">Créer un bon - {user.fullName}
-                </h2>
+                <h2 className="text-xl font-bold mb-4">Créer un bon - {user.fullName}</h2>
+                <p className="text-sm text-gray-600 mb-2">
+                    Points disponibles: <span className="font-semibold">{user.points.toLocaleString()}</span>
+                </p>
+      
+                <p className="text-sm text-orange-600 mb-4">
+                    Montant minimum: <span className="font-bold">{pointSettingsData?.getPointSettings.loyaltyRewardValue || 0} DT</span>
+                </p>
 
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Montant du bon
+                            Montant du bon (DT)
                         </label>
                         <input
                             type="number"
                             value={voucherAmount}
                             onChange={(e) => setVoucherAmount(Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            min="1"
+                            min={pointSettingsData?.getPointSettings.loyaltyRewardValue || 1}
                             step="0.01"
-                            placeholder="Saisir le montant du bon
-"
+                            placeholder={`Minimum ${pointSettingsData?.getPointSettings.loyaltyRewardValue || 0} DT`}
                             disabled={isLoading}
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expire le
+                            Expire le
                         </label>
                         <input
                             type="datetime-local"
@@ -231,14 +184,14 @@ export const VoucherCreationModal: React.FC<{
                             disabled={isLoading || voucherAmount <= 0 || !expiresAt}
                             className="flex-1 py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-md font-medium transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'Créer le bon...' : 'Création en cours...'}
+                            {isLoading ? 'Création en cours...' : 'Créer le bon'}
                         </button>
                         <button
                             onClick={handleClose}
                             disabled={isLoading}
                             className="flex-1 py-2 px-4 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium transition-colors disabled:bg-gray-300"
                         >
-                            Cancel
+                            Annuler
                         </button>
                     </div>
                 </div>

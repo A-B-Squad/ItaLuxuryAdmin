@@ -5,9 +5,9 @@ import { SEARCH_PRODUCTS_QUERY } from "@/app/graph/queries";
 
 const useProducts = (
   query: string | undefined,
-  sortBy?: "createdAt" | "price" | "name" | "isVisible",
+  sortBy?: "createdAt" | "price" | "name" | "isVisible" | "outOfStock",
   pageSize?: number,
-  sortOrder: "asc" | "desc" = "desc"
+  sortOrder: "asc" | "desc" = "desc",
 ) => {
   const [limitSearchedProducts, setLimitSearchedProducts] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -26,21 +26,21 @@ const useProducts = (
             query: query || undefined,
             page,
             pageSize,
-            sortBy: sortBy || "createdAt",
-            sortOrder: sortOrder || "desc",
-            visibleProduct: sortBy === "isVisible" ? (sortOrder === "desc" ? true : false) : undefined
+            sortBy: sortBy ,
+            sortOrder: sortOrder ,
+            visibleProduct: sortBy === "isVisible" ? (sortOrder === "asc" ? true : false) : undefined
           },
         },
         fetchPolicy: "cache-and-network",
       });
-      
+
       // Fetch all products for total count (without pagination)
       const { data: allSearchedProduct } = await searchProducts({
         variables: {
           input: {
             query: query || undefined,
             page: 1,
-            pageSize: 1000, // Use a large number instead of undefined
+            pageSize: 1000, 
             sortBy: sortBy || "createdAt",
             sortOrder: sortOrder || "desc",
           },
@@ -51,7 +51,7 @@ const useProducts = (
       let fetchedProducts = [
         ...(searchedProductWithLimit?.searchProducts?.results?.products || []),
       ];
-  
+
       setLimitSearchedProducts(fetchedProducts);
       setTotalCount(searchedProductWithLimit?.searchProducts?.totalCount || 0);
       setAllProducts(
@@ -72,7 +72,7 @@ const useProducts = (
     () => Math.max(1, Math.ceil(totalCount / (pageSize || 12))),
     [totalCount, pageSize],
   );
-  
+
   return {
     limitSearchedProducts,
     totalCount,

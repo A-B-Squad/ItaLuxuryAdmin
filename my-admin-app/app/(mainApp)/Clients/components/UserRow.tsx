@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { use } from "react";
 import { StarRating } from "./StarRating";
+import moment from "moment-timezone";
 
 
 // TypeScript Interfaces
@@ -29,12 +30,11 @@ interface Package {
 
 interface Checkout {
     id: string;
-    GovernoTaux: {
+    Governorate: {
         name: string;
     };
     package: Package[];
 }
-
 interface Voucher {
     id: string;
     code: string;
@@ -78,6 +78,7 @@ interface User {
     fullName: string;
     email: string;
     number: string;
+    createdAt: string
     points: number;
     reviews: Review[];
     ContactUs: ContactUs[];
@@ -85,7 +86,6 @@ interface User {
     Voucher: Voucher[];
     pointTransactions: PointTransaction[];
 }
-
 
 
 // User Row Component
@@ -104,7 +104,6 @@ export const UserRow: React.FC<{ user: User; onClick: () => void }> = ({
             className="hover:bg-gray-100 cursor-pointer transition-colors duration-150"
             onClick={onClick}
         >
-            <td className="px-6 py-4 whitespace-nowrap">{user.id}</td>
             <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
             <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
             <td className="px-6 py-4 whitespace-nowrap text-center">{user.points}</td>
@@ -115,17 +114,9 @@ export const UserRow: React.FC<{ user: User; onClick: () => void }> = ({
                 {user.reviews.length}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-center">
-                {user.reviews.length > 0 ? (
-                    <div className="flex justify-center">
-                        <StarRating rating={averageRating} />
-                        <span className="ml-2 text-sm text-gray-600">
-                            ({averageRating.toFixed(1)})
-                        </span>
-                    </div>
-                ) : (
-                    "N/A"
-                )}
+                {moment(Number(user.createdAt)).format("DD/MM/YYYY HH:mm")}
             </td>
+
         </tr>
     );
 };

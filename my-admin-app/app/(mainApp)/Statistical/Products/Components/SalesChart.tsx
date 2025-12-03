@@ -10,7 +10,6 @@ import SearchProduct from "@/app/(mainApp)/components/searchProduct";
 import SelectedProductInfo from "./SelectedProductInfo";
 import ChartsGrid from "./ChartsGrid";
 
-
 Chart.register(...registerables);
 
 interface Pagination {
@@ -80,7 +79,7 @@ interface ProductInCheckout {
   checkout: Checkout;
 }
 
-// Updated Product interface to match your GraphQL response
+//  Product interface 
 interface Product {
   id: string;
   name: string;
@@ -107,8 +106,53 @@ const SalesChart: React.FC<{
 }> = ({ data, dateRange }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const processData = (data: Data) => {
+  // Create filtered packages based on date range
+  const filteredPackages = useMemo(() => {
     const packages = data.getAllPackages?.packages || [];
+
+    if (!dateRange || !dateRange.from || !dateRange.to) {
+      return packages;
+    }
+
+    return packages.filter((pkg) => {
+      const packageDate = new Date(parseInt(pkg.createdAt));
+      return packageDate >= dateRange.from! && packageDate <= dateRange.to!;
+    });
+  }, [data, dateRange]);
+
+  // Create filtered product data for selected product based on actual package data
+  const filteredSelectedProductData = useMemo(() => {
+    if (!selectedProduct) return null;
+
+    // Create synthetic ProductInCheckout data from filtered packages
+    const filteredProductInCheckout: ProductInCheckout[] = [];
+
+    filteredPackages.forEach((pkg) => {
+      // Check if this package contains the selected product
+      const productInThisPackage = pkg.Checkout.productInCheckout.find(
+        (item) => item.product.id === selectedProduct.id
+      );
+
+      if (productInThisPackage) {
+        // Create a synthetic ProductInCheckout entry that matches the expected structure
+        filteredProductInCheckout.push({
+          checkout: {
+            phone: pkg.Checkout.phone,
+            package: [{ status: pkg.status }],
+            Governorate: pkg.Checkout.Governorate
+          }
+        });
+      }
+    });
+
+    return {
+      ...selectedProduct,
+      ProductInCheckout: filteredProductInCheckout
+    };
+  }, [selectedProduct, filteredPackages]);
+
+  const processData = (data: Data) => {
+    const packages = filteredPackages;
 
     const productSales: {
       [date: string]: {
@@ -135,13 +179,6 @@ const SalesChart: React.FC<{
       const { productInCheckout } = pkg.Checkout;
       const date = format(new Date(parseInt(pkg.createdAt)), "yyyy-MM-dd");
       const governorate = pkg.Checkout.Governorate?.name || "Non spécifié";
-
-      if (dateRange && dateRange.from && dateRange.to) {
-        const packageDate = new Date(parseInt(pkg.createdAt));
-        if (packageDate < dateRange.from || packageDate > dateRange.to) {
-          return;
-        }
-      }
 
       productInCheckout.forEach((item) => {
         const { product, productQuantity } = item;
@@ -190,8 +227,7 @@ const SalesChart: React.FC<{
     productQuantities,
     governorateData,
     totalSalesByGovernorate
-  } = useMemo(() => processData(data), [data, dateRange]);
-
+  } = useMemo(() => processData(data), [filteredPackages]);
 
   // Get top 5 products for detailed analysis
   const topProducts = useMemo(() => {
@@ -242,7 +278,6 @@ const SalesChart: React.FC<{
       }]
     };
   }, [totalSalesByGovernorate]);
-
 
   // Chart options
   const chartOptions: ChartOptions<"line"> = {
@@ -364,9 +399,6 @@ const SalesChart: React.FC<{
     },
   };
 
-
-
-
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
   };
@@ -384,17 +416,23 @@ const SalesChart: React.FC<{
             <h2 className="text-xl font-bold text-gray-800">Recherche de Produit</h2>
             <p className="text-gray-600 text-sm mt-1">
               Recherchez un produit pour voir sa répartition par gouvernorat
+              {dateRange && dateRange.from && dateRange.to && (
+                <span className="block text-blue-600 font-medium mt-1">
+                  Période: {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                </span>
+              )}
             </p>
           </div>
           <SearchProduct onProductSelect={handleProductSelect} />
         </div>
       </div>
 
-      {/* Selected Product Info */}
-      {selectedProduct && (
+      {/* Selected Product Info - Now with properly filtered data */}
+      {filteredSelectedProductData && (
         <SelectedProductInfo
-          selectedProduct={selectedProduct}
+          selectedProduct={filteredSelectedProductData}
           onClearSelection={handleClearSelection}
+          dateRange={dateRange}
         />
       )}
 
@@ -405,8 +443,6 @@ const SalesChart: React.FC<{
         chartOptions={chartOptions}
         doughnutOptions={doughnutOptions}
       />
-
-
     </div>
   );
 };
