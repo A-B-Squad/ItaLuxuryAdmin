@@ -1,9 +1,8 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import JsBarcode from "jsbarcode";
-import { Order, ProductInCheckout } from "../../bundle.types/index";
 import { translatePaymentMethodStatus } from "./_translateStatus";
-
+import { ProductInCheckout,Order } from '../../types/index';
 const formatDate = (dateString: string): string => {
   const date = new Date(parseInt(dateString));
   return date.toLocaleDateString("fr-FR", {
